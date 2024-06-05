@@ -1,4 +1,3 @@
-<!-- resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -20,18 +19,13 @@
     <!-- Styles -->
     @livewireStyles
 </head>
-<body class="font-sans antialiased">
-<div id="app">
+<body class="font-sans antialiased h-screen flex">
     @auth
-    <nav class="bg-white border-b border-gray-300">
-        <div class="flex justify-between items-center px-6 bg-blue-300" style="height: 60px">
-            <button id="menu-button" onclick="expandSidebar()">
-                <i class="fas fa-bars text-cyan-500 text-lg text-white"></i>
+    <div id="sidebar" class="w-16 bg-white h-full flex flex-col transition-all duration-200 ease-in-out">
+        <div class="p-2 space-y-4 flex flex-col items-center">
+            <button id="menu-button" class="focus:outline-none self-center" onclick="expandSidebar()">
+                <i class="fas fa-bars text-cyan-500 text-lg text-black"></i>
             </button>
-        </div>
-    </nav>
-    <div id="sidebar" class="w-16 bg-white h-screen fixed transition-all duration-200 ease-in-out">
-        <div class="p-2 space-y-4">
             <a href="{{ route('report') }}" title="Informes" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('report')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
                 <i class="fas fa-file-alt"></i>
                 <span class="font-medium transition-all duration-200 opacity-0">Informes</span>
@@ -48,7 +42,7 @@
                 <i class="fas fa-users"></i>
                 <span class="font-medium transition-all duration-200 opacity-0">Usuarios</span>
             </a>
-            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu dropdown-menu-end w-full" aria-labelledby="navbarDropdown">
                 <a title="Cerrar sesión" id="logout" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group" href="{{ route('logoutUser') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="fas fa-sign-out-alt"></i>
                     <span class="font-medium transition-all duration-200 opacity-0">Cerrar sesión</span>
@@ -59,53 +53,61 @@
             </div>
         </div>
     </div>
-    
+
+    <div class="flex-1 flex flex-col">
+        {{-- <nav class="bg-white border-b border-gray-300 w-full">
+            <div class="flex justify-between items-center px-6 bg-blue-300" style="height: 60px">
+                <!-- Removed the button from here -->
+            </div>
+        </nav> --}}
+        <div id="main-content" class="flex-1 bg-gray-100 transition-all duration-200 ease-in-out">
+            <main class="p-4">
+                {{$slot}}
+            </main>
+        </div>
+        <footer class="bg-light text-center text-lg-start w-full h-0">
+            <div class="text-center p-3 bg-blue-300 ">
+                <span class="text-gray-700">© 2024 Desarrollado por Luis Rodriguez</span>
+            </div>
+        </footer>
+        
+    </div>
     @endauth
 
     @guest
         <livewire:user-login.user-login />
-    @else
-    <div class="ml-16 bg-gray-100 h-screen fixed w-full lg:w-4/4 transition-all duration-200 ease-in-out">
-        <main class="p-4">
-            {{$slot}}
-        </main>
-    </div>
     @endguest
-</div>
 
-<script>
-    function expandSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.querySelector('.ml-16');
+    <script>
+        function expandSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const menuButton = document.getElementById('menu-button');
 
-        if (sidebar.style.width === '16rem') {
-            sidebar.style.width = '4rem';
-            mainContent.style.marginLeft = '4rem';
-            sidebar.classList.remove('text-left', 'px-6');
-            sidebar.classList.add('text-center', 'px-0');
-        } else {
-            sidebar.style.width = '16rem';
-            mainContent.style.marginLeft = '16rem';
-            sidebar.classList.add('text-left', 'px-6');
-            sidebar.classList.remove('text-center', 'px-0');
+            if (sidebar.style.width === '16rem') {
+                sidebar.style.width = '4rem';
+                menuButton.classList.remove('self-end');
+                menuButton.classList.add('self-center');
+            } else {
+                sidebar.style.width = '16rem';
+                menuButton.classList.remove('self-center');
+                menuButton.classList.add('self-end');
+            }
+
+            const labels = sidebar.querySelectorAll('span');
+            labels.forEach(label => label.classList.toggle('opacity-0'));
         }
 
-        const labels = sidebar.querySelectorAll('span');
-        labels.forEach(label => label.classList.toggle('opacity-0'));
-    }
+        function highlightSidebarItem(element) {
+            const links = document.querySelectorAll("#sidebar a");
+            links.forEach(link => {
+                link.classList.remove('bg-blue-300', 'text-white');
+                link.querySelector('i').classList.remove('text-white');
+            });
+            element.classList.add('bg-blue-300', 'text-white');
+            element.querySelector('i').classList.add('text-white');
+        }
+    </script>
 
-    function highlightSidebarItem(element) {
-        const links = document.querySelectorAll("#sidebar a");
-        links.forEach(link => {
-            link.classList.remove('bg-blue-300', 'text-white');
-            link.querySelector('i').classList.remove('text-white');
-        });
-        element.classList.add('bg-blue-300', 'text-white');
-        element.querySelector('i').classList.add('text-white');
-    }
-
-</script>
-
-@livewireScripts
+    @livewireScripts
 </body>
 </html>
