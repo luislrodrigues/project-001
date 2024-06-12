@@ -2,6 +2,7 @@
 
 namespace App\Livewire\UserLogin;
 
+use App\Models\User;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -18,12 +19,17 @@ class UserLogin extends Component
             'password'      => ['required'],
         ]);
         try{
+            $user = User::where('email', $this->email)->first();
+            if ($user && $user->status !== 'active') {
+                $this->addError('email', 'Tu cuenta no está activa.');
+                return;
+            }
             if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
                 session()->flash('message', 'Inicio de sesión exitoso.');
                 return redirect()->intended('/report'); 
                 
             } else {
-                session()->flash('error', 'Las credenciales no coinciden con nuestros registros.');
+                $this->addError('password', 'Las credenciales no coinciden con nuestros registros.');
                 $this->resetInputFields();
             }
         } catch (\Exception $e) {

@@ -18,10 +18,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
+Route::middleware('guest')->get('/', function () {
     return view('layouts.app');
 });
-Route::get('/login', function () {
+Route::middleware('guest')->get('/login', function () {
     return view('layouts.app');
 });
 
@@ -35,5 +35,7 @@ Route::middleware([
     Route::get('/company', Company::class)->name('company');
     Route::get('/equipment', Equipment::class)->name('equipment');
     Route::get('/user', User::class)->name('user');
+    Route::put('/users/{userId}/toggle-status', [User::class, 'toggleUserStatus'])
+    ->name('users.toggleStatus');
 });
 
