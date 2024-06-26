@@ -35,14 +35,12 @@ class User extends Component
 
     public function saveUser()
     {
+        $this->validate([
+            'name'      => ['bail', 'required', 'string','max:255'],
+            'email'     => ['bail', 'required', 'email', Rule::unique('users')->whereNull('deleted_at')],
+            'password'  => ['bail','string', 'nullable', 'min:8'],
+        ]);
         try {
-            $this->validate(
-                [
-                    'name'      => 'bail|required|string|max:255',
-                    'email'     => 'bail|required|email|unique:users,email|max:255',
-                    'password'  => 'bail|required|string|min:8',
-                ]
-            );
             ModelsUser::create([
                 'name'      => $this->name,
                 'email'     => $this->email,
@@ -75,12 +73,12 @@ class User extends Component
 
     public function updateUser()
     {
+        $this->validate([
+            'name'      => ['bail', 'required', 'string','max:255'],
+            'email'     => ['bail', 'required', 'email', Rule::unique('users')->ignore($this->userIdToUpdate)->whereNull('deleted_at')],
+            'password'  => ['bail','string', 'nullable', 'min:8'],
+        ]);
         try{
-            $this->validate([
-                'name'      => ['bail', 'required', 'string','max:255', Rule::unique('users')->ignore($this->userIdToUpdate)->whereNull('deleted_at')],
-                'email'     => ['bail', 'required', 'email', Rule::unique('users')->ignore($this->userIdToUpdate)->whereNull('deleted_at')],
-                'password'  => ['bail','string', 'nullable', 'min:8'],
-            ]);
 
             $user = ModelsUser::findOrFail($this->userIdToUpdate);
 

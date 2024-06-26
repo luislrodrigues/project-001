@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->get('/', function () {
     return view('layouts.app');
-});
+})->name('login');
 Route::middleware('guest')->get('/login', function () {
     return view('layouts.app');
 });

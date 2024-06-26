@@ -6,22 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class EquipmentCharacteristic extends Model
+class Brand extends Model
 {
     use HasFactory;
     use SoftDeletes;
 
-    protected $fillable = [
-        'equipment_id', 
-        'name', 
-        'value', 
-        'unit', 
+    protected $table = 'brands';
+
+    Protected $fillable = [
+        'id',
+        'name',
         'status',
     ];
-
-
-    public function equipment()
+    
+    public function equipments()
     {
-        return $this->belongsTo(Equipment::class);
+        return $this->hasMany(Equipment::class);
     }
 }

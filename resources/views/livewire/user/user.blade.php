@@ -8,12 +8,12 @@
             </svg>
         </div>
     </div>
-    <div class="py-8">
+    <div class="py-4">
         <div>
             <h2 class="text-2xl font-semibold leading-tight">Usuarios</h2>
         </div>
-        <div class="py-8">
-            <button  id="openModalButton" class="ml-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4">
+        <div class="py-4">
+            <button  id="openModalButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4">
                 Crear usuario
               </button>
         </div>
@@ -129,9 +129,6 @@
 @push('scripts')
 <script>
     document.addEventListener('livewire:initialized', function () {
-        Livewire.on('deleteUser', (userId) => {
-            deleted('user', 'deleteUser', userId);
-        });
 
         Livewire.on('alertSuccess', (message) => {
             alertSuccess(message);

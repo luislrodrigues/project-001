@@ -38,7 +38,7 @@
                 <span class="font-medium transition-all duration-200 opacity-0">Empresas</span>
             </a>
             <a href="{{ route('equipment') }}" title="Equipos" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('equipment')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
-                <i class="fas fa-cogs"></i>
+                <i class="fas fa-cog"></i>
                 <span class="font-medium transition-all duration-200 opacity-0">Equipos</span>
             </a>
             <a href="{{ route('user') }}" title="Usuarios" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('user')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
@@ -78,9 +78,8 @@
     @endauth
 
     @guest
-    <div class="flex-1 bg-gray-50 flex justify-center items-center">
+
         <livewire:user-login.user-login />
-    </div>
     @endguest
     <script>
         function expandSidebar() {

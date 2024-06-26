@@ -11,11 +11,15 @@ class Equipment extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $table = 'equipments';
+    protected $table = 'equipment';
     
     Protected $fillable = [
         'id',
+        'brand_id',
+        'company_id',
+        'equipment_type_id',
         'name',
+        'code',
         'status',
     ];
 
@@ -23,10 +27,17 @@ class Equipment extends Model
     {
         return $this->belongsTo(Company::class);
     }
-
-    public function characteristics()
+    public function brand()
     {
-        return $this->hasMany(EquipmentCharacteristic::class);
+        return $this->belongsTo(Brand::class);
+    }
+    public function equipmentType()
+    {
+        return $this->belongsTo(EquipmentType::class);
+    }
+    public function values()
+    {
+        return $this->hasMany(EquipmentTypeValue::class);
     }
 
     public function reports()

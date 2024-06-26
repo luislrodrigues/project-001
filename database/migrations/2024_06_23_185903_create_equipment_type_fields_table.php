@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('equipment_characteristics', function (Blueprint $table) {
+        Schema::create('equipment_type_fields', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('equipment_id')->constrained('equipment')->onDelete('cascade');
+            $table->foreignId('equipment_type_id')->constrained('equipment_types')->onDelete('cascade');
             $table->string('name');
-            $table->string('value');
-            $table->string('unit');
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->string('unit')->nullable();
+            $table->text('options')->nullable();
+            $table->enum('type',['text','select','numeric'])->default('text');
+            $table->enum('status',['active','inactive'])->default('active');
             $table->softDeletes();
             $table->timestamps();
         });
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('equipment_characteristics');
+        Schema::dropIfExists('equipment_type_fields');
     }
 };
