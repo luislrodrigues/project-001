@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
@@ -18,17 +20,24 @@ class UserSeeder extends Seeder
                 "name" => "luis",
                 "email" => "lrodrguez@email.com",
                 "status" => "active",
-                "password" => bcrypt(12345678)
+                "password" => bcrypt(12345678),
             ),
             array(
                 "name" => "alvaro",
                 "email" => "alvaro@email.com",
                 "status" => "active",
-                "password" => bcrypt(12345678)
+                "password" => bcrypt(12345678),
             ),
         );
-        
+        foreach ($users as $user) {
+            User::create($user);
+        }
+        // Obtener los roles
+        $adminRole = Role::where('name', 'admin')->first();
+        $userRole = Role::where('name', 'user')->first();
 
-        DB::table('users')->insert($users);
+        // Asignar roles a los usuarios
+        User::where('email', 'lrodrguez@email.com')->first()->assignRole($adminRole);
+        User::where('email', 'alvaro@email.com')->first()->assignRole($userRole);
     }
 }

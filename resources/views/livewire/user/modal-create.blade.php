@@ -53,14 +53,22 @@
       </div>
   </div>
 </div>
-
 @push('scripts')
 <script>
+    const closeModalButton = document.getElementById('closeModalButton');
+    const closeModalButton2 = document.getElementById('closeModalButton2');
     document.addEventListener('livewire:initialized', function () {
         Livewire.on('close-modal-user', () => {
-        const modalCreate = document.getElementById('modalCreate');
-        modalCreate.classList.add('hidden');
+            const modalCreate = document.getElementById('modalCreate');
+            modalCreate.classList.add('hidden');
+        });
+
     });
+    closeModalButton.addEventListener('click', function() {
+      modalCreate.classList.add('hidden');
+    });
+    closeModalButton2.addEventListener('click', function() {
+      modalCreate.classList.add('hidden');
     });
 </script>
 @endpush

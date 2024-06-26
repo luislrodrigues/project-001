@@ -13,9 +13,11 @@
            <h2 class="text-2xl font-semibold leading-tight">Equipos</h2>
        </div>
        <div class="py-4">
-           <button  id="openModalButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4">
-               Crear equipo
-             </button>
+            @can('save equipment')
+                <button  id="openModalButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4">
+                    Crear equipo
+                </button>
+             @endcan
        </div>
        <div class="my-2 flex items-center">
            <div class="flex-1 mr-4">
@@ -84,10 +86,12 @@
                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                Marca
                            </th>
+                           @can('actions equipment')
                            <th
                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                Acciones
                            </th>
+                           @endcan
                        </tr>
                    </thead>
                    <tbody>
@@ -108,18 +112,19 @@
                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                {{ $equipment->brand->name }}
                            </td>
-                           <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                               <button class="mr-2"  wire:click="showEquipmentDetails({{ $equipment->id }})">
-                                   <i class="fas fa-eye fa-lg text-blue-300" title="Detalle"></i>
-                               </button>
-                               <button class="mr-2"  wire:click="OpenModalEdit({{ $equipment->id }})">
-                                   <i class="fas fa-edit fa-lg text-blue-300" title="Editar"></i>
-                               </button>
-                               <button class="ml-2" onclick="deleted('equipment.equipment', 'destroy',{{ $equipment->id }})" wire:loading.attr="disabled">
-                                    <i class="fas fa-trash text-yellow-500" title="Eliminar"></i>
-                               </button>
-                           </td>
-                           
+                           @can('actions equipment')
+                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                                <button class="mr-2"  wire:click="showEquipmentDetails({{ $equipment->id }})">
+                                    <i class="fas fa-eye fa-lg text-blue-300" title="Detalle"></i>
+                                </button>
+                                <button class="mr-2"  wire:click="OpenModalEdit({{ $equipment->id }})">
+                                    <i class="fas fa-edit fa-lg text-blue-300" title="Editar"></i>
+                                </button>
+                                <button class="ml-2" onclick="deleted('equipment.equipment', 'destroy',{{ $equipment->id }})" wire:loading.attr="disabled">
+                                        <i class="fas fa-trash text-yellow-500" title="Eliminar"></i>
+                                </button>
+                            </td>
+                           @endcan
                        </tr>
                        @endforeach
                    </tbody>
@@ -153,9 +158,8 @@
             modalShow.classList.add('hidden');
             modalShow.classList.remove('hidden');
         });
-        Livewire.on('open-modal-create-equipment', () => {
+        Livewire.on('open-modal-edit-equipment', () => {
             const modalCreate = document.getElementById('modalCreate');
-            modalCreate.classList.add('hidden');
             modalCreate.classList.remove('hidden');
         });
     });

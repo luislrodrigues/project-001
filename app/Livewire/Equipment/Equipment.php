@@ -66,59 +66,70 @@ class Equipment extends Component
     protected $listeners = ['destroy'];
     public function destroy($id)
     {
-        try{
-            $equipment = ModelsEquipment::findOrFail($id);
-            EquipmentTypeValue::where('id_equipment', $id)->delete();
-            $equipment->status = 'inactive';
-            $equipment->save();
-            $equipment->delete();
-            $this->dispatch('alertSuccess', 'El equipo se elimino correctamente.');
-        }catch (\Exception $e) {
-            $this->dispatch('alertFailed', 'Error al aliminar el equipo: ' . $e->getMessage());
+        if (auth()->user()->can('delete equipment')) {
+            try{
+                $equipment = ModelsEquipment::findOrFail($id);
+                EquipmentTypeValue::where('id_equipment', $id)->delete();
+                $equipment->status = 'inactive';
+                $equipment->save();
+                $equipment->delete();
+                $this->dispatch('alertSuccess', 'El equipo se elimino correctamente.');
+            }catch (\Exception $e) {
+                $this->dispatch('alertFailed', 'Error al aliminar el equipo: ' . $e->getMessage());
+            }
+
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
 
     public function saveEquipment()
     {
-        $rules = [
-            'name'    => 'required|string|max:255',
-            'code'    => 'required|string|max:255',
-            'company' => 'required|integer|exists:companies,id',
-            'brand'   => 'required|integer|exists:brands,id',
-            'type'    => 'required|integer|exists:equipment_types,id',
-        ];
-        foreach ($this->additionalFields as $field) {
-            if ($field->type == 'text') {
-                $rules["fieldValues.{$field->id}"] = 'required|string';
-            }else if($field->type == 'select'){
-                $rules["fieldValues.{$field->id}"] = 'required';
-            }else if($field->type == 'numeric'){
-                $rules["fieldValues.{$field->id}"] = 'required|numeric';
-            }
-        }
-        $this->validate($rules);
-        try {
-           $equipment = ModelsEquipment::create([
-                'name'               => $this->name,
-                'code'               => $this->code,
-                'company_id'         => $this->company,
-                'brand_id'           => $this->brand,
-                'equipment_type_id'  => $this->type,
-            ]);
 
-            foreach ($this->fieldValues as $typeId => $value) {
-                EquipmentTypeValue::create([
-                    'id_equipment'            => $equipment->id,
-                    'equipment_type_field_id' => $typeId,
-                    'value'                   => $value,
+        if (auth()->user()->can('save equipment')) {
+            $rules = [
+                'name'    => 'required|string|max:255',
+                'code'    => 'required|string|max:255',
+                'company' => 'required|integer|exists:companies,id',
+                'brand'   => 'required|integer|exists:brands,id',
+                'type'    => 'required|integer|exists:equipment_types,id',
+            ];
+            foreach ($this->additionalFields as $field) {
+                if ($field->type == 'text') {
+                    $rules["fieldValues.{$field->id}"] = 'required|string';
+                }else if($field->type == 'select'){
+                    $rules["fieldValues.{$field->id}"] = 'required';
+                }else if($field->type == 'numeric'){
+                    $rules["fieldValues.{$field->id}"] = 'required|numeric';
+                }
+            }
+            $this->validate($rules);
+            try {
+               $equipment = ModelsEquipment::create([
+                    'name'               => $this->name,
+                    'code'               => $this->code,
+                    'company_id'         => $this->company,
+                    'brand_id'           => $this->brand,
+                    'equipment_type_id'  => $this->type,
                 ]);
+    
+                foreach ($this->fieldValues as $typeId => $value) {
+                    EquipmentTypeValue::create([
+                        'id_equipment'            => $equipment->id,
+                        'equipment_type_field_id' => $typeId,
+                        'value'                   => $value,
+                    ]);
+                }
+    
+                $this->resetForm();
+                $this->dispatch('close-modal-equipment');
+                $this->dispatch('alertSuccess','Se guardo el equipo correctamente');
+            } catch (\Exception $e) {
+                    $this->dispatch('alertFailed', 'Error al guardar el equipo: ' . $e->getMessage());
             }
-
-            $this->resetForm();
-            $this->dispatch('close-modal-equipment');
-            $this->dispatch('alertSuccess','Se guardo el equipo correctamente');
-        } catch (\Exception $e) {
-                $this->dispatch('alertFailed', 'Error al guardar el equipo: ' . $e->getMessage());
+ 
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
 
@@ -148,58 +159,63 @@ class Equipment extends Component
     }
     public function OpenModalEdit($equipmentId){
         $this->loadEquipment($equipmentId);
-        $this->dispatch('open-modal-create-equipment');
+        $this->dispatch('open-modal-edit-equipment');
     }
 
 
     public function updateEquipment()
     {
-        $rules = [
-            'name'    => 'required|string|max:255',
-            'code'    => 'required|string|max:255',
-            'company' => 'required|integer|exists:companies,id',
-            'brand'   => 'required|integer|exists:brands,id',
-            'type'    => 'required|integer|exists:equipment_types,id',
-        ];
-        foreach ($this->additionalFields as $field) {
-            if ($field->type == 'text') {
-                $rules["fieldValues.{$field->id}"] = 'required|string';
-            } else if ($field->type == 'select') {
-                $rules["fieldValues.{$field->id}"] = 'required';
-            } else if ($field->type == 'numeric') {
-                $rules["fieldValues.{$field->id}"] = 'required|numeric';
+        if (auth()->user()->can('edit equipment')) {
+            $rules = [
+                'name'    => 'required|string|max:255',
+                'code'    => 'required|string|max:255',
+                'company' => 'required|integer|exists:companies,id',
+                'brand'   => 'required|integer|exists:brands,id',
+                'type'    => 'required|integer|exists:equipment_types,id',
+            ];
+            foreach ($this->additionalFields as $field) {
+                if ($field->type == 'text') {
+                    $rules["fieldValues.{$field->id}"] = 'required|string';
+                } else if ($field->type == 'select') {
+                    $rules["fieldValues.{$field->id}"] = 'required';
+                } else if ($field->type == 'numeric') {
+                    $rules["fieldValues.{$field->id}"] = 'required|numeric';
+                }
             }
-        }
-        $this->validate($rules);
-
-        try {
-            $equipment = ModelsEquipment::find($this->equipmentIdToUpdate);
-            $equipment->update([
-                'name'               => $this->name,
-                'code'               => $this->code,
-                'company_id'         => $this->company,
-                'brand_id'           => $this->brand,
-                'equipment_type_id'  => $this->type,
-            ]);
-            EquipmentTypeValue::where('id_equipment', $equipment->id)->delete();
-            foreach ($this->fieldValues as $typeId => $value) {
-                EquipmentTypeValue::updateOrCreate(
-                    ['id_equipment' => $equipment->id, 'equipment_type_field_id' => $typeId],
-                    ['value' => $value]
-                );
+            $this->validate($rules);
+    
+            try {
+                $equipment = ModelsEquipment::find($this->equipmentIdToUpdate);
+                $equipment->update([
+                    'name'               => $this->name,
+                    'code'               => $this->code,
+                    'company_id'         => $this->company,
+                    'brand_id'           => $this->brand,
+                    'equipment_type_id'  => $this->type,
+                ]);
+                EquipmentTypeValue::where('id_equipment', $equipment->id)->delete();
+                foreach ($this->fieldValues as $typeId => $value) {
+                    EquipmentTypeValue::updateOrCreate(
+                        ['id_equipment' => $equipment->id, 'equipment_type_field_id' => $typeId],
+                        ['value' => $value]
+                    );
+                }
+    
+                $this->resetForm();
+                $this->dispatch('close-modal-equipment');
+                $this->dispatch('alertSuccess', 'Equipo actualizado correctamente');
+            } catch (\Exception $e) {
+                $this->dispatch('alertFailed', 'Error al actualizar el equipo: ' . $e->getMessage());
             }
-
-            $this->resetForm();
-            $this->dispatch('close-modal-equipment');
-            $this->dispatch('alertSuccess', 'Equipo actualizado correctamente');
-        } catch (\Exception $e) {
-            $this->dispatch('alertFailed', 'Error al actualizar el equipo: ' . $e->getMessage());
+ 
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
 
     public function resetForm()
     {
-        $this->reset(['name','company','code','type', 'equipmentIdToUpdate','type']);
+        $this->reset(['name','company','code','type', 'equipmentIdToUpdate','type','brand']);
         $this->additionalFields = [];
         $this->resetValidation();
     }

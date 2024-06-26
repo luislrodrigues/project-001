@@ -11,6 +11,8 @@ class Report extends Model
     use HasFactory;
     use SoftDeletes;
 
+    protected $guard = 'web';
+
     protected $table = 'reports';
     
     Protected $fillable = [

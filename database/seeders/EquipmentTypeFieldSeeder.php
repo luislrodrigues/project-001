@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\EquipmentTypeField;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -647,6 +648,8 @@ class EquipmentTypeFieldSeeder extends Seeder
         );
         
 
-        DB::table('equipment_type_fields')->insert($equipment_type_fields);
+        foreach ($equipment_type_fields as $equipment_type_field) {
+            EquipmentTypeField::create($equipment_type_field);
+        }
     }
 }

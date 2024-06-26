@@ -10,6 +10,8 @@ class Company extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    
+    protected $guard = 'web';
 
     protected $table = 'companies';
 

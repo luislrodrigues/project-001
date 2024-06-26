@@ -35,22 +35,27 @@ class User extends Component
 
     public function saveUser()
     {
-        $this->validate([
-            'name'      => ['bail', 'required', 'string','max:255'],
-            'email'     => ['bail', 'required', 'email', Rule::unique('users')->whereNull('deleted_at')],
-            'password'  => ['bail','string', 'nullable', 'min:8'],
-        ]);
-        try {
-            ModelsUser::create([
-                'name'      => $this->name,
-                'email'     => $this->email,
-                'password'  => bcrypt($this->password),
+        if (auth()->user()->can('save user')) {
+            $this->validate([
+                'name'      => ['bail', 'required', 'string','max:255'],
+                'email'     => ['bail', 'required', 'email', Rule::unique('users')->whereNull('deleted_at')],
+                'password'  => ['bail','string', 'nullable', 'min:8'],
             ]);
-            $this->resetForm();
-            $this->dispatch('close-modal-user');
-            $this->dispatch('alertSuccess','Se guardo el usuario correctamente');
-     } catch (\Exception $e) {
-            $this->dispatch('alertFailed', 'Error al guardar el usuario: ' . $e->getMessage());
+            try {
+               $user = ModelsUser::create([
+                    'name'      => $this->name,
+                    'email'     => $this->email,
+                    'password'  => bcrypt($this->password),
+                ]);
+                $user->assignRole('user');
+                $this->resetForm();
+                $this->dispatch('close-modal-user');
+                $this->dispatch('alertSuccess','Se guardo el usuario correctamente');
+         } catch (\Exception $e) {
+                $this->dispatch('alertFailed', 'Error al guardar el usuario: ' . $e->getMessage());
+            }
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
 
@@ -69,42 +74,53 @@ class User extends Component
         $this->email = $user->email;
         $this->password = ''; 
         $this->userIdToUpdate = $userId;
+        $this->dispatch('open-modal-edit-user');
     }
 
     public function updateUser()
     {
-        $this->validate([
-            'name'      => ['bail', 'required', 'string','max:255'],
-            'email'     => ['bail', 'required', 'email', Rule::unique('users')->ignore($this->userIdToUpdate)->whereNull('deleted_at')],
-            'password'  => ['bail','string', 'nullable', 'min:8'],
-        ]);
-        try{
-
-            $user = ModelsUser::findOrFail($this->userIdToUpdate);
-
-            $user->update([
-                'name' => $this->name,
-                'email' => $this->email,
-                'password' => bcrypt($this->password),
+        if (auth()->user()->can('edit user')) {
+            $this->validate([
+                'name'      => ['bail', 'required', 'string','max:255'],
+                'email'     => ['bail', 'required', 'email', Rule::unique('users')->ignore($this->userIdToUpdate)->whereNull('deleted_at')],
+                'password'  => ['bail','string', 'nullable', 'min:8'],
             ]);
-            $this->resetForm();
-            $this->dispatch('close-modal-user');
-            $this->dispatch('alertSuccess', 'Se actualizó el usuario correctamente');
-    }catch (\Exception $e) {
-            $this->dispatch('alertFailed', 'Error al actualizar el usuario: ' . $e->getMessage());
+            try{
+    
+                $user = ModelsUser::findOrFail($this->userIdToUpdate);
+                $dataToUpdate = [
+                    'name' => $this->name,
+                    'email' => $this->email,
+                ];
+                if (!empty($this->password)) {
+                    $dataToUpdate['password'] = bcrypt($this->password);
+                }
+                $user->update($dataToUpdate);
+                $this->resetForm();
+                $this->dispatch('close-modal-user');
+                $this->dispatch('alertSuccess', 'Se actualizó el usuario correctamente');
+            }catch (\Exception $e) {
+                $this->dispatch('alertFailed', 'Error al actualizar el usuario: ' . $e->getMessage());
+            }
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
 
 
     public function toggleUserStatus($userId)
     {
-        try{
-            $user = ModelsUser::findOrFail($userId);
-            $user->status = ($user->status == 'active') ? 'inactive' : 'active';
-            $user->save();
-            $this->dispatch('alertSuccess', 'Estado del usuario actualizado correctamente.');
-        }catch (\Exception $e) {
-            $this->dispatch('alertFailed', 'Error al actualizar el estado del  usuario: ' . $e->getMessage());
+        if (auth()->user()->can('inactive user')) {
+            try{
+                $user = ModelsUser::findOrFail($userId);
+                $user->status = ($user->status == 'active') ? 'inactive' : 'active';
+                $user->save();
+                $this->dispatch('alertSuccess', 'Estado del usuario actualizado correctamente.');
+            }catch (\Exception $e) {
+                $this->dispatch('alertFailed', 'Error al actualizar el estado del  usuario: ' . $e->getMessage());
+            }
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
 }

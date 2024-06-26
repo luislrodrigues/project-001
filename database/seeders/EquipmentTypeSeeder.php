@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\EquipmentType;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +77,8 @@ class EquipmentTypeSeeder extends Seeder
             ),
         );
 
-        DB::table('equipment_types')->insert($equipmentTypes);
+        foreach ($equipmentTypes as $equipmentType) {
+            EquipmentType::create($equipmentType);
+        }
     }
 }

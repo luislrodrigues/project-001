@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Company;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +67,9 @@ class CompanySeeder extends Seeder
             ),
         );
         
-        DB::table('companies')->insert($companies);
+        foreach ($companies as $company) {
+            Company::create($company);
+        }
 
     }
 }

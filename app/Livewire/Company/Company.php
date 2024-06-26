@@ -28,39 +28,50 @@ class Company extends Component
 
     public function saveCompany()
     {
-        $this->validate([
-            'name'      => ['bail', 'required', 'string','max:255', Rule::unique('companies')->whereNull('deleted_at')],
-        ]);
-        try {
-            ModelsCompany::create([
-                'name'      => $this->name,
+
+        if (auth()->user()->can('save company')) {
+            $this->validate([
+                'name'      => ['bail', 'required', 'string','max:255', Rule::unique('companies')->whereNull('deleted_at')],
             ]);
-            $this->resetForm();
-            $this->dispatch('close-modal-company');
-            $this->dispatch('alertSuccess','Se guardo la empresa correctamente');
-     } catch (\Exception $e) {
-            $this->dispatch('alertFailed', 'Error al guardar la empresa: ' . $e->getMessage());
+            try {
+                ModelsCompany::create([
+                    'name'      => $this->name,
+                ]);
+                $this->resetForm();
+                $this->dispatch('close-modal-company');
+                $this->dispatch('alertSuccess','Se guardo la empresa correctamente');
+            } catch (\Exception $e) {
+                $this->dispatch('alertFailed', 'Error al guardar la empresa: ' . $e->getMessage());
+            }
+
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
 
     
     public function updateCompany()
     {
-        $this->validate([
-            'name'      => ['bail', 'required', 'string','max:255', Rule::unique('companies')->ignore($this->companyIdToUpdate)->whereNull('deleted_at')],
-        ]);
-        try{
 
-            $company = ModelsCompany::findOrFail($this->companyIdToUpdate);
-
-            $company->update([
-                'name' => $this->name,
+        if (auth()->user()->can('edit company')) {
+            $this->validate([
+                'name'      => ['bail', 'required', 'string','max:255', Rule::unique('companies')->ignore($this->companyIdToUpdate)->whereNull('deleted_at')],
             ]);
-            $this->resetForm();
-            $this->dispatch('close-modal-company');
-            $this->dispatch('alertSuccess', 'Se actualizó la empresa correctamente');
-    }catch (\Exception $e) {
-            $this->dispatch('alertFailed', 'Error al actualizar la empresa: ' . $e->getMessage());
+            try{
+    
+                $company = ModelsCompany::findOrFail($this->companyIdToUpdate);
+    
+                $company->update([
+                    'name' => $this->name,
+                ]);
+                $this->resetForm();
+                $this->dispatch('close-modal-company');
+                $this->dispatch('alertSuccess', 'Se actualizó la empresa correctamente');
+            }catch (\Exception $e) {
+                $this->dispatch('alertFailed', 'Error al actualizar la empresa: ' . $e->getMessage());
+            }
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
     public function resetForm()
@@ -74,20 +85,26 @@ class Company extends Component
         $company = ModelsCompany::findOrFail($companyId);
         $this->name = $company->name;
         $this->companyIdToUpdate = $companyId;
+        $this->dispatch('open-modal-edit-company');
     }
     protected $listeners = ['destroy'];
     public function destroy($id)
     {
-        try{
-            $company = ModelsCompany::findOrFail($id);
-            $company->equipments()->update(['status' => 'inactive']);
-            $company->equipments()->delete();
-            $company->status = 'inactive';
-            $company->save();
-            $company->delete();
-            $this->dispatch('alertSuccess', 'La empresa se elimino correctamente.');
-        }catch (\Exception $e) {
-            $this->dispatch('alertFailed', 'Error al eliminar la  empresa: ' . $e->getMessage());
+
+        if (auth()->user()->can('delete company')) {
+            try{
+                $company = ModelsCompany::findOrFail($id);
+                $company->equipments()->update(['status' => 'inactive']);
+                $company->equipments()->delete();
+                $company->status = 'inactive';
+                $company->save();
+                $company->delete();
+                $this->dispatch('alertSuccess', 'La empresa se elimino correctamente.');
+            }catch (\Exception $e) {
+                $this->dispatch('alertFailed', 'Error al eliminar la  empresa: ' . $e->getMessage());
+            }
+        } else {
+            abort(403, 'No tienes los permisos requeridos.');
         }
     }
 }

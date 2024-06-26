@@ -13,9 +13,11 @@
             <h2 class="text-2xl font-semibold leading-tight">Usuarios</h2>
         </div>
         <div class="py-4">
-            <button  id="openModalButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4">
-                Crear usuario
-              </button>
+            @can('save user')
+                <button  id="openModalButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4">
+                    Crear usuario
+                </button>
+            @endcan
         </div>
         <div class="my-2 flex items-center">
             <div class="flex-1 mr-4">
@@ -54,10 +56,12 @@
                                 class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                 Estado
                             </th>
-                            <th
-                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
-                                Acciones
-                            </th>
+                            @can('actions user')
+                                <th
+                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                    Acciones
+                                </th>
+                             @endcan
                         </tr>
                     </thead>
                     <tbody>
@@ -77,8 +81,9 @@
                                     <span class="bg-red-200 text-red-600 py-1 px-3 rounded-full text-xs">Inactivo</span>
                                 @endif
                             </td>
+                            @can('actions user')
                             <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                <button class="mr-2" id="openModalButtonEdit" wire:click="editUser({{ $user->id }})">
+                                <button class="mr-2"  wire:click="editUser({{ $user->id }})">
                                     <i class="fas fa-edit fa-lg text-blue-300" title="Editar"></i>
                                 </button>
                                 <button class="ml-2" wire:click.prevent="toggleUserStatus({{ $user->id }})" wire:loading.attr="disabled">
@@ -89,7 +94,7 @@
                                     @endif
                                 </button>
                             </td>
-                            
+                            @endcan
                         </tr>
                         @endforeach
                     </tbody>
@@ -102,29 +107,13 @@
     @include('livewire.user.modal-create')
 
     </div>
-    <script>
-        const openModalButton = document.getElementById('openModalButton');
-        const openModalButtonEdit = document.querySelectorAll('#openModalButtonEdit');
-        const closeModalButton = document.getElementById('closeModalButton');
-        const closeModalButton2 = document.getElementById('closeModalButton2');
-        const modalCreate = document.getElementById('modalCreate');
-      
-        openModalButton.addEventListener('click', function() {
-          modalCreate.classList.remove('hidden');
-        });
-        openModalButtonEdit.forEach(button => {
-          button.addEventListener('click', function() {
-            modalCreate.classList.remove('hidden');
-          });
-        });
-      
-        closeModalButton.addEventListener('click', function() {
-          modalCreate.classList.add('hidden');
-        });
-        closeModalButton2.addEventListener('click', function() {
-          modalCreate.classList.add('hidden');
-        });
-      </script>
+<script>
+    const openModalButton = document.getElementById('openModalButton');
+    const modalCreate = document.getElementById('modalCreate');
+    openModalButton.addEventListener('click', function() {
+        modalCreate.classList.remove('hidden');
+    });
+</script>
 
 @push('scripts')
 <script>
@@ -136,6 +125,10 @@
 
         Livewire.on('alertFailed', (message) => {
             alertFailed(message);
+        });
+        Livewire.on('open-modal-edit-user', () => {
+            const modalCreate = document.getElementById('modalCreate');
+            modalCreate.classList.remove('hidden');
         });
     });
 </script>

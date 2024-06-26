@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Brand;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +46,9 @@ class BrandSeeder extends Seeder
                 "status" => "active",
             ),
         );
-        DB::table('brands')->insert($brands);
+        foreach ($brands as $brand) {
+            Brand::create($brand);
+        }
         
     }
 }
