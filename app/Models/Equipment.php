@@ -22,6 +22,7 @@ class Equipment extends Model
         'equipment_type_id',
         'name',
         'code',
+        'tag',
         'status',
     ];
 

@@ -30,6 +30,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'actions equipment',
             'delete equipment',
             'consult equipment',
+            'save report',
+            'edit report',
+            'actions report',
+            'delete report',
+            'consult report',
         ];
 
         // Crear permisos
@@ -46,6 +51,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'consult user',
             'consult company',
             'consult equipment',
+            'consult report',
         ];
 
 

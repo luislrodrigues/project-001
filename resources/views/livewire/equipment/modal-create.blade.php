@@ -27,17 +27,22 @@
             <div class="grid grid-cols-3 gap-4 mb-6">
                 <div>
                     <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre</label>
-                    <input type="text" id="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar nombre" wire:model.lazy="name">
+                    <input type="text" id="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar nombre" wire:model.defer="name">
                     @error('name') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label for="code" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Codigo</label>
-                    <input type="text" id="code" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar codigo" wire:model.lazy="code">
+                    <input type="text" id="code" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar codigo" wire:model.defer="code">
                     @error('code') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                 </div>
                 <div>
+                    <label for="tag" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tag</label>
+                    <input type="text" id="tag" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar tag" wire:model.defer="tag">
+                    @error('tag') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
+                </div>
+                <div>
                     <label for="company" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Empresa</label>
-                    <select id="company" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"  wire:model.lazy="company">
+                    <select id="company" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"  wire:model.defer="company">
                         <option value="">Selecione</option>
                         @foreach($companies as $company)
                             <option value="{{ $company->id }}">{{ $company->name }}</option>
@@ -47,7 +52,7 @@
                 </div>
                 <div>
                     <label for="brand" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Marca</label>
-                        <select id="brand" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model.lazy="brand">
+                        <select id="brand" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model.defer="brand">
                         <option value="">Selecione</option>
                         @foreach($brands as $brand)
                             <option value="{{ $brand->id }}">{{ $brand->name }}</option>
@@ -69,7 +74,7 @@
                 <div>
                     <label for="campo{{$field->id}}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"> {{ $field->name }}     @if(isset($field->unit) && $field->unit) ({{ $field->unit }})@endif </label>
                     @if($field->type == 'select')
-                        <select id="campo{{$field->id}}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" wire:model.lazy="fieldValues.{{ $field->id }}">
+                        <select id="campo{{$field->id}}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" wire:model.defer="fieldValues.{{ $field->id }}">
                             <option value="">Seleccione una opción</option>
                             @if(is_array($field->options))
                             @foreach($field->options as $option)
@@ -78,7 +83,7 @@
                         @endif
                         </select>
                     @else
-                        <input  type="text" id="campo{{$field->id}}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar {{ $field->name }}" wire:model.lazy="fieldValues.{{ $field->id }}">
+                        <input  type="text" id="campo{{$field->id}}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar {{ $field->name }}" wire:model.defer="fieldValues.{{ $field->id }}">
                     @endif
                     @error("fieldValues.{$field->id}")
                         <span class="text-sm text-red-500">{{ $message }}</span>

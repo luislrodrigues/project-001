@@ -17,7 +17,20 @@ class Report extends Model
     
     Protected $fillable = [
         'id',
-        'name',
+        'equipment_id',
+        'measurement_date',
+        'location',
+        'process',
+        'diagnosis',
+        'condition',
+        'failure_mechanism',
+        'component_failure',
+        'recommendation',
+        'ot_created',
+        'status_ot',
+        'execution_date',
+        'verification_recommendation',
+        'analist',
         'status',
     ];
 

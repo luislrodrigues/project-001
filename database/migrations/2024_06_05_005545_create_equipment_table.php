@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('equipment_type_id')->constrained('equipment_types');
             $table->string('name');
             $table->string('code');
+            $table->string('tag');
             $table->enum('status',['active','inactive'])->default('active');
             $table->softDeletes();
             $table->timestamps();

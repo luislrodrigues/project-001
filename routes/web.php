@@ -31,7 +31,7 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::post('/logoutUser', [UserLogin::class, 'logoutUser'])->name('logoutUser');
-    Route::get('/report', Report::class)->name('report');
+    Route::get('/report', Report::class)->name('report')->middleware('permission:consult report');
     Route::get('/company', Company::class)->name('company')->middleware('permission:consult company');
     Route::get('/equipment', Equipment::class)->name('equipment')->middleware('permission:consult equipment');
     Route::get('/user', User::class)->name('user')->middleware('permission:consult user');

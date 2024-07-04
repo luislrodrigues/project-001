@@ -14,7 +14,7 @@ use Livewire\WithPagination;
 class Equipment extends Component
 {
     use WithPagination;
-    public  $search,$company_search,$brand_search,$equipment_types_search, $status,$name,$company,$code,$brand,$type,$equipmentIdToUpdate;
+    public  $search,$company_search,$brand_search,$equipment_types_search, $status,$name,$company,$code,$tag,$brand,$type,$equipmentIdToUpdate;
     public $additionalFields  = [];
     public $fieldValues = [];
         public function mount()
@@ -90,6 +90,7 @@ class Equipment extends Component
             $rules = [
                 'name'    => 'required|string|max:255',
                 'code'    => 'required|string|max:255',
+                'tag'    => 'required|string|max:255',
                 'company' => 'required|integer|exists:companies,id',
                 'brand'   => 'required|integer|exists:brands,id',
                 'type'    => 'required|integer|exists:equipment_types,id',
@@ -108,6 +109,7 @@ class Equipment extends Component
                $equipment = ModelsEquipment::create([
                     'name'               => $this->name,
                     'code'               => $this->code,
+                    'tag'                => $this->tag,
                     'company_id'         => $this->company,
                     'brand_id'           => $this->brand,
                     'equipment_type_id'  => $this->type,
@@ -140,6 +142,7 @@ class Equipment extends Component
             $this->equipmentIdToUpdate = $equipment->id;
             $this->name = $equipment->name;
             $this->code = $equipment->code;
+            $this->tag = $equipment->tag;
             $this->company = $equipment->company_id;
             $this->brand = $equipment->brand_id;
             $this->type = $equipment->equipment_type_id;
@@ -169,6 +172,7 @@ class Equipment extends Component
             $rules = [
                 'name'    => 'required|string|max:255',
                 'code'    => 'required|string|max:255',
+                'tag'    => 'required|string|max:255',
                 'company' => 'required|integer|exists:companies,id',
                 'brand'   => 'required|integer|exists:brands,id',
                 'type'    => 'required|integer|exists:equipment_types,id',
@@ -189,6 +193,7 @@ class Equipment extends Component
                 $equipment->update([
                     'name'               => $this->name,
                     'code'               => $this->code,
+                    'tag'               => $this->tag,
                     'company_id'         => $this->company,
                     'brand_id'           => $this->brand,
                     'equipment_type_id'  => $this->type,
@@ -215,7 +220,7 @@ class Equipment extends Component
 
     public function resetForm()
     {
-        $this->reset(['name','company','code','type', 'equipmentIdToUpdate','type','brand']);
+        $this->reset(['name','company','code','tag','type', 'equipmentIdToUpdate','type','brand']);
         $this->additionalFields = [];
         $this->resetValidation();
     }

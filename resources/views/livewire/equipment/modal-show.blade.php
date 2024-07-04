@@ -34,6 +34,10 @@
                         <span id="code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $code }}</span>
                     </div>
                     <div>
+                        <label for="tag" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tag</label>
+                        <span id="tag" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $tag }}</span>
+                    </div>
+                    <div>
                         <label for="company" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Empresa</label>
                         <span id="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ optional($companies->find($company))->name }}</span>
                     </div>
