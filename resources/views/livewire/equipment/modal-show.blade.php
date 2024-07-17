@@ -38,27 +38,13 @@
                         <span id="tag" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $tag }}</span>
                     </div>
                     <div>
+                        <label for="description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descripcion</label>
+                        <span id="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $tag }}</span>
+                    </div>
+                    <div>
                         <label for="company" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Empresa</label>
                         <span id="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ optional($companies->find($company))->name }}</span>
                     </div>
-                    <div>
-                        <label for="brand" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Marca</label>
-                        <span id="brand" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ optional($brands->find($brand))->name }}</span>
-                    </div>
-                    <div>
-                        <label for="type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipo</label>
-                        <span id="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ optional($equipment_types->find($type))->name }}</span>
-                    </div>
-                    @foreach($additionalFields as $field)
-                    <div>
-                        <label for="campo{{$field->id}}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{{ $field->name }} @if(isset($field->unit) && $field->unit) ({{ $field->unit }})@endif</label>
-                        <span id="campo{{$field->id}}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">
-                            @if(isset($fieldValues[$field->id]))
-                                {{ $fieldValues[$field->id] }}
-                            @endif
-                        </span>
-                    </div>
-                    @endforeach
                 </div>
                 <div class="flex justify-between">
                     <button wire:click="resetForm" type="button" id="closeModalShowButton2" class="text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-400 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
@@ -74,12 +60,6 @@
 <script>
     const closeModalShowButton = document.getElementById('closeModalShowButton');
     const closeModalShowButton2 = document.getElementById('closeModalShowButton2');
-    document.addEventListener('livewire:initialized', function () {
-        Livewire.on('close-modal-equipment', () => {
-            const modalShow = document.getElementById('modalShow');
-            modalShow.classList.add('hidden');
-        });
-    });
     closeModalShowButton.addEventListener('click', function() {
         modalShow.classList.add('hidden');
     });

@@ -17,12 +17,11 @@ class Equipment extends Model
     
     Protected $fillable = [
         'id',
-        'brand_id',
         'company_id',
-        'equipment_type_id',
         'name',
         'code',
         'tag',
+        'description',
         'status',
     ];
 
@@ -30,21 +29,13 @@ class Equipment extends Model
     {
         return $this->belongsTo(Company::class);
     }
-    public function brand()
-    {
-        return $this->belongsTo(Brand::class);
-    }
-    public function equipmentType()
-    {
-        return $this->belongsTo(EquipmentType::class);
-    }
-    public function values()
-    {
-        return $this->hasMany(EquipmentTypeValue::class);
-    }
 
     public function reports()
     {
         return $this->hasMany(Report::class);
+    }
+    public function components()
+    {
+        return $this->hasMany(Component::class);
     }
 }

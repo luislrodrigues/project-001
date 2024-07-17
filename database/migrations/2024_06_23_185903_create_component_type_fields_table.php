@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('equipment_type_values', function (Blueprint $table) {
+        Schema::create('component_type_fields', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('id_equipment')->constrained('equipment');
-            $table->foreignId('equipment_type_field_id')->constrained('equipment_type_fields');
-            $table->string('value');
+            $table->foreignId('component_type_id')->constrained('component_types')->onDelete('cascade');
+            $table->string('name');
+            $table->string('unit')->nullable();
+            $table->text('options')->nullable();
+            $table->enum('type',['text','select','numeric'])->default('text');
             $table->enum('status',['active','inactive'])->default('active');
             $table->softDeletes();
             $table->timestamps();
@@ -27,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('equipment_type_values');
+        Schema::dropIfExists('component_type_fields');
     }
 };

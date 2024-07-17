@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class EquipmentType extends Model
+class ComponentType extends Model
 {
     use HasFactory;
     use SoftDeletes;
 
-    protected $table = 'equipment_types';
+    protected $table = 'component_types';
 
     Protected $fillable = [
         'id',
@@ -19,12 +19,12 @@ class EquipmentType extends Model
         'status',
     ];
     
-    public function equipments()
+    public function components()
     {
-        return $this->hasMany(Equipment::class);
+        return $this->hasMany(Component::class);
     }
-    public function equipmentTypeFields()
+    public function componentTypeFields()
     {
-        return $this->hasMany(EquipmentTypeField::class);
+        return $this->hasMany(ComponentTypeField::class);
     }
 }

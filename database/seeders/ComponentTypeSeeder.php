@@ -2,19 +2,19 @@
 
 namespace Database\Seeders;
 
-use App\Models\EquipmentType;
+use App\Models\ComponentType;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class EquipmentTypeSeeder extends Seeder
+class ComponentTypeSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $equipmentTypes = array(
+        $componentTypes = array(
             array(
                 "id" => 1,
                 "name" => "Motor Eléctrico",
@@ -77,8 +77,8 @@ class EquipmentTypeSeeder extends Seeder
             ),
         );
 
-        foreach ($equipmentTypes as $equipmentType) {
-            EquipmentType::create($equipmentType);
+        foreach ($componentTypes as $componentType) {
+            ComponentType::create($componentType);
         }
     }
 }

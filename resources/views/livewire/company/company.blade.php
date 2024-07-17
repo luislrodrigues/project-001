@@ -23,7 +23,7 @@
             <div class="flex-1 mr-4">
                 <label for="status" class="block text-sm font-medium text-gray-700">Estado:</label>
                 <div class="relative">
-                    <select id="status" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model='status'>
+                    <select id="status" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model.lazy='status'>
                         <option value="">Todos</option>
                         <option value="active">Activo</option>
                         <option value="inactive">Inactivo</option>

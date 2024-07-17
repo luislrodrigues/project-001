@@ -14,11 +14,10 @@ return new class extends Migration
         Schema::create('equipment', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('company_id')->constrained('companies');
-            $table->foreignId('brand_id')->constrained('brands');
-            $table->foreignId('equipment_type_id')->constrained('equipment_types');
             $table->string('name');
             $table->string('code');
             $table->string('tag');
+            $table->string('description');
             $table->enum('status',['active','inactive'])->default('active');
             $table->softDeletes();
             $table->timestamps();

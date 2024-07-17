@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('equipment_types', function (Blueprint $table) {
+        Schema::create('components', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('name')->unique();
+            $table->foreignId('component_type_id')->constrained('component_types');
+            $table->foreignId('equipment_id')->constrained('equipment');
+            $table->foreignId('brand_id')->constrained('brands');
             $table->enum('status',['active','inactive'])->default('active');
             $table->softDeletes();
             $table->timestamps();
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('equipment_types');
+        Schema::dropIfExists('components');
     }
 };

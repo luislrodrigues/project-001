@@ -2,22 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\EquipmentTypeField;
+use App\Models\ComponentTypeField;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class EquipmentTypeFieldSeeder extends Seeder
+class ComponentTypeFieldSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $equipment_type_fields = array(
+        $component_type_fields = array(
             array(
                 "id" => 1,
-                "equipment_type_id" => 1,
+                "component_type_id" => 1,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -26,7 +26,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 2,
-                "equipment_type_id" => 1,
+                "component_type_id" => 1,
                 "name" => "Potencia",
                 "type" => "numeric",
                 "options" => NULL,
@@ -35,7 +35,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 3,
-                "equipment_type_id" => 1,
+                "component_type_id" => 1,
                 "name" => "Velocidad",
                 "type" => "numeric",
                 "options" => NULL,
@@ -44,7 +44,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 4,
-                "equipment_type_id" => 1,
+                "component_type_id" => 1,
                 "name" => "Frame",
                 "type" => "numeric",
                 "options" => NULL,
@@ -53,7 +53,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 5,
-                "equipment_type_id" => 1,
+                "component_type_id" => 1,
                 "name" => "Rodamiento lado libre",
                 "type" => "numeric",
                 "options" => NULL,
@@ -62,7 +62,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 6,
-                "equipment_type_id" => 1,
+                "component_type_id" => 1,
                 "name" => "Rodamiento lado acople",
                 "type" => "numeric",
                 "options" => NULL,
@@ -71,7 +71,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 7,
-                "equipment_type_id" => 2,
+                "component_type_id" => 2,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -80,7 +80,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 8,
-                "equipment_type_id" => 2,
+                "component_type_id" => 2,
                 "name" => "Potencia",
                 "type" => "numeric",
                 "options" => NULL,
@@ -89,7 +89,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 9,
-                "equipment_type_id" => 2,
+                "component_type_id" => 2,
                 "name" => "Velocidad",
                 "type" => "numeric",
                 "options" => NULL,
@@ -98,7 +98,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 10,
-                "equipment_type_id" => 2,
+                "component_type_id" => 2,
                 "name" => "# Cilindros",
                 "type" => "numeric",
                 "options" => NULL,
@@ -107,7 +107,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 11,
-                "equipment_type_id" => 2,
+                "component_type_id" => 2,
                 "name" => "# Pistones",
                 "type" => "numeric",
                 "options" => NULL,
@@ -116,7 +116,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 12,
-                "equipment_type_id" => 2,
+                "component_type_id" => 2,
                 "name" => "# Bancadas",
                 "type" => "numeric",
                 "options" => NULL,
@@ -125,7 +125,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 13,
-                "equipment_type_id" => 3,
+                "component_type_id" => 3,
                 "name" => "Tipo acople",
                 "type" => "select",
                 "options" => "[ \"Elastoméro\", \"Piñón\", \"Rejilla\", \"Junta Cardánica\" ]",
@@ -134,7 +134,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 14,
-                "equipment_type_id" => 4,
+                "component_type_id" => 4,
                 "name" => "Marca Poleas",
                 "type" => "text",
                 "options" => NULL,
@@ -143,7 +143,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 15,
-                "equipment_type_id" => 4,
+                "component_type_id" => 4,
                 "name" => "Diámetro Polea Motríz",
                 "type" => "text",
                 "options" => NULL,
@@ -152,7 +152,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 16,
-                "equipment_type_id" => 4,
+                "component_type_id" => 4,
                 "name" => "Diámetro Polea Conducida",
                 "type" => "text",
                 "options" => NULL,
@@ -161,7 +161,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 17,
-                "equipment_type_id" => 4,
+                "component_type_id" => 4,
                 "name" => "Referencia Polea",
                 "type" => "text",
                 "options" => NULL,
@@ -170,7 +170,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 18,
-                "equipment_type_id" => 4,
+                "component_type_id" => 4,
                 "name" => "Número de Canales",
                 "type" => "text",
                 "options" => NULL,
@@ -179,7 +179,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 19,
-                "equipment_type_id" => 4,
+                "component_type_id" => 4,
                 "name" => "Tipo Canal Polea",
                 "type" => "select",
                 "options" => "[ \"Tipo A\", \"Tipo B\", \"Tipo C\", \"SPA\", \"SPB\", \"SPC\", \"XV\", \"XP\" ]",
@@ -188,7 +188,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 20,
-                "equipment_type_id" => 4,
+                "component_type_id" => 4,
                 "name" => "Referencia Correa",
                 "type" => "text",
                 "options" => NULL,
@@ -197,7 +197,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 21,
-                "equipment_type_id" => 4,
+                "component_type_id" => 4,
                 "name" => "Cantidad Correas",
                 "type" => "text",
                 "options" => NULL,
@@ -206,7 +206,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 22,
-                "equipment_type_id" => 5,
+                "component_type_id" => 5,
                 "name" => "Marca Transmisión",
                 "type" => "text",
                 "options" => NULL,
@@ -215,7 +215,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 23,
-                "equipment_type_id" => 5,
+                "component_type_id" => 5,
                 "name" => "# Dientes Piñón Motriz",
                 "type" => "text",
                 "options" => NULL,
@@ -224,7 +224,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 24,
-                "equipment_type_id" => 5,
+                "component_type_id" => 5,
                 "name" => "# Dientes Piñón Conducido",
                 "type" => "text",
                 "options" => NULL,
@@ -233,7 +233,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 25,
-                "equipment_type_id" => 5,
+                "component_type_id" => 5,
                 "name" => "Referencia Transmisión",
                 "type" => "text",
                 "options" => NULL,
@@ -242,7 +242,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 26,
-                "equipment_type_id" => 5,
+                "component_type_id" => 5,
                 "name" => "Referencia Cadena",
                 "type" => "text",
                 "options" => NULL,
@@ -251,7 +251,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 27,
-                "equipment_type_id" => 5,
+                "component_type_id" => 5,
                 "name" => "Paso Cadena",
                 "type" => "text",
                 "options" => NULL,
@@ -260,7 +260,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 28,
-                "equipment_type_id" => 6,
+                "component_type_id" => 6,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -269,7 +269,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 29,
-                "equipment_type_id" => 6,
+                "component_type_id" => 6,
                 "name" => "Tipo Reductor",
                 "type" => "select",
                 "options" => "[\"Piñones\", \"Cicloidal\"]",
@@ -278,7 +278,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 30,
-                "equipment_type_id" => 6,
+                "component_type_id" => 6,
                 "name" => "Potencia",
                 "type" => "numeric",
                 "options" => NULL,
@@ -287,7 +287,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 31,
-                "equipment_type_id" => 6,
+                "component_type_id" => 6,
                 "name" => "Velocidad",
                 "type" => "numeric",
                 "options" => NULL,
@@ -296,7 +296,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 32,
-                "equipment_type_id" => 6,
+                "component_type_id" => 6,
                 "name" => "Relación velocidad",
                 "type" => "numeric",
                 "options" => NULL,
@@ -305,7 +305,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 33,
-                "equipment_type_id" => 6,
+                "component_type_id" => 6,
                 "name" => "Posición",
                 "type" => "select",
                 "options" => "[\"Horizontal\", \"Verticall\"]",
@@ -314,7 +314,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 34,
-                "equipment_type_id" => 6,
+                "component_type_id" => 6,
                 "name" => "Referencia Aceite",
                 "type" => "text",
                 "options" => NULL,
@@ -323,7 +323,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 35,
-                "equipment_type_id" => 7,
+                "component_type_id" => 7,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -332,7 +332,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 36,
-                "equipment_type_id" => 7,
+                "component_type_id" => 7,
                 "name" => "Velocidad",
                 "type" => "text",
                 "options" => NULL,
@@ -341,7 +341,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 37,
-                "equipment_type_id" => 7,
+                "component_type_id" => 7,
                 "name" => "Caudal",
                 "type" => "text",
                 "options" => NULL,
@@ -350,7 +350,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 38,
-                "equipment_type_id" => 7,
+                "component_type_id" => 7,
                 "name" => "H",
                 "type" => "text",
                 "options" => NULL,
@@ -359,7 +359,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 39,
-                "equipment_type_id" => 7,
+                "component_type_id" => 7,
                 "name" => "Diámetro Impulsor",
                 "type" => "numeric",
                 "options" => NULL,
@@ -368,7 +368,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 40,
-                "equipment_type_id" => 7,
+                "component_type_id" => 7,
                 "name" => "# Álabes impulsor",
                 "type" => "numeric",
                 "options" => NULL,
@@ -377,7 +377,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 41,
-                "equipment_type_id" => 8,
+                "component_type_id" => 8,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -386,7 +386,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 42,
-                "equipment_type_id" => 8,
+                "component_type_id" => 8,
                 "name" => "Velocidad",
                 "type" => "numeric",
                 "options" => NULL,
@@ -395,7 +395,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 43,
-                "equipment_type_id" => 8,
+                "component_type_id" => 8,
                 "name" => "Caudal",
                 "type" => "numeric",
                 "options" => NULL,
@@ -404,7 +404,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 44,
-                "equipment_type_id" => 8,
+                "component_type_id" => 8,
                 "name" => "H",
                 "type" => "numeric",
                 "options" => NULL,
@@ -413,7 +413,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 45,
-                "equipment_type_id" => 8,
+                "component_type_id" => 8,
                 "name" => "# Paletas",
                 "type" => "numeric",
                 "options" => NULL,
@@ -422,7 +422,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 46,
-                "equipment_type_id" => 9,
+                "component_type_id" => 9,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -431,7 +431,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 47,
-                "equipment_type_id" => 9,
+                "component_type_id" => 9,
                 "name" => "Velocidad",
                 "type" => "numeric",
                 "options" => NULL,
@@ -440,7 +440,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 48,
-                "equipment_type_id" => 9,
+                "component_type_id" => 9,
                 "name" => "Caudal",
                 "type" => "numeric",
                 "options" => NULL,
@@ -449,7 +449,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 49,
-                "equipment_type_id" => 9,
+                "component_type_id" => 9,
                 "name" => "H",
                 "type" => "numeric",
                 "options" => NULL,
@@ -458,7 +458,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 50,
-                "equipment_type_id" => 9,
+                "component_type_id" => 9,
                 "name" => "# Dientes",
                 "type" => "numeric",
                 "options" => NULL,
@@ -467,7 +467,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 51,
-                "equipment_type_id" => 10,
+                "component_type_id" => 10,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -476,7 +476,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 52,
-                "equipment_type_id" => 10,
+                "component_type_id" => 10,
                 "name" => "Velocidad",
                 "type" => "numeric",
                 "options" => NULL,
@@ -485,7 +485,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 53,
-                "equipment_type_id" => 10,
+                "component_type_id" => 10,
                 "name" => "Caudal",
                 "type" => "numeric",
                 "options" => NULL,
@@ -494,7 +494,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 54,
-                "equipment_type_id" => 10,
+                "component_type_id" => 10,
                 "name" => "H",
                 "type" => "numeric",
                 "options" => NULL,
@@ -503,7 +503,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 55,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Tipo Ventilador",
                 "type" => "select",
                 "options" => "[\"Centrífugo\",\"Axial\"]",
@@ -512,7 +512,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 56,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -521,7 +521,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 57,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Velocidad",
                 "type" => "numeric",
                 "options" => NULL,
@@ -530,7 +530,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 58,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Caudal",
                 "type" => "numeric",
                 "options" => NULL,
@@ -539,7 +539,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 59,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Referencia Chumacera",
                 "type" => "text",
                 "options" => NULL,
@@ -548,7 +548,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 60,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Referencia Rodamientos",
                 "type" => "text",
                 "options" => NULL,
@@ -557,7 +557,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 61,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Referencia Manguito Fijación",
                 "type" => "text",
                 "options" => NULL,
@@ -566,7 +566,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 62,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Referencia Arandela Fijación",
                 "type" => "text",
                 "options" => NULL,
@@ -575,7 +575,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 63,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Referencia Espaciadores",
                 "type" => "text",
                 "options" => NULL,
@@ -584,7 +584,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 64,
-                "equipment_type_id" => 11,
+                "component_type_id" => 11,
                 "name" => "Referencia Grasa",
                 "type" => "text",
                 "options" => NULL,
@@ -593,7 +593,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 65,
-                "equipment_type_id" => 12,
+                "component_type_id" => 12,
                 "name" => "Referencia",
                 "type" => "text",
                 "options" => NULL,
@@ -602,7 +602,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 66,
-                "equipment_type_id" => 12,
+                "component_type_id" => 12,
                 "name" => "Potencia",
                 "type" => "numeric",
                 "options" => "HP",
@@ -611,7 +611,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 67,
-                "equipment_type_id" => 12,
+                "component_type_id" => 12,
                 "name" => "Velocidad",
                 "type" => "numeric",
                 "options" => "RPM",
@@ -620,7 +620,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 68,
-                "equipment_type_id" => 12,
+                "component_type_id" => 12,
                 "name" => "Frame",
                 "type" => "text",
                 "options" => NULL,
@@ -629,7 +629,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 69,
-                "equipment_type_id" => 12,
+                "component_type_id" => 12,
                 "name" => "Rodamiento lado libre",
                 "type" => "text",
                 "options" => NULL,
@@ -638,7 +638,7 @@ class EquipmentTypeFieldSeeder extends Seeder
             ),
             array(
                 "id" => 70,
-                "equipment_type_id" => 12,
+                "component_type_id" => 12,
                 "name" => "Rodamiento lado acople",
                 "type" => "text",
                 "options" => NULL,
@@ -648,8 +648,8 @@ class EquipmentTypeFieldSeeder extends Seeder
         );
         
 
-        foreach ($equipment_type_fields as $equipment_type_field) {
-            EquipmentTypeField::create($equipment_type_field);
+        foreach ($component_type_fields as $component_type_field) {
+            ComponentTypeField::create($component_type_field);
         }
     }
 }

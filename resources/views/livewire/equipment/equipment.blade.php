@@ -23,32 +23,10 @@
            <div class="flex-1 mr-4">
                <label for="company_search" class="block text-sm font-medium text-gray-700">Empresa:</label>
                <div class="relative">
-                   <select id="company" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model='company_search'>
+                   <select id="company" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model.lazy='company_search'>
                         <option value="">Todas</option>
                         @foreach($companies as $company)
                             <option value="{{ $company->id }}">{{ $company->name }}</option>
-                        @endforeach
-                   </select>
-               </div>
-           </div>
-           <div class="flex-1 mr-4">
-               <label for="brand_search" class="block text-sm font-medium text-gray-700">Marca:</label>
-               <div class="relative">
-                   <select id="company" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model='brand_search'>
-                        <option value="">Todas</option>
-                        @foreach($brands as $brand)
-                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                        @endforeach
-                   </select>
-               </div>
-           </div>
-           <div class="flex-1 mr-4">
-               <label for="company" class="block text-sm font-medium text-gray-700">Tipo:</label>
-               <div class="relative">
-                   <select id="type_search" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model='equipment_types_search'>
-                        <option value="">Todos</option>
-                        @foreach($equipment_types as $type)
-                            <option value="{{ $type->id }}">{{ $type->name }}</option>
                         @endforeach
                    </select>
                </div>
@@ -76,15 +54,7 @@
                            </th>
                            <th
                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
-                               Tipo
-                           </th>
-                           <th
-                               class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                Empresa
-                           </th>
-                           <th
-                               class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
-                               Marca
                            </th>
                            @can('actions equipment')
                            <th
@@ -104,13 +74,7 @@
                                {{ $equipment->code }}
                            </td>
                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                               {{ $equipment->equipmentType->name }}
-                           </td>
-                           <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                {{ $equipment->company->name }}
-                           </td>
-                           <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                               {{ $equipment->brand->name }}
                            </td>
                            @can('actions equipment')
                             <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">

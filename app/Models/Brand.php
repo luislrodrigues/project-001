@@ -19,8 +19,8 @@ class Brand extends Model
         'status',
     ];
     
-    public function equipments()
+    public function component()
     {
-        return $this->hasMany(Equipment::class);
+        return $this->hasMany(Component::class);
     }
 }

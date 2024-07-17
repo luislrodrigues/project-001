@@ -15,13 +15,15 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->foreignId('equipment_id')->constrained('equipment')->onDelete('cascade');
             $table->date('measurement_date');
+            $table->string('image_1');
+            $table->string('image_2');
             $table->string('location');
             $table->string('process');
             $table->text('diagnosis');
             $table->enum('condition',['Critico','Seguimiento','Alarma','Peligro']);
             $table->string('failure_mechanism');
             $table->string('component_failure');
-            $table->text('recommendation');
+            $table->json('recommendations')->nullable();
             $table->enum('priority',['Alta','Media']);
             $table->string('ot_created')->nullable();
             $table->string('status_ot')->nullable();
@@ -39,6 +41,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reports');
+        Schema::table('reports', function (Blueprint $table) {
+            $table->dropColumn('image_1');
+            $table->dropColumn('image_2');
+        });
     }
 };

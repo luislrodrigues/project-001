@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Company\Company;
+use App\Livewire\ComponentManager\ComponentManager;
 use App\Livewire\Equipment\Equipment;
 use App\Livewire\Report\Report;
 use App\Livewire\User\User;
@@ -33,6 +34,7 @@ Route::middleware([
     Route::post('/logoutUser', [UserLogin::class, 'logoutUser'])->name('logoutUser');
     Route::get('/report', Report::class)->name('report')->middleware('permission:consult report');
     Route::get('/company', Company::class)->name('company')->middleware('permission:consult company');
+    Route::get('/component', ComponentManager::class)->name('component');
     Route::get('/equipment', Equipment::class)->name('equipment')->middleware('permission:consult equipment');
     Route::get('/user', User::class)->name('user')->middleware('permission:consult user');
 });
