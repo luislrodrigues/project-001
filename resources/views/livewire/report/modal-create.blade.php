@@ -1,5 +1,5 @@
 <div wire:ignore.self id="modalCreate" tabindex="-1" aria-hidden="true" class="hidden  overflow-hidden fixed inset-0 z-50 flex items-center justify-center">
-    <div wire:loading wire:target="saveCompany,updateEquipment,addRecommendation,deleteRecommendation">
+    <div wire:loading wire:target="saveReport,updateReport,addRecommendation,deleteRecommendation" class="hidden overflow-y-auto overflow-x-hidden fixed inset-0 z-50 flex items-center justify-center">
         <div class="flex flex-col items-center justify-center h-full">
             <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
@@ -27,7 +27,7 @@
             <div class="grid grid-cols-3 gap-4 mb-2">
                 <div>
                     <label for="equipment" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Equipo</label>
-                    <select id="equipment" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"  wire:model.defer="equipment">
+                    <select id="equipment" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"  wire:model.lazy="equipment">
                         <option value="">Selecione</option>
                         @foreach($equipments as $equipment)
                             <option value="{{ $equipment->id }}">{{ $equipment->name }}</option>
@@ -116,11 +116,13 @@
                     @error('image_2') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                 </div>
             </div>
-            <div class="grid mb-2">
-                <label for="diagnosis" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Diagnostico</label>
-                <textarea type="text" id="diagnosis" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar diagnostico" wire:model.defer="diagnosis"></textarea>
-                @error('diagnosis') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
+            @foreach ($components as $index => $component)
+            <div class="mb-3">
+                <label for="diagnostic_{{ $component->id }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Diagnóstico {{ $component->componentType->name }}</label>
+                <textarea id="diagnostic_{{ $component->id }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar diagnóstico" wire:model.defer="diagnostics.{{ $component->id }}"></textarea>
+                @error('diagnostics.' . $component->id) <span class="text-sm text-red-500">{{ $message }}</span> @enderror
             </div>
+            @endforeach
             <div class="grid mb-2">
                 @foreach ($recommendations as $index => $recommendation)
                 <div class="mb-3">

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('image_2');
             $table->string('location');
             $table->string('process');
-            $table->text('diagnosis');
+            $table->json('diagnosis')->nullable();
             $table->enum('condition',['Critico','Seguimiento','Alarma','Peligro']);
             $table->string('failure_mechanism');
             $table->string('component_failure');

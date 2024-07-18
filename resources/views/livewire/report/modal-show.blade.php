@@ -1,6 +1,6 @@
 <div wire:ignore.self id="modalShow" tabindex="-1" aria-hidden="true"
     class="hidden overflow-hidden fixed inset-0 z-50 flex items-center justify-center">
-    <div wire:loading wire:target="saveCompany,updateEquipment">
+    <div wire:loading wire:target="saveCompany,updateEquipment,sendEmailReport" class="hidden overflow-y-auto overflow-x-hidden fixed inset-0 z-50 flex items-center justify-center">
         <div class="flex flex-col items-center justify-center h-full">
             <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24">
@@ -117,13 +117,9 @@
                             </a>
                         </div>
                     @endif
-                    <div class="col-span-3">
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Diagnóstico</label>
-                        <span
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $diagnosis }}</span>
-                    </div>
+
                 </div>
-                <div class="grid mb-2">
+                <div class="grid mb-4">
                     <div>
                         <label
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Recomendaciónes</label>
@@ -135,6 +131,9 @@
                     </div>
                 </div>
                 <div class="flex justify-between">
+                    <button type="button" wire:click="sendEmailReport" class="text-white inline-flex items-center bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                        Enviar notificacion
+                      </button>
                     <button type="button" wire:click="resetForm" id="closeModalShowButton2"
                         class="text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-400 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
                         Cerrar

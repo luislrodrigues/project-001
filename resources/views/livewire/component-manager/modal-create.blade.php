@@ -1,5 +1,5 @@
 <div wire:ignore.self id="modalCreate" tabindex="-1" aria-hidden="true" class="hidden overflow-hidden overflow-x-hidden fixed inset-0 z-50 flex items-center justify-center">
-    <div wire:loading wire:target="saveComponent,updateComponent">
+    <div wire:loading wire:target="saveComponent,updateComponent" class="hidden overflow-y-auto overflow-x-hidden fixed inset-0 z-50 flex items-center justify-center">
         <div class="flex flex-col items-center justify-center h-full">
             <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>

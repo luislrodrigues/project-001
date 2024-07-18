@@ -6,10 +6,13 @@ use App\Models\Equipment;
 use App\Models\Report as ModelsReport;
 use Livewire\Component;
 use App\Models\Company;
+use App\Models\Component as ModelsComponent;
+use App\Models\ComponentType;
 use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Mail;
 class Report extends Component
 {
     use WithFileUploads;
@@ -17,8 +20,10 @@ class Report extends Component
     public $equipment_search,$condition_search,$priority_search,$company_search,$reportIdToUpdate;
     public $equipment,$location,$process,$diagnosis,$measurement_date,$image_1,$image_2,$condition,$failure_mechanism,$component_failure,$priority,$ot_created,$status_ot,$execution_date,$verification_recommendation,$analist;
 
-    public $reportData; // Datos del reporte
+    public $reportData;
     public $recommendations = [];
+    public $components = [];
+    public $diagnostics = [];
 
 
     public function render()
@@ -50,6 +55,11 @@ class Report extends Component
         ])->layout('layouts.app');
     }
 
+    public function updatedEquipment($value)
+    {
+        $this->components = ModelsComponent::where('equipment_id',$value)->where('status','active')->get();
+    }
+
     protected $listeners = ['destroy'];
     public function destroy($id)
     {
@@ -77,7 +87,6 @@ class Report extends Component
                 'image_2'             => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'location'            => 'required|string|max:255',
                 'process'             => 'required|string|max:255',
-                'diagnosis'           => 'required',
                 'condition'           => 'required',
                 'failure_mechanism'   => 'required',
                 'component_failure'   => 'required',
@@ -97,18 +106,22 @@ class Report extends Component
                     'measurement_date'            => $this->measurement_date,
                     'location'                    => $this->location,
                     'process'                     => $this->process,
-                    'diagnosis'                   => $this->diagnosis,
                     'condition'                   => $this->condition,
                     'priority'                    => $this->priority,
                     'failure_mechanism'           => $this->failure_mechanism,
                     'component_failure'           => $this->component_failure,
-                    'recommendations'             => $this->recommendations,
                     'ot_created'                  => $this->ot_created,
                     'status_ot'                   => $this->status_ot,
                     'execution_date'              => $this->execution_date,
                     'verification_recommendation' => $this->verification_recommendation,
                     'analist'                     => $this->analist,
                 ];
+                if (!empty($this->diagnostics)) {
+                    $dataCreate['diagnosis'] = json_encode($this->diagnostics);
+                }
+                if (!empty($this->recommendations)) {
+                    $dataCreate['recommendations'] = json_encode($this->recommendations);
+                }
                 if ($imagePath1)$dataCreate['image_1'] = $imagePath1;
                 if ($imagePath2)$dataCreate['image_2'] = $imagePath2;
                 ModelsReport::create($dataCreate);
@@ -143,7 +156,7 @@ class Report extends Component
         $this->measurement_date = $report->measurement_date;
         $this->location = $report->location;
         $this->process = $report->process;
-        $this->diagnosis = $report->diagnosis;
+        $this->diagnostics = $report->diagnosis ? json_decode($report->diagnosis,true) : [];
         $this->condition = $report->condition;
         $this->priority = $report->priority;
         $this->failure_mechanism = $report->failure_mechanism;
@@ -155,13 +168,15 @@ class Report extends Component
         $this->verification_recommendation = $report->verification_recommendation;
         $this->analist = $report->analist;
         $this->reportIdToUpdate = $reportId;
+        $this->reportIdToUpdate = $reportId;
+        $this->updatedEquipment( $report->equipment_id);
     }
 
     
     
+
     public function updateReport()
     {
-        
         if (auth()->user()->can('edit report')) {
             $rules = [
                 'equipment'           => 'required|integer|exists:equipment,id',
@@ -169,7 +184,6 @@ class Report extends Component
                 'image_2'             => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'location'            => 'required|string|max:255',
                 'process'             => 'required|string|max:255',
-                'diagnosis'           => 'required',
                 'condition'           => 'required',
                 'failure_mechanism'   => 'required',
                 'component_failure'   => 'required',
@@ -194,18 +208,22 @@ class Report extends Component
                     'measurement_date'            => $this->measurement_date,
                     'location'                    => $this->location,
                     'process'                     => $this->process,
-                    'diagnosis'                   => $this->diagnosis,
                     'condition'                   => $this->condition,
                     'priority'                    => $this->priority,
                     'failure_mechanism'           => $this->failure_mechanism,
                     'component_failure'           => $this->component_failure,
-                    'recommendations'             => $this->recommendations,
                     'ot_created'                  => $this->ot_created,
                     'status_ot'                   => $this->status_ot,
                     'execution_date'              => $this->execution_date,
                     'verification_recommendation' => $this->verification_recommendation,
                     'analist'                     => $this->analist,
                 ];
+                if (!empty($this->diagnostics)) {
+                    $dataToUpdate['diagnosis'] = json_encode($this->diagnostics);
+                }
+                if (!empty($this->recommendations)) {
+                    $dataToUpdate['recommendations'] = $this->recommendations;
+                }
                 if ($imagePath1)$dataToUpdate['image_1'] = $imagePath1;
                 if ($imagePath2)$dataToUpdate['image_2'] = $imagePath2;
                 $report->update($dataToUpdate);
@@ -220,7 +238,9 @@ class Report extends Component
         }
     }
     public function resetForm(){
-        $this->reset(['reportIdToUpdate','equipment','location','process','diagnosis','measurement_date','image_1','image_2','condition','failure_mechanism','component_failure','recommendations','priority','ot_created','status_ot','execution_date','verification_recommendation','analist']);
+        $this->reset(['reportIdToUpdate','equipment','location','process','measurement_date','image_1','image_2','condition','failure_mechanism','component_failure','priority','ot_created','status_ot','execution_date','verification_recommendation','analist']);
+        $this->diagnostics = [];
+        $this->recommendations = [];
         $this->resetValidation();
     }
 
@@ -371,12 +391,58 @@ class Report extends Component
         }
     }
 
-    public function downloadPdf($id)
+    public function generatePdf($id)
     {
         $this->reportData = ModelsReport::findOrFail($id);
+        $diagnosis = json_decode($this->reportData->diagnosis, true);
+        if (is_array($diagnosis)) {
+            $diagnosisWithNames = [];
+            foreach ($diagnosis as $index => $value) {
+                $componentType = ComponentType::findOrFail($index);
+                $diagnosisWithNames[$componentType->name] = $value;
+            }
+            $this->reportData->diagnosis = $diagnosisWithNames;
+        }
         $pdf = Pdf::loadView('livewire.report.report-pdf', ['reportData' => $this->reportData]);
-        return response()->streamDownload(function() use ($pdf) {
-            echo $pdf->output();
-        }, 'reporte.pdf');
+        return $pdf;
+    }
+
+    public function downloadPdf($id)
+    {
+        try{
+            $pdf = $this->generatePdf($id);
+            return response()->streamDownload(function() use ($pdf) {
+                echo $pdf->output();
+            }, 'reporte.pdf');
+
+        }catch (\Exception $e) {
+            $this->dispatch('alertFailed', 'Error al descargar el pdf' . $e->getMessage());
+        }
+    }
+
+    public function sendEmailReport(){
+        try {
+            $pdf = $this->generatePdf($this->reportIdToUpdate);
+    
+            $tempPath = storage_path('app/temp');
+    
+            if (!file_exists($tempPath)) {
+                mkdir($tempPath, 0755, true);
+            }
+    
+            $pdfPath = $tempPath . '/reporte.pdf';
+            $pdf->save($pdfPath);
+    
+            Mail::send([], [], function ($message) use ($pdfPath) {
+                $message->to('luisleonardor4@gmail.com')
+                        ->subject('Envio de reporte')
+                        ->html('Este es un correo de prueba.');
+    
+                $message->attach($pdfPath);
+            });
+            $this->dispatch('alertSuccess', 'Se envio correctamente');
+        }catch (\Exception $e) {
+            $this->dispatch('alertFailed', 'Error al enviar la notificacion: ' . $e->getMessage());
+        }
     }
 }

@@ -127,13 +127,23 @@
         <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1" style="width: 48%; height: 200px;">
         <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 2" style="width: 48%; height: 200px;">
     </div>
+    @if (is_array($reportData->diagnosis))
+        @foreach($reportData->diagnosis as $component => $paragraph)
+            <div class="info">
+                <h4>{{ $component }}:</h5>
+                <p class="content-cell">{{ $paragraph }}</p>
+            </div>
+        @endforeach
+    @endif
     <div class="info">
-        <h4>RECOMENDACIÓN GENERAL:</h4>
-        <ul>
-            @foreach($reportData->recommendations as $recommendation)
-                <li>{{ $recommendation }}</li>
-            @endforeach
-        </ul>
+        @if (is_array($reportData->recommendations))
+            <h4>RECOMENDACIÓN GENERAL:</h4>
+            <ul>
+                @foreach($reportData->recommendations as $recommendation)
+                    <li class="content-cell">{{ $recommendation }}</li>
+                @endforeach
+            </ul>
+        @endif
     </div>
     <footer>
         Carrera 5 # 14-36, Barrio San Nicolás, Fundación, Magdalena.<br>
