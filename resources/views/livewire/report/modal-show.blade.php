@@ -119,17 +119,7 @@
                     @endif
 
                 </div>
-                <div class="grid mb-4">
-                    <div>
-                        <label
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Recomendaciónes</label>
-                        @foreach ($recommendations as $index => $recommendation)
-                            <span
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $index + 1 }}.
-                                {{ $recommendation }}</span>
-                        @endforeach
-                    </div>
-                </div>
+ 
                 <div class="flex justify-between">
                     <button type="button" wire:click="sendEmailReport" class="text-white inline-flex items-center bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
                         Enviar notificacion

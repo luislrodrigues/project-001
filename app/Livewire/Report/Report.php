@@ -24,6 +24,7 @@ class Report extends Component
     public $recommendations = [];
     public $components = [];
     public $diagnostics = [];
+    
 
 
     public function render()
@@ -58,6 +59,9 @@ class Report extends Component
     public function updatedEquipment($value)
     {
         $this->components = ModelsComponent::where('equipment_id',$value)->where('status','active')->get();
+        foreach ($this->components as $component) {
+            $this->recommendations[$component->id] = []; 
+        }
     }
 
     protected $listeners = ['destroy'];
@@ -240,6 +244,7 @@ class Report extends Component
     public function resetForm(){
         $this->reset(['reportIdToUpdate','equipment','location','process','measurement_date','image_1','image_2','condition','failure_mechanism','component_failure','priority','ot_created','status_ot','execution_date','verification_recommendation','analist']);
         $this->diagnostics = [];
+        $this->components = [];
         $this->recommendations = [];
         $this->resetValidation();
     }
@@ -379,18 +384,6 @@ class Report extends Component
 
     }
 
-    public function addRecommendation()
-    {
-        $this->recommendations[] = ""; // Agrega un nuevo campo vacío
-    }
-    public function deleteRecommendation($index)
-    {
-        if (isset($this->recommendations[$index])) {
-            unset($this->recommendations[$index]);
-            $this->recommendations = array_values($this->recommendations); // Reindexar el array
-        }
-    }
-
     public function generatePdf($id)
     {
         $this->reportData = ModelsReport::findOrFail($id);
@@ -444,5 +437,16 @@ class Report extends Component
         }catch (\Exception $e) {
             $this->dispatch('alertFailed', 'Error al enviar la notificacion: ' . $e->getMessage());
         }
+    }
+
+    public function addRecommendation($componentId)
+    {
+        $this->recommendations[$componentId][] = ''; // Agregar una nueva recomendación al componente específico
+    }
+
+    public function deleteRecommendation($componentId, $index)
+    {
+    unset($this->recommendations[$componentId][$index]);
+    $this->recommendations[$componentId] = array_values($this->recommendations[$componentId]); // Reindexar el array
     }
 }
