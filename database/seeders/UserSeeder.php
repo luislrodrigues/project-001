@@ -24,7 +24,7 @@ class UserSeeder extends Seeder
             ),
             array(
                 "name" => "alvaro",
-                "email" => "alvaro@email.com",
+                "email" => "alvaro.sanchezm1@gmail.com",
                 "status" => "active",
                 "password" => bcrypt(12345678),
             ),
@@ -37,7 +37,7 @@ class UserSeeder extends Seeder
         $userRole = Role::where('name', 'user')->first();
 
         // Asignar roles a los usuarios
-        User::where('email', 'lrodrguez@email.com')->first()->assignRole($adminRole);
-        User::where('email', 'alvaro@email.com')->first()->assignRole($userRole);
+        User::where('email', 'alvaro.sanchezm1@gmail.com')->first()->assignRole($adminRole);
+        User::where('email', 'lrodrguez@email.com')->first()->assignRole($userRole);
     }
 }
