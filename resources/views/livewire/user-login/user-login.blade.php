@@ -7,7 +7,7 @@
             <div class="max-w-md w-full  overflow-hidden sm:rounded-lg sm:overflow-hidden">
                 <div class="px-6 py-8">
                     <div class="flex justify-center">
-                        <img src="{{ asset('images/logo-1.jpg') }}" width="180px">
+                        <img src="{{ asset('images/logo-1.JPG') }}" width="180px">
                     </div>
                     </svg>
                     <form class="mt-8 space-y-6" wire:submit.prevent="attemptLogin">
