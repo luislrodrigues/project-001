@@ -74,7 +74,7 @@
         </div>
         <footer class="bg-light text-center text-lg-start w-full h-0">
             <div class="text-center p-3 bg-blue-300 ">
-                <span class="text-gray-700">© 2024 Desarrollado por Luis Rodriguez</span>
+                <span class="text-gray-700">© 2024 3Sanchez</span>
             </div>
         </footer>
         
