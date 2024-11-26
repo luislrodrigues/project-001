@@ -157,10 +157,11 @@
             </tr>
         </table>
     </div>
-
-    <div class="image-container">
-        <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
-        <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2">
+    <div class="info">
+        <div class="image-container">
+            <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
+            <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2">
+        </div>
     </div>
 
     @foreach($components as $component)
@@ -180,7 +181,7 @@
             </table>
 
             @if(isset($reportData->diagnosis[$component->id]) && !empty($reportData->diagnosis[$component->id]))
-                <p><strong>Diagnóstico:</strong> {{ $reportData->diagnosis[$component->id] }}</p>
+                <p><strong>Diagnóstico:</strong><br> {{ $reportData->diagnosis[$component->id] }}</p>
             @else
                 <p><strong>Diagnóstico:</strong></p>
             @endif
@@ -194,8 +195,6 @@
                 @else
                     <p></p>
                 @endif
-            
-            
             </ul>
         </div>
     @endforeach
