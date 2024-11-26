@@ -52,7 +52,7 @@
         }
         .infoImg {
             background-color: white;
-            padding: 0 20px;
+            padding: 20px 20px 0px 20px;
             margin-top: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
