@@ -159,8 +159,8 @@
     </div>
 
     <div class="image-container">
-        {{-- <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
-        <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 2"> --}}
+        <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
+        <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 2">
     </div>
 
     @foreach($components as $component)
