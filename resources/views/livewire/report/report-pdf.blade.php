@@ -5,89 +5,124 @@
     <title>Reporte</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            width: 100%;
-            height: 100%;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
-            position: relative;
+            background-color: #f7f7f7;
+            color: #333;
+            height: 100%;
+            width: 100%;
         }
+
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px;
-            height: 60px;
-        }
-        .header-title {
             background-color: #4CAF50;
             color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 20px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
             margin: 0;
         }
+
         h4 {
+            font-size: 18px;
             margin: 0;
-            display: inline;
         }
-        img {
-            height: 80px;
-            align-self: center;
-            margin-top: -10px;
-        }
+
         .watermark {
             position: absolute;
-            right: 10px;
+            top: 20px;
+            right: 20px;
             width: 150px;
-            pointer-events: none;
+            opacity: 0.1;
         }
+
         .info {
-            margin-top: 10px;
-            padding: 5px;
-            border-radius: 5px;
-            font-size: 12px; /* Tamaño de letra más pequeño */
+            background-color: white;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .info p {
-            margin: 5px 0; /* Espacio entre líneas */
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        td {
-            padding: 0px;
-            margin: 0 4px;
-            text-align: left;
-            border: none; /* Sin borde */
-        }
-        .title-cell {
-            font-size: 14px; /* Tamaño de letra más pequeño */
-            width: 200px; /* Ajusta el ancho aquí */
-        }
-        .content-cell {
             font-size: 14px;
+            margin: 10px 0;
+            line-height: 1.6;
         }
+
+        .info table {
+            width: 100%;
+            border-spacing: 0;
+            margin-top: 10px;
+        }
+
+        .title-cell {
+            font-weight: bold;
+            width: 200px;
+            padding: 10px;
+            background-color: #f2f2f2;
+        }
+
+        .content-cell {
+            padding: 10px;
+            text-align: left;
+        }
+
         .image-container {
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
-            padding-top: 40px;
         }
+
+        .image-container img {
+            width: 48%;
+            height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
         footer {
-            position: absolute;
-            bottom: 20px; /* Espacio desde el fondo */
-            left: 0;
-            right: 0;
             text-align: center;
             font-size: 14px;
+            margin-top: 30px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        footer a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <img src="{{ asset('images/logo.png') }}" class="watermark">
     <header>
-        <h4 class="header-title">Ingeniería de Mantenimiento y Confiabilidad</h4>
+        <div>
+            <h4 class="header-title">Ingeniería de Mantenimiento y Confiabilidad</h4>
+        </div>
     </header>
 
     <div class="info">
@@ -121,33 +156,43 @@
                 <td class="content-cell">{{ $reportData->measurement_date }}</td>
             </tr>
         </table>
+    </div>
 
-    </div>
     <div class="image-container">
-        <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1" style="width: 48%; height: 200px;">
-        <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 2" style="width: 48%; height: 200px;">
+        <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
+        <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 2">
     </div>
-    @if (is_array($reportData->diagnosis))
-        @foreach($reportData->diagnosis as $component => $paragraph)
-            <div class="info">
-                <h4>{{ $component }}:</h5>
-                <p class="content-cell">{{ $paragraph }}</p>
-            </div>
-        @endforeach
-    @endif
-    <div class="info">
-        @if (is_array($reportData->recommendations))
-            <h4>RECOMENDACIÓN GENERAL:</h4>
+
+    @foreach($components as $component)
+        <div class="info">
+            <h3>{{$component->componentType->name}}</h3>
+            <table>
+                <tr>
+                    <td class="title-cell"><strong>Marca:</strong></td>
+                    <td class="content-cell">{{ $component->brand->name }}</td>
+                </tr>
+                @foreach($component->fields as $field)
+                    <tr>
+                        <td class="title-cell"><strong>{{ $field->name }}:</strong></td>
+                        <td class="content-cell">{{ $field->value->value }}</td>
+                    </tr>
+                @endforeach
+            </table>
+
+            <p><strong>Diagnóstico:</strong> {{ $reportData->diagnosis[$component->id] }}</p>
+
+            <p><strong>Recomendaciones:</strong></p>
             <ul>
-                @foreach($reportData->recommendations as $recommendation)
-                    <li class="content-cell">{{ $recommendation }}</li>
+                @foreach ($reportData->recommendations[$component->id] as $recommendation)
+                    <li>{{ $recommendation }}</li>
                 @endforeach
             </ul>
-        @endif
-    </div>
+        </div>
+    @endforeach
+
     <footer>
         Carrera 5 # 14-36, Barrio San Nicolás, Fundación, Magdalena.<br>
-        Móvil: 316 4048830. E-mail: alvaro.sanchezm1@gmail.com
+        Móvil: 316 4048830. E-mail: <a href="mailto:alvaro.sanchezm1@gmail.com">alvaro.sanchezm1@gmail.com</a>
     </footer>
 </body>
 </html>

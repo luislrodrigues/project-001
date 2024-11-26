@@ -384,17 +384,15 @@ class Report extends Component
 
     public function generatePdf($id)
     {
-        $this->reportData = ModelsReport::findOrFail($id);
-        $diagnosis = json_decode($this->reportData->diagnosis, true);
-        if (is_array($diagnosis)) {
-            $diagnosisWithNames = [];
-            foreach ($diagnosis as $index => $value) {
-                $componentType = ComponentType::findOrFail($index);
-                $diagnosisWithNames[$componentType->name] = $value;
-            }
-            $this->reportData->diagnosis = $diagnosisWithNames;
-        }
-        $pdf = Pdf::loadView('livewire.report.report-pdf', ['reportData' => $this->reportData]);
+        $this->reportData = ModelsReport::with(['equipment.components.fields.value','equipment.components.componentType'])->findOrFail($id);
+        $components = $this->reportData->equipment->components;
+        $this->reportData->diagnosis = json_decode($this->reportData->diagnosis,true);
+        // $this->reportData->recommendations = json_decode($this->reportData->recommendations,true);
+        
+        $pdf = Pdf::loadView('livewire.report.report-pdf', [
+            'reportData' => $this->reportData,
+            'components' => $components
+        ]);
         return $pdf;
     }
 
