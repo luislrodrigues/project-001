@@ -35,12 +35,13 @@
             margin: 0;
         }
 
-        .watermark {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 150px;
-            opacity: 0.1;
+        p{
+            font-family: 'Arial', sans-serif;
+            font-size: 15px;
+        }
+        strong{
+            font-family: 'Arial', sans-serif;
+            font-size: 15px;
         }
 
         .info {
@@ -103,7 +104,14 @@
 
         ul {
             margin: 10px 0;
-            padding-left: 20px;
+            /* padding-left: 20px; */
+           list-style: none;
+           margin:0;
+           padding:0;
+        }
+        li{
+            font-family: 'Arial', sans-serif;
+            font-size: 15px;
         }
 
         footer {
@@ -133,14 +141,14 @@
     </header>
 
     <div class="info">
-        <ul style="list-style: none;margin:0;padding:0;">
-            <li ><strong>PLANTA:</strong> {{ $reportData->equipment->company->name }}</li>
-            <li><strong>EQUIPO:</strong> {{ $reportData->equipment->name }}</li>
-            <li><strong>CONDICIÓN:</strong> {{ $reportData->condition }}</li>
-            <li><strong>MECANISMO FALLA:</strong> {{ $reportData->failure_mechanism }}</li>
-            <li><strong>COMPONENTE EN FALLA:</strong> {{ $reportData->component_failure }}</li>
-            <li><strong>PRIORIDAD ATENCIÓN:</strong> {{ $reportData->priority }}</li>
-            <li><strong>FECHA MEDICIÓN:</strong> {{ $reportData->measurement_date }}</li>
+        <ul>
+            <li ><strong>Planta:</strong> {{ $reportData->equipment->company->name }}</li>
+            <li><strong>Equipo:</strong> {{ $reportData->equipment->name }}</li>
+            <li><strong>Condición:</strong> {{ $reportData->condition }}</li>
+            <li><strong>Mecanismo falla:</strong> {{ $reportData->failure_mechanism }}</li>
+            <li><strong>Componente en falla:</strong> {{ $reportData->component_failure }}</li>
+            <li><strong>Prioridad atención:</strong> {{ $reportData->priority }}</li>
+            <li><strong>fecha medición:</strong> {{ $reportData->measurement_date }}</li>
         </ul>
     </div>
     <div class="infoImg">
@@ -154,7 +162,7 @@
         <div class="info">
             <h3>{{$component->componentType->name}}</h3>
 
-            <ul style="list-style: none;margin:0;padding:0;">
+            <ul>
                 <li><strong>Marca:</strong> {{ $component->brand->name  }}</li>
                 @foreach($component->fields as $field)
                     <li><strong>{{ $field->name }}:</strong> {{ $field->value->value }}</li>
