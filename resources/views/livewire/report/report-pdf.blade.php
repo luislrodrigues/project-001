@@ -105,9 +105,6 @@
         ul {
             margin: 10px 0;
             /* padding-left: 20px; */
-           list-style: none;
-           margin:0;
-           padding:0;
         }
         li{
             font-family: 'Arial', sans-serif;
@@ -141,7 +138,7 @@
     </header>
 
     <div class="info">
-        <ul>
+        <ul  style="list-style: none;margin:0;padding:0;">
             <li ><strong>Planta:</strong> {{ $reportData->equipment->company->name }}</li>
             <li><strong>Equipo:</strong> {{ $reportData->equipment->name }}</li>
             <li><strong>Condición:</strong> {{ $reportData->condition }}</li>
@@ -153,8 +150,8 @@
     </div>
     <div class="infoImg">
         <div class="image-container">
-            <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
-            <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2">
+            {{-- <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
+            <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2"> --}}
         </div>
     </div>
 
@@ -162,7 +159,7 @@
         <div class="info">
             <h3>{{$component->componentType->name}}</h3>
 
-            <ul>
+            <ul  style="list-style: none;margin:0;padding:0;">
                 <li><strong>Marca:</strong> {{ $component->brand->name  }}</li>
                 @foreach($component->fields as $field)
                     <li><strong>{{ $field->name }}:</strong> {{ $field->value->value }}</li>
