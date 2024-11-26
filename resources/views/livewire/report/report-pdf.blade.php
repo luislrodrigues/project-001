@@ -9,7 +9,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            background-color: #f7f7f7;
+            background-color: #ffffff;
             color: #333;
             height: 100%;
             width: 100%;
@@ -126,36 +126,15 @@
     </header>
 
     <div class="info">
-        <table>
-            <tr>
-                <td class="title-cell"><strong>PLANTA:</strong></td>
-                <td class="content-cell">{{ $reportData->equipment->company->name }}</td>
-            </tr>
-            <tr>
-                <td class="title-cell"><strong>EQUIPO:</strong></td>
-                <td class="content-cell">{{ $reportData->equipment->name }}</td>
-            </tr>
-            <tr>
-                <td class="title-cell">CONDICIÓN:</td>
-                <td class="content-cell">{{ $reportData->condition }}</td>
-            </tr>
-            <tr>
-                <td class="title-cell">MECANISMO FALLA:</td>
-                <td class="content-cell">{{ $reportData->failure_mechanism }}</td>
-            </tr>
-            <tr>
-                <td class="title-cell">COMPONENTE EN FALLA:</td>
-                <td class="content-cell">{{ $reportData->component_failure }}</td>
-            </tr>
-            <tr>
-                <td class="title-cell">PRIORIDAD ATENCIÓN:</td>
-                <td class="content-cell">{{ $reportData->priority }}</td>
-            </tr>
-            <tr>
-                <td class="title-cell">FECHA MEDICIÓN:</td>
-                <td class="content-cell">{{ $reportData->measurement_date }}</td>
-            </tr>
-        </table>
+        <ul style="list-style: none;margin:0;padding:0;">
+            <li ><strong>PLANTA:</strong> {{ $reportData->equipment->company->name }}</li>
+            <li><strong>EQUIPO:</strong> {{ $reportData->equipment->name }}</li>
+            <li><strong>CONDICIÓN:</strong> {{ $reportData->condition }}</li>
+            <li><strong>MECANISMO FALLA:</strong> {{ $reportData->failure_mechanism }}</li>
+            <li><strong>COMPONENTE EN FALLA:</strong> {{ $reportData->component_failure }}</li>
+            <li><strong>PRIORIDAD ATENCIÓN:</strong> {{ $reportData->priority }}</li>
+            <li><strong>FECHA MEDICIÓN:</strong> {{ $reportData->measurement_date }}</li>
+        </ul>
     </div>
     <div class="info">
         <div class="image-container">
@@ -167,18 +146,13 @@
     @foreach($components as $component)
         <div class="info">
             <h3>{{$component->componentType->name}}</h3>
-            <table>
-                <tr>
-                    <td class="title-cell"><strong>Marca:</strong></td>
-                    <td class="content-cell">{{ $component->brand->name }}</td>
-                </tr>
+
+            <ul style="list-style: none;margin:0;padding:0;">
+                <li><strong>Marca:</strong> {{ $component->brand->name  }}</li>
                 @foreach($component->fields as $field)
-                    <tr>
-                        <td class="title-cell"><strong>{{ $field->name }}:</strong></td>
-                        <td class="content-cell">{{ $field->value->value }}</td>
-                    </tr>
+                    <li><strong>{{ $field->name }}:</strong> {{ $field->value->value }}</li>
                 @endforeach
-            </table>
+            </ul>
 
             @if(isset($reportData->diagnosis[$component->id]) && !empty($reportData->diagnosis[$component->id]))
                 <p><strong>Diagnóstico:</strong><br> {{ $reportData->diagnosis[$component->id] }}</p>
