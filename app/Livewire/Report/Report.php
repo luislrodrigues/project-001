@@ -423,7 +423,7 @@ class Report extends Component
             $pdf->save($pdfPath);
     
             Mail::send([], [], function ($message) use ($pdfPath) {
-                $message->to('luisleonardor4@gmail.com')
+                $message->to('alvaro.sanchezm1@gmail.com')
                         ->subject('Envio de reporte')
                         ->html('Este es un correo de prueba.');
     
