@@ -179,13 +179,23 @@
                 @endforeach
             </table>
 
-            <p><strong>Diagnóstico:</strong> {{ $reportData->diagnosis[$component->id] }}</p>
+            @if(isset($reportData->diagnosis[$component->id]) && !empty($reportData->diagnosis[$component->id]))
+                <p><strong>Diagnóstico:</strong> {{ $reportData->diagnosis[$component->id] }}</p>
+            @else
+                <p><strong>Diagnóstico:</strong></p>
+            @endif
 
             <p><strong>Recomendaciones:</strong></p>
             <ul>
-                @foreach ($reportData->recommendations[$component->id] as $recommendation)
-                    <li>{{ $recommendation }}</li>
-                @endforeach
+                @if(isset($reportData->recommendations[$component->id]) && is_array($reportData->recommendations[$component->id]) && !empty($reportData->recommendations[$component->id]))
+                    @foreach ($reportData->recommendations[$component->id] as $recommendation)
+                        <li>{{ $recommendation }}</li>
+                    @endforeach
+                @else
+                    <p></p>
+                @endif
+            
+            
             </ul>
         </div>
     @endforeach
