@@ -10,20 +10,28 @@ use App\Models\ComponentTypeField;
 use App\Models\ComponentTypeValue;
 use App\Models\Equipment;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class ComponentManager extends Component
 {
-
+    use WithPagination;
     public $type_search,$equipment_search,$company_search,$brand_search;
     public $componentIdToUpdate,$component_type,$equipment,$brand;
     public $additionalFields = [];
     public $fieldValues = [];
+    public $brands = [];
+
+
+        public function mount()
+    {
+        $this->brands = Brand::where('status','active')->get();
+
+    }
     public function render()
     {
         $equipments = Equipment::where('status','active')->get();
         $component_types = ComponentType::where('status','active')->get();
         $companies = Company::where('status','active')->get();
-        $brands = Brand::where('status','active')->get();
         $components = ModelsComponent::query();
         if (!empty($this->type_search)) {
             $components->where('component_type_id', $this->type_search);
@@ -46,7 +54,6 @@ class ComponentManager extends Component
             'component_types'   =>$component_types,
             'companies'   =>$companies,
             'components'   =>$components,
-            'brands'   =>$brands,
         ])
         ->layout('layouts.app');
     }
@@ -188,7 +195,8 @@ class ComponentManager extends Component
         $this->reset(['componentIdToUpdate','component_type','equipment','brand']);
         $this->resetValidation();
     }
-    protected $listeners = ['destroy'];
+    protected $listeners = ['destroy','valueUpdated','updatedBrands'];
+
     public function destroy($id)
     {
         if (auth()->user()->can('delete equipment')) {
@@ -205,5 +213,15 @@ class ComponentManager extends Component
         } else {
             abort(403, 'No tienes los permisos requeridos.');
         }
+    }
+
+    public function valueUpdated($variableName,$value)
+    {
+        $this->{$variableName} = $value;
+    }
+    public function updatedBrands()
+    {
+        $this->brands = Brand::where('status', 'active')->get();
+        $this->dispatch('updateOptions', $this->brands);
     }
 }

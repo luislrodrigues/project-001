@@ -15,7 +15,7 @@
         <div class="relative bg-white rounded-lg shadow dark:bg-gray-700 overflow-y-auto" style="max-height:85vh">
             <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ $reportIdToUpdate ? 'Editar reporte' : 'Crear nuevo reporte' }}
+                    Detalle del reporte
                 </h3>
                 <button wire:click="resetForm" type="button" id="closeModalShowButton"
                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -31,7 +31,7 @@
                 <div class="grid grid-cols-3 gap-4 mb-2">
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Equipo</label>
-                        {{-- <span class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $equipment->name }}</span> --}}
+                        <span class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $equipment->name }}</span>
                     </div>
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha
@@ -118,6 +118,42 @@
                     @endif
 
                 </div>
+
+                @foreach ($components as $index => $component)
+                    <div>
+                        <div  class="mb-2">
+                            <label for="diagnostic_{{ $component->id }}"
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Diagnóstico {{ $component->componentType->name }}
+                            </label>
+                            <textarea id="diagnostic_{{ $component->id }}"
+                                disabled
+                                   class="bg-blue-50 border border-blue-100 text-gray-700 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-blue-100 dark:border-blue-300 dark:text-gray-300 dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                placeholder="Ingresar diagnóstico" wire:model.defer="diagnostics.{{ $component->id }}"></textarea>
+                        </div>
+
+                        <div class="mb-2">
+                            @if (isset($recommendations[$component->id]) && is_array($recommendations[$component->id]) && !empty($recommendations[$component->id]))
+                                @foreach ($recommendations[$component->id] as $recIndex => $recommendation)
+                                    <div class="mb-3">
+                                        <label for="recommendation_{{ $component->id }}_{{ $recIndex }}"
+                                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                            Recomendación {{ $recIndex + 1 }} {{ $component->componentType->name }}
+                                        </label>
+                                        <div class="flex items-center">
+                                            <input type="text"
+                                                disabled
+                                                id="recommendation_{{ $component->id }}_{{ $recIndex }}"
+                                                    class="bg-blue-50 border border-blue-100 text-gray-700 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-blue-100 dark:border-blue-300 dark:text-gray-300 dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                                placeholder="Recomendación {{ $recIndex + 1 }} {{ $component->componentType->name }}"
+                                                wire:model.defer="recommendations.{{ $component->id }}.{{ $recIndex }}">
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                 @endforeach
  
                 <div class="flex justify-between">
                     <button type="button" wire:click="sendEmailReport" class="text-white inline-flex items-center bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">

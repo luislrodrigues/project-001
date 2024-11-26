@@ -35,16 +35,13 @@
                    </select>
                     @error('equipment') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                 </div>
-                <div>
-                    <label for="brand" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Marca</label>
-                        <select  name="brand" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"  wire:model.lazy="brand" >
-                        <option value="">Selecione</option>
-                        @foreach($brands as $brand)
-                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                        @endforeach
-                   </select>
-                    @error('brand') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
-                </div>
+                <livewire:select-with-modal.select-with-modal 
+                    label="Agregar marca" 
+                    :options="$brands"
+                    field="brand"
+                    updateLists="updatedBrands"
+                />
+
                 <div>
                     <label for="component_type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipo Componente</label>
                         <select  name="component_type" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"  wire:model.lazy="component_type" >

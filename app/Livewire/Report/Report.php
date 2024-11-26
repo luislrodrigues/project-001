@@ -13,9 +13,11 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Mail;
+use Livewire\WithPagination;
+
 class Report extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads,WithPagination;
 
     public $equipment_search,$condition_search,$priority_search,$company_search,$reportIdToUpdate;
     public $equipment,$location,$process,$diagnosis,$measurement_date,$image_1,$image_2,$condition,$failure_mechanism,$component_failure,$priority,$ot_created,$status_ot,$execution_date,$verification_recommendation,$analist;
@@ -54,14 +56,6 @@ class Report extends Component
             'equipments'   =>$equipments,
             'companies'        =>$companies,
         ])->layout('layouts.app');
-    }
-
-    public function updatedEquipment($value)
-    {
-        $this->components = ModelsComponent::where('equipment_id',$value)->where('status','active')->get();
-        foreach ($this->components as $component) {
-            $this->recommendations[$component->id] = []; 
-        }
     }
 
     protected $listeners = ['destroy'];
@@ -156,6 +150,10 @@ class Report extends Component
 
     public function loadReport($reportId){
         $report = ModelsReport::findOrFail($reportId);
+        $recommendations = [];
+        if(is_array($report->recommendations) && !empty($report->recommendations)){
+            $recommendations = $report->recommendations;
+        }
         $this->equipment = $report->equipment_id;
         $this->measurement_date = $report->measurement_date;
         $this->location = $report->location;
@@ -165,7 +163,7 @@ class Report extends Component
         $this->priority = $report->priority;
         $this->failure_mechanism = $report->failure_mechanism;
         $this->component_failure = $report->component_failure;
-        $this->recommendations = is_array($report->recommendations) ? $report->recommendations : [] ;
+        $this->recommendations = $recommendations ;
         $this->ot_created = $report->ot_created;
         $this->status_ot = $report->status_ot;
         $this->execution_date = $report->execution_date;
@@ -173,7 +171,7 @@ class Report extends Component
         $this->analist = $report->analist;
         $this->reportIdToUpdate = $reportId;
         $this->reportIdToUpdate = $reportId;
-        $this->updatedEquipment( $report->equipment_id);
+        $this->components = ModelsComponent::where('equipment_id',$report->equipment_id)->where('status','active')->get();
     }
 
     

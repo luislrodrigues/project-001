@@ -62,9 +62,13 @@
             <div class="relative">
                     <select id="brand" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model.lazy='brand_search'>
                         <option value="">Todas</option>
+                        @if(!empty($brands) && count($brands) > 0)
                         @foreach($brands as $brand)
-                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>  <!-- Accede con la clave del arreglo -->
                         @endforeach
+                            @else
+                                <option value="" disabled>No hay opciones disponibles</option>
+                        @endif
                     </select>
                 </div>
             </div>
@@ -131,6 +135,9 @@
             </tbody>
                 </table>
         
+            </div>
+            <div class="flex justify-center">
+                {{ $components->links() }}
             </div>
         </div>
          @include('livewire.component-manager.modal-create')
