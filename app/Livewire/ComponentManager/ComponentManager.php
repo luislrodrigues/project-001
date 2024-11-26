@@ -85,8 +85,8 @@ class ComponentManager extends Component
          }
     }
     public function saveComponent(){
-
         if (auth()->user()->can('save equipment')) {
+            if($this->brand == 'add_new') $this->brand = "";
             $rules = [
                 'equipment'       => 'required|integer|exists:equipment,id',
                 'component_type'  => 'required|integer|exists:component_types,id',
