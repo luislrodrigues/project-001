@@ -45,6 +45,13 @@
 
         .info {
             background-color: white;
+            padding: 5px;
+            margin-top: 5px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .infoImg {
+            background-color: white;
             padding: 20px;
             margin-top: 10px;
             border-radius: 8px;
@@ -136,7 +143,7 @@
             <li><strong>FECHA MEDICIÓN:</strong> {{ $reportData->measurement_date }}</li>
         </ul>
     </div>
-    <div class="info">
+    <div class="infoImg">
         <div class="image-container">
             <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
             <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2">
