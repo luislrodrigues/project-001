@@ -163,7 +163,7 @@
         <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 2">
     </div>
 
-    @foreach($components as $component)
+    {{-- @foreach($components as $component)
         <div class="info">
             <h3>{{$component->componentType->name}}</h3>
             <table>
@@ -188,7 +188,7 @@
                 @endforeach
             </ul>
         </div>
-    @endforeach
+    @endforeach --}}
 
     <footer>
         Carrera 5 # 14-36, Barrio San Nicolás, Fundación, Magdalena.<br>
