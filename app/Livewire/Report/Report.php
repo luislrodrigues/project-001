@@ -445,4 +445,12 @@ class Report extends Component
     unset($this->recommendations[$componentId][$index]);
     $this->recommendations[$componentId] = array_values($this->recommendations[$componentId]); // Reindexar el array
     }
+
+    public function updatedEquipment($value)
+    {
+        $this->components = ModelsComponent::where('equipment_id',$value)->where('status','active')->get();
+        foreach ($this->components as $component) {
+            $this->recommendations[$component->id] = []; 
+        }
+    }
 }
