@@ -25,7 +25,7 @@
         }
 
         .header-title {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
             margin: 0;
         }
