@@ -45,7 +45,8 @@
 
         .info {
             background-color: white;
-            padding-top: 10px;
+            padding: 20px;
+            margin-top: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
