@@ -277,7 +277,7 @@ class Report extends Component
 
             // Añadir encabezados
             $headings = [
-                'EMPRESA', 'FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO', 'TIPO EQUIPO', 'TAG', 'DESCRIPCIÓN', 'EQUIPO', 'POT (HP)', 
+                'EMPRESA', 'EQUIPO', 'FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO', 'TIPO COMPONENTE', 'TAG', 'DESCRIPCIÓN','CODIGO', 'POT (HP)', 
                 'RPM', 'MARCA', 'REFERENCIA MOTOR', 'FRAME', 'RODA. LL', 'ROD. LA', 'REF. CHUMACERAS', 'ROD. CHUMACERAS', 
                 'DIAGNÓSTICO', 'CONDICIÓN', 'MECANISMO FALLA', 'COMPONENTE EN FALLA', 'RECOMENDACIÓN', 'PRIORIDAD', 'OT CREADA', 
                 'ESTADO DE OT', 'FECHA EJECUCIÓN', 'VERIFICACIÓN RECOMENDACIÓN', 'ANALISTA', 'Mes', 'Año'
@@ -316,55 +316,66 @@ class Report extends Component
             ];
         
             // Aplicar estilo verde hasta la columna AB
-            $sheet->getStyle('A1:AB1')->applyFromArray($greenStyle);
+            $sheet->getStyle('A1:AC1')->applyFromArray($greenStyle);
         
             // Aplicar estilo azul a las columnas AC y AD
-            $sheet->getStyle('AC1:AD1')->applyFromArray($blueStyle);
+            $sheet->getStyle('AD1:AE1')->applyFromArray($blueStyle);
 
             // Añadir datos al sheet
             $row = 2;
             foreach ($reports as $report) {
-                $sheet->setCellValue('A' . $row, $report->equipment->company->name);
-                $sheet->setCellValue('B' . $row, $report->measurement_date);
-                $sheet->setCellValue('C' . $row, $report->location);
-                $sheet->setCellValue('D' . $row, $report->process);
-                $sheet->setCellValue('E' . $row, $report->equipment->component->equipmentType->name);
-                $sheet->setCellValue('F' . $row, $report->equipment->tag);
-                $sheet->setCellValue('G' . $row, $report->equipment->description);
-                $sheet->setCellValue('H' . $row, $report->equipment->name);
+
+     
+                foreach ($report->equipment->components as $component) {
+                    $sheet->setCellValue('A' . $row, $report->equipment->company->name);
+                    $sheet->setCellValue('B' . $row, $report->equipment->name);
+                    $sheet->setCellValue('C' . $row, $report->measurement_date);
+                    $sheet->setCellValue('D' . $row, $report->location);
+                    $sheet->setCellValue('E' . $row, $report->process);
+                    $sheet->setCellValue('F' . $row, $component->componentType->name);
+    
+                    $sheet->setCellValue('G' . $row, $report->equipment->tag);
+                    $sheet->setCellValue('H' . $row, $report->equipment->description);
+                    $sheet->setCellValue('I' . $row, $report->equipment->code);
+
+                    foreach($component->fields as $field){
+                        if($field['name'] == 'Potencia' && $field->value)$sheet->setCellValue('J' . $row, $field->value->value);
+                        if($field['name'] == 'Velocidad' && $field->value)$sheet->setCellValue('K' . $row, $field->value->value);
+                         $sheet->setCellValue('L' . $row, $component->brand->name);
+                         if($field['name'] == 'Referencia' && $field->value)$sheet->setCellValue('M' . $row, $field->value->value);
 
 
-                // foreach($report->equipment->fields as $field){
-                //     if($field['name'] == 'Potencia' && $field->value)$sheet->setCellValue('I' . $row, $field->value->value);
-                //     if($field['name'] == 'Velocidad' && $field->value)$sheet->setCellValue('J' . $row, $field->value->value);
-                //     if($field['name'] == 'Referencia' && $field->value)$sheet->setCellValue('L' . $row, $field->value->value);
-                //     if($field['name'] == 'Frame' && $field->value)$sheet->setCellValue('M' . $row, $field->value->value);
-                //     if($field['name'] == 'Rodamiento lado libre' && $field->value)$sheet->setCellValue('N' . $row, $field->value->value);
-                //     if($field['name'] == 'Rodamiento lado acople' && $field->value)$sheet->setCellValue('O' . $row, $field->value->value);
-                //     if($field['name'] == 'Referencia Chumacera' && $field->value)$sheet->setCellValue('P' . $row, $field->value->value);
-                //     if($field['name'] == 'Referencia Rodamientos' && $field->value)$sheet->setCellValue('Q' . $row, $field->value->value);
-                // }
-                $recommendationsString = implode(' ; ', $report->recommendations);
-                // $sheet->setCellValue('K' . $row, $report->equipment->brand->name);
-                $sheet->setCellValue('R' . $row, $report->ot_created);
-                $sheet->setCellValue('R' . $row, $report->diagnosis);
-                $sheet->setCellValue('S' . $row, $report->condition);
-                $sheet->setCellValue('T' . $row, $report->failure_mechanism);
-                $sheet->setCellValue('U' . $row, $report->component_failure);
-                $sheet->setCellValue('V' . $row, $recommendationsString);
-                $sheet->setCellValue('W' . $row, $report->priority);
-                $sheet->setCellValue('X' . $row, $report->ot_created);
-                $sheet->setCellValue('Y' . $row, $report->status_ot);
-                $sheet->setCellValue('Z' . $row, $report->execution_date);
-                $sheet->setCellValue('AA' . $row, $report->verification_recommendation);
-                $sheet->setCellValue('AB' . $row, $report->analist);
-                $sheet->setCellValue('AC' . $row, date('m', strtotime($report->execution_date)));
-                $sheet->setCellValue('AD' . $row, date('Y', strtotime($report->execution_date)));
-                $row++;
+                        if($field['name'] == 'Frame' && $field->value)$sheet->setCellValue('N' . $row, $field->value->value);
+                        if($field['name'] == 'Rodamiento lado libre' && $field->value)$sheet->setCellValue('O' . $row, $field->value->value);
+                        if($field['name'] == 'Rodamiento lado acople' && $field->value)$sheet->setCellValue('P' . $row, $field->value->value);
+                        if($field['name'] == 'Referencia Chumacera' && $field->value)$sheet->setCellValue('Q' . $row, $field->value->value);
+                        if($field['name'] == 'Referencia Rodamientos' && $field->value)$sheet->setCellValue('R' . $row, $field->value->value);
+                    }
+                    $recommendations = ($report->recommendations);
+                    $recommendationsString = (is_array($recommendations) && array_key_exists($component->id, $recommendations) && is_array($recommendations[$component->id])) 
+                        ? implode(' ; ', $recommendations[$component->id]) 
+                        : '';
+                    $diagnosis = json_decode($report->diagnosis,true);
+                    $componentDiagnosis = (is_array($diagnosis) && array_key_exists($component->id, $diagnosis)) ? $diagnosis[$component->id] : '';
+                    $sheet->setCellValue('S' . $row,$componentDiagnosis );
+                    $sheet->setCellValue('T' . $row, $report->condition);
+                    $sheet->setCellValue('U' . $row, $report->failure_mechanism);
+                    $sheet->setCellValue('V' . $row, $report->component_failure);
+                    $sheet->setCellValue('W' . $row, $recommendationsString);
+                    $sheet->setCellValue('X' . $row, $report->priority);
+                    $sheet->setCellValue('Y' . $row, $report->ot_created);
+                    $sheet->setCellValue('Z' . $row, $report->status_ot);
+                    $sheet->setCellValue('AA' . $row, $report->execution_date);
+                    $sheet->setCellValue('AB' . $row, $report->verification_recommendation);
+                    $sheet->setCellValue('AC' . $row, $report->analist);
+                    $sheet->setCellValue('AD' . $row, date('m', strtotime($report->execution_date)));
+                    $sheet->setCellValue('AE' . $row, date('Y', strtotime($report->execution_date)));
+                    $row++;
+                }
+
             }
-
             // Ajustar el ancho de las columnas al contenido
-            foreach (range('A', 'AD') as $column) {
+            foreach (range('A', 'AE') as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
             // Guardar el archivo Excel
