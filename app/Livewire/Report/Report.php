@@ -375,7 +375,12 @@ class Report extends Component
 
             }
             // Ajustar el ancho de las columnas al contenido
-            foreach (range('A', 'AE') as $column) {
+            $columns = [];
+            for ($i = 0; $i < 31; $i++) { // Adjust the number (31) for your required range
+                $columns[] = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+            }
+            
+            foreach ($columns as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
             // Guardar el archivo Excel
