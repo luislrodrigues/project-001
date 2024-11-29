@@ -118,6 +118,10 @@
                                 class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                 Analista
                             </th>
+                            <th
+                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                PDF
+                            </th>
                             @can('actions report')
                                 <th
                                     class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
@@ -153,12 +157,14 @@
                                 <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                     {{ $report->analist }}
                                 </td>
+                                <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                                    <button class="mr-2" wire:click="downloadPdf({{ $report->id }})">
+                                        <i class="fas fa-file-pdf fa-lg text-blue-300" title="Exportar pdf"></i>
+                                    </button>
+                                </td>
 
                                 @can('actions report')
                                     <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                        <button class="mr-2" wire:click="downloadPdf({{ $report->id }})">
-                                            <i class="fas fa-file-pdf fa-lg text-blue-300" title="Exportar pdf"></i>
-                                        </button>
                                         <button class="mr-2"  wire:click="showReportDetails({{ $report->id }})">
                                             <i class="fas fa-eye fa-lg text-blue-300" title="Detalle"></i>
                                         </button>
