@@ -122,12 +122,10 @@
                                 class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                 PDF
                             </th>
-                            @can('actions report')
-                                <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
-                                    Acciones
-                                </th>
-                            @endcan
+                            <th
+                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Acciones
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -163,21 +161,21 @@
                                     </button>
                                 </td>
 
-                                @can('actions report')
-                                    <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                        <button class="mr-2"  wire:click="showReportDetails({{ $report->id }})">
-                                            <i class="fas fa-eye fa-lg text-blue-300" title="Detalle"></i>
-                                        </button>
-                                        <button class="mr-2" wire:click="editReport({{ $report->id }})">
-                                            <i class="fas fa-edit fa-lg text-blue-300" title="Editar"></i>
-                                        </button>
-                                        <button class="ml-2"
-                                            onclick="deleted('report.report', 'destroy',{{ $report->id }})"
-                                            wire:loading.attr="disabled">
-                                            <i class="fas fa-trash text-yellow-500" title="Eliminar"></i>
-                                        </button>
+                                <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                                    <button class="mr-2"  wire:click="showReportDetails({{ $report->id }})">
+                                        <i class="fas fa-eye fa-lg text-blue-300" title="Detalle"></i>
+                                    </button>
+                                    @can('actions report')
+                                            <button class="mr-2" wire:click="editReport({{ $report->id }})">
+                                                <i class="fas fa-edit fa-lg text-blue-300" title="Editar"></i>
+                                            </button>
+                                            <button class="ml-2"
+                                                onclick="deleted('report.report', 'destroy',{{ $report->id }})"
+                                                wire:loading.attr="disabled">
+                                                <i class="fas fa-trash text-yellow-500" title="Eliminar"></i>
+                                            </button>
+                                        @endcan
                                     </td>
-                                @endcan
                             </tr>
                         @endforeach
                     </tbody>
