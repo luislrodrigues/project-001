@@ -1,9 +1,13 @@
-<div wire:ignore.self id="modalCreate" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed inset-0 z-50 flex items-center justify-center">
+<div wire:ignore.self id="modalCreate" tabindex="-1" aria-hidden="true"
+    class="hidden overflow-y-auto overflow-x-hidden fixed inset-0 z-50 flex items-center justify-center">
     <div wire:loading wire:target="saveCompany,updateCompany" class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="flex flex-col items-center justify-center h-full">
-            <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
-                <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
+            <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2"
+                    stroke="currentColor" fill="none"></circle>
+                <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2"
+                    fill="none"></path>
             </svg>
         </div>
     </div>
@@ -15,27 +19,80 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ $companyIdToUpdate ? 'Editar empresa' : 'Crear nuevo empresa' }}
                 </h3>
-                <button wire:click="resetForm" type="button" id="closeModalButton" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
-                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                <button wire:click="resetForm" type="button" id="closeModalButton"
+                    class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
                     </svg>
                     <span class="sr-only">Close modal</span>
                 </button>
             </div>
             <!-- Modal body -->
-            <form class="p-4 md:p-5" @if($companyIdToUpdate) wire:submit.prevent="updateCompany" @else wire:submit.prevent="saveCompany" @endif>
+            <form class="p-4 md:p-5"
+                @if ($companyIdToUpdate) wire:submit.prevent="updateCompany" @else wire:submit.prevent="saveCompany" @endif>
                 <div class="grid gap-4 mb-6">
                     <div>
-                        <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre</label>
-                        <input type="text" id="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Ingresar nombre" wire:model.defer="name">
-                        @error('name') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
+                        <label for="name"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre</label>
+                        <input type="text" id="name"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            placeholder="Ingresar nombre" wire:model.defer="name">
+                        @error('name')
+                            <span class="text-sm text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
-                </div>
+                    <div class="mb-2">
+                        @if (isset($emails) && is_array($emails) && !empty($emails))
+                            @foreach ($emails as $recIndex => $email)
+                                <div class="mb-3">
+                                    <label for="email-{{ $recIndex }}"
+                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                        Correo {{ $recIndex + 1 }}
+                                    </label>
+                                    <div class="flex items-center">
+                                        <input type="text"
+                                            id="email-{{ $recIndex }}"
+                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                            placeholder="Correo"
+                                            wire:model="emails.{{ $recIndex }}">
+                                        
+                                        @if ($recIndex > 0)
+                                            <!-- Mostrar botón eliminar solo si no es el primer campo -->
+                                            <button type="button"
+                                                wire:click="deleteEmail({{ $recIndex }})"
+                                                class="ml-2 bg-red-600 text-white hover:bg-red-700 rounded-lg px-3 py-1"
+                                                wire:loading.attr="disabled">
+                                                Eliminar
+                                            </button>
+                                        @endif
+                                    </div>
+                                    @error("emails.$recIndex")
+                                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            @endforeach
+                        @endif
+                    
+                        <div class="flex justify-center">
+                            <button type="button"
+                                class="text-white inline-flex items-center bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+                                wire:click="addEmail">
+                                Agregar Correo
+                            </button>
+                        </div>
+                    
+                    </div>
+                    
+                    
                 <div class="flex justify-between">
-                    <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    <button type="submit"
+                        class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                         {{ $companyIdToUpdate ? 'Actualizar' : 'Guardar' }}
                     </button>
-                    <button wire:click="resetForm" type="button" id="closeModalButton2" class="text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-400 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
+                    <button wire:click="resetForm" type="button" id="closeModalButton2"
+                        class="text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-400 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
                         Cerrar
                     </button>
                 </div>
@@ -45,21 +102,21 @@
 </div>
 
 @push('scripts')
-<script>
-    const closeModalButton = document.getElementById('closeModalButton');
-    const closeModalButton2 = document.getElementById('closeModalButton2');
-    document.addEventListener('livewire:initialized', function () {
-        Livewire.on('close-modal-company', () => {
-            const modalCreate = document.getElementById('modalCreate');
+    <script>
+        const closeModalButton = document.getElementById('closeModalButton');
+        const closeModalButton2 = document.getElementById('closeModalButton2');
+        document.addEventListener('livewire:initialized', function() {
+            Livewire.on('close-modal-company', () => {
+                const modalCreate = document.getElementById('modalCreate');
+                modalCreate.classList.add('hidden');
+            });
+
+        });
+        closeModalButton.addEventListener('click', function() {
             modalCreate.classList.add('hidden');
         });
-
-    });
-    closeModalButton.addEventListener('click', function() {
-        modalCreate.classList.add('hidden');
-    });
-    closeModalButton2.addEventListener('click', function() {
-        modalCreate.classList.add('hidden');
-    });
-</script>
+        closeModalButton2.addEventListener('click', function() {
+            modalCreate.classList.add('hidden');
+        });
+    </script>
 @endpush

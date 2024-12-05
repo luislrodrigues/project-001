@@ -18,6 +18,7 @@ class Company extends Model
     Protected $fillable = [
         'id',
         'name',
+        'emails',
         'status',
     ];
     

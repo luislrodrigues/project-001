@@ -427,25 +427,34 @@ class Report extends Component
 
     public function sendEmailReport(){
         try {
-            $pdf = $this->generatePdf($this->reportIdToUpdate);
-    
-            $tempPath = storage_path('app/temp');
-    
-            if (!file_exists($tempPath)) {
-                mkdir($tempPath, 0755, true);
+            $equipment = Equipment::with('company')->findOrFail($this->equipment);
+            $recipients = json_decode($equipment->company->emails);
+
+            if(is_array($recipients) && !empty($recipients)){
+                $pdf = $this->generatePdf($this->reportIdToUpdate);
+        
+                $tempPath = storage_path('app/temp');
+        
+                if (!file_exists($tempPath)) {
+                    mkdir($tempPath, 0755, true);
+                }
+        
+                $pdfPath = $tempPath . '/reporte.pdf';
+                $pdf->save($pdfPath);
+                
+                Mail::send([], [], function ($message) use ($pdfPath,$recipients) {
+                    $message->to($recipients)
+                            ->subject('Envio de reporte')
+                            ->html('Este es un correo de prueba.');
+        
+                    $message->attach($pdfPath);
+                });
+                $this->dispatch('alertSuccess', 'Se envio correctamente');
+
+            }else{
+                $this->dispatch('alertInfo', 'No hay correos en la lista de destinatarios.');
             }
-    
-            $pdfPath = $tempPath . '/reporte.pdf';
-            $pdf->save($pdfPath);
-    
-            Mail::send([], [], function ($message) use ($pdfPath) {
-                $message->to('alvaro.sanchezm1@gmail.com')
-                        ->subject('Envio de reporte')
-                        ->html('Este es un correo de prueba.');
-    
-                $message->attach($pdfPath);
-            });
-            $this->dispatch('alertSuccess', 'Se envio correctamente');
+
         }catch (\Exception $e) {
             $this->dispatch('alertFailed', 'Error al enviar la notificacion: ' . $e->getMessage());
         }

@@ -11,6 +11,7 @@ class Company extends Component
 {
     use WithPagination;
     public  $search, $status,$name,$companyIdToUpdate;
+    public $emails = [''];
     
     public function render()
     {
@@ -32,10 +33,13 @@ class Company extends Component
         if (auth()->user()->can('save company')) {
             $this->validate([
                 'name'      => ['bail', 'required', 'string','max:255', Rule::unique('companies')->whereNull('deleted_at')],
+                'emails.*' => 'required|email',
+
             ]);
             try {
                 ModelsCompany::create([
                     'name'      => $this->name,
+                    'emails'    => json_encode($this->emails),
                 ]);
                 $this->resetForm();
                 $this->dispatch('close-modal-company');
@@ -56,6 +60,7 @@ class Company extends Component
         if (auth()->user()->can('edit company')) {
             $this->validate([
                 'name'      => ['bail', 'required', 'string','max:255', Rule::unique('companies')->ignore($this->companyIdToUpdate)->whereNull('deleted_at')],
+                'emails.*' => 'required|email',
             ]);
             try{
     
@@ -63,6 +68,7 @@ class Company extends Component
     
                 $company->update([
                     'name' => $this->name,
+                    'emails'    => json_encode($this->emails),
                 ]);
                 $this->resetForm();
                 $this->dispatch('close-modal-company');
@@ -77,6 +83,7 @@ class Company extends Component
     public function resetForm()
     {
         $this->reset(['name', 'companyIdToUpdate']);
+        $this->emails = [''];
         $this->resetValidation();
     }
 
@@ -84,6 +91,7 @@ class Company extends Component
     {
         $company = ModelsCompany::findOrFail($companyId);
         $this->name = $company->name;
+        $this->emails = json_decode($company->emails);
         $this->companyIdToUpdate = $companyId;
         $this->dispatch('open-modal-edit-company');
     }
@@ -106,5 +114,23 @@ class Company extends Component
         } else {
             abort(403, 'No tienes los permisos requeridos.');
         }
+    }
+
+    public function deleteEmail($index)
+    {
+        
+        if ($index === 0) {
+            return; 
+        }
+
+        if (isset($this->emails[$index])) {
+            unset($this->emails[$index]);
+            $this->emails = array_values($this->emails); 
+        }
+    }
+
+    public function addEmail()
+    {
+        $this->emails[] = '';
     }
 }

@@ -109,6 +109,9 @@
             Livewire.on('alertFailed', (message) => {
                 alertFailed(message);
             });
+            Livewire.on('alertInfo', (message) => {
+                alertInfo(message);
+            });
             Livewire.on('open-modal-edit-company', () => {
             const modalCreate = document.getElementById('modalCreate');
             modalCreate.classList.remove('hidden');

@@ -21,6 +21,13 @@ const  alertSuccess  = (message) => {
         icon: "success"
       });
 };
+const  alertInfo  = (message) => {
+    Swal.fire({
+        title: "Éxito!",
+        text: message,
+        icon: "info"
+      });
+};
 
 
 const alertFailed = (message) => {

@@ -117,6 +117,9 @@
         Livewire.on('alertFailed', (message) => {
             alertFailed(message);
         });
+        Livewire.on('alertInfo', (message) => {
+                alertInfo(message);
+        });
         Livewire.on('open-modal-show-equipment', () => {
             const modalShow = document.getElementById('modalShow');
             modalShow.classList.add('hidden');
