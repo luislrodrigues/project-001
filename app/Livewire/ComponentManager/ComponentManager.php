@@ -50,10 +50,10 @@ class ComponentManager extends Component
         $components =$components->paginate(10); 
 
         return view('livewire.component-manager.component-manager', [
-            'equipments'   =>$equipments,
-            'component_types'   =>$component_types,
-            'companies'   =>$companies,
-            'components'   =>$components,
+            'equipments'       =>$equipments,
+            'component_types'  =>$component_types,
+            'companies'        =>$companies,
+            'components'       =>$components,
         ])
         ->layout('layouts.app');
     }
@@ -195,7 +195,7 @@ class ComponentManager extends Component
         $this->reset(['componentIdToUpdate','component_type','equipment','brand']);
         $this->resetValidation();
     }
-    protected $listeners = ['destroy','valueUpdated','updatedBrands'];
+    protected $listeners = ['destroy','updatedBrands'];
 
     public function destroy($id)
     {
@@ -215,9 +215,11 @@ class ComponentManager extends Component
         }
     }
 
-    public function valueUpdated($variableName,$value)
+    public function handleSelectChange($value, $field)
     {
-        $this->{$variableName} = $value;
+        if ($value === 'add_new') {
+            $this->dispatch('open-modal-select', $field);
+        }
     }
     public function updatedBrands()
     {

@@ -141,11 +141,14 @@
         <ul  style="list-style: none;margin:0;padding:0;">
             <li ><strong>Planta:</strong> {{ $reportData->equipment->company->name }}</li>
             <li><strong>Equipo:</strong> {{ $reportData->equipment->name }}</li>
+            <li><strong>Tipo equipo:</strong> {{ $reportData->equipment->equipmentType->name }}</li>
             <li><strong>Condición:</strong> {{ $reportData->condition }}</li>
             <li><strong>Mecanismo falla:</strong> {{ $reportData->failure_mechanism }}</li>
             <li><strong>Componente en falla:</strong> {{ $reportData->component_failure }}</li>
             <li><strong>Prioridad atención:</strong> {{ $reportData->priority }}</li>
             <li><strong>fecha medición:</strong> {{ $reportData->measurement_date }}</li>
+            <li><strong>Proceso:</strong> {{ $reportData->equipment->process->name }}</li>
+            <li><strong>Ubicación:</strong> {{ $reportData->equipment->ubication->name }}</li>
         </ul>
     </div>
     <div class="infoImg">

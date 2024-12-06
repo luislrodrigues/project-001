@@ -5,22 +5,42 @@ namespace App\Livewire\Equipment;
 use App\Models\Brand;
 use App\Models\Company;
 use App\Models\Equipment as ModelsEquipment;
+use App\Models\EquipmentType;
+use App\Models\Process;
+use App\Models\Ubication;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class Equipment extends Component
 {
     use WithPagination;
-    public  $search,$company_search, $status,$name,$company,$code,$tag,$description,$brand,$equipmentIdToUpdate;
+    public  $search,$company_search,$equipment_type_search, $status,$name,$company,$code,$tag,$description,$brand,$equipmentIdToUpdate,$equipment_type,$ubication,$process;
+    public $equipment_types = [];
+    public $processes = [];
+    public $ubications = [];
+    public $companies = [];
+
+    protected $listeners = ['destroy','updatedEquipmentTypes','updatedProcesses','updatedUbications'];
+
+
+    public function mount()
+    {
+        $this->equipment_types = EquipmentType::where('status','active')->whereNull('deleted_at')->get();
+        $this->processes = Process::where('status','active')->whereNull('deleted_at')->get();
+        $this->ubications = Ubication::where('status','active')->whereNull('deleted_at')->get();
+        $this->companies = Company::whereNull('deleted_at')->where('status','active')->get();
+    }
 
     public function render()
     {
-       $companies = Company::whereNull('deleted_at')->where('status','active')->get();
-       $brands = Brand::whereNull('deleted_at')->where('status','active')->get();
+
 
         $equipments = ModelsEquipment::query();
         if (!empty($this->company_search)) {
            $equipments->where('company_id', $this->company_search);
+        }
+        if (!empty($this->equipment_type_search)) {
+           $equipments->where('equipment_type_id', $this->equipment_type_search);
         }
         if (!empty($this->search)) {
            $equipments->where(function ($query) {
@@ -29,13 +49,10 @@ class Equipment extends Component
         }
        $equipments =$equipments->paginate(10); 
         return view('livewire.equipment.equipment', [
-            'equipments'       =>$equipments,
-            'companies'        =>$companies,
-            'brands'           =>$brands,
+            'equipments'  =>$equipments,
         ])->layout('layouts.app');
     }
 
-    protected $listeners = ['destroy'];
     public function destroy($id)
     {
         if (auth()->user()->can('delete equipment')) {
@@ -64,6 +81,9 @@ class Equipment extends Component
                 'tag'          => 'required|string|max:255',
                 'description'  => 'required|string|max:255',
                 'company'      => 'required|integer|exists:companies,id',
+                'process' => 'required|integer|exists:processes,id',
+                'ubication' => 'required|integer|exists:ubications,id',
+                'equipment_type' => 'required|integer|exists:equipment_types,id',
             ];
             $this->validate($rules);
             try {
@@ -73,6 +93,9 @@ class Equipment extends Component
                     'tag'                => $this->tag,
                     'description'        => $this->description,
                     'company_id'         => $this->company,
+                    'process_id'         => $this->process,
+                    'ubication_id'       => $this->ubication,
+                    'equipment_type_id'  => $this->equipment_type,
                 ]);
     
                 $this->resetForm();
@@ -97,6 +120,9 @@ class Equipment extends Component
             $this->tag = $equipment->tag;
             $this->description = $equipment->description;
             $this->company = $equipment->company_id;
+            $this->process = $equipment->process_id;
+            $this->ubication = $equipment->ubication_id;
+            $this->equipment_type = $equipment->equipment_type_id;
         }
     }
     public function showEquipmentDetails($equipmentId){
@@ -118,6 +144,9 @@ class Equipment extends Component
                 'tag'    => 'required|string|max:255',
                 'description'    => 'required|string|max:255',
                 'company' => 'required|integer|exists:companies,id',
+                'process' => 'required|integer|exists:processes,id',
+                'ubication' => 'required|integer|exists:ubications,id',
+                'equipment_type' => 'required|integer|exists:equipment_types,id',
             ];
             $this->validate($rules);
             try {
@@ -128,6 +157,9 @@ class Equipment extends Component
                     'tag'                => $this->tag,
                     'description'        => $this->description,
                     'company_id'         => $this->company,
+                    'process_id'         => $this->process,
+                    'ubication_id'       => $this->ubication,
+                    'equipment_type_id'  => $this->equipment_type,
                 ]);
                 $this->resetForm();
                 $this->dispatch('close-modal-equipment');
@@ -143,7 +175,31 @@ class Equipment extends Component
 
     public function resetForm()
     {
-        $this->reset(['name','company','code','tag','description', 'equipmentIdToUpdate','brand']);
+        $this->reset(['name','company','code','tag','description', 'equipmentIdToUpdate','brand','equipment_type','process','ubication']);
         $this->resetValidation();
+    }
+
+    public function updatedEquipmentTypes()
+    {
+        $this->equipment_type = '';
+        $this->equipment_types = EquipmentType::where('status', 'active')->whereNull('deleted_at')->get();
+        $this->dispatch('updateOptions', $this->equipment_types);
+    }
+    public function updatedProcesses()
+    {
+        $this->processes = Process::where('status', 'active')->whereNull('deleted_at')->get();
+        $this->dispatch('updateOptions', $this->processes);
+    }
+    public function updatedUbications()
+    {
+        $this->ubications = Ubication::where('status', 'active')->whereNull('deleted_at')->get();
+        $this->dispatch('updateOptions', $this->ubications);
+    }
+
+    public function handleSelectChange($value, $field)
+    {
+        if ($value === 'add_new') {
+            $this->dispatch('open-modal-select', $field);
+        }
     }
 }

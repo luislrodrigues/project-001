@@ -31,7 +31,7 @@
                 <div class="grid grid-cols-3 gap-4 mb-2">
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Equipo</label>
-                        <span class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $equipment->name }}</span>
+                        <span class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $equipment_name }}</span>
                     </div>
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha

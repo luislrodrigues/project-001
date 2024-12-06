@@ -21,8 +21,6 @@ class Report extends Model
         'measurement_date',
         'image_1',
         'image_2',
-        'location',
-        'process',
         'diagnosis',
         'condition',
         'failure_mechanism',
@@ -32,7 +30,7 @@ class Report extends Model
         'status_ot',
         'execution_date',
         'verification_recommendation',
-        'analist',
+        'analist_id',
         'status',
     ];
 
@@ -43,5 +41,9 @@ class Report extends Model
     public function equipment()
     {
         return $this->belongsTo(Equipment::class);
+    }
+    public function analist()
+    {
+        return $this->belongsTo(User::class);
     }
 }

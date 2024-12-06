@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('equipment', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('company_id')->constrained('companies');
+            $table->foreignId('equipment_type_id')->constrained('equipment_types');
+            $table->foreignId('process_id')->constrained('processes');
+            $table->foreignId('ubication_id')->constrained('ubications');
             $table->string('name');
             $table->string('code');
             $table->string('tag');

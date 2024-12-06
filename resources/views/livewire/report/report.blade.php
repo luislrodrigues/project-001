@@ -141,10 +141,10 @@
                                     {{ $report->measurement_date }}
                                 </td>
                                 <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                    {{ $report->location }}
+                                    {{ $report->equipment->ubication->name }}
                                 </td>
                                 <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                    {{ $report->process }}
+                                    {{ $report->equipment->process->name }}
                                 </td>
                                 <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                     {{ $report->condition }}
@@ -153,7 +153,7 @@
                                     {{ $report->priority }}
                                 </td>
                                 <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                    {{ $report->analist }}
+                                    {{ $report->analist->name }}
                                 </td>
                                 <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                     <button class="mr-2" wire:click="downloadPdf({{ $report->id }})">

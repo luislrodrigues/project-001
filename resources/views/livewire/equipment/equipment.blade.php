@@ -31,6 +31,17 @@
                    </select>
                </div>
            </div>
+           <div class="flex-1 mr-4">
+               <label for="company_search" class="block text-sm font-medium text-gray-700">Tipo equipo:</label>
+               <div class="relative">
+                   <select id="company" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model.lazy='equipment_type_search'>
+                        <option value="">Todos</option>
+                        @foreach($equipment_types as $equipmentType)
+                            <option value="{{ $equipmentType->id }}">{{ $equipmentType->name }}</option>
+                        @endforeach
+                   </select>
+               </div>
+           </div>
            <div class="flex-1">
                <label for="search" class="block text-sm font-medium text-gray-700">Buscar:</label>
                <div class="relative">
@@ -47,6 +58,18 @@
                            <th
                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                Nombre
+                           </th>
+                           <th
+                               class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                               Tipo equipo
+                           </th>
+                           <th
+                               class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                               Proceso
+                           </th>
+                           <th
+                               class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                               Ubicación
                            </th>
                            <th
                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
@@ -69,6 +92,15 @@
                        <tr>
                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                {{ $equipment->name }}
+                           </td>
+                           <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                               {{ $equipment->equipmentType->name }}
+                           </td>
+                           <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                               {{ $equipment->process->name }}
+                           </td>
+                           <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                               {{ $equipment->ubication->name }}
                            </td>
                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                {{ $equipment->code }}

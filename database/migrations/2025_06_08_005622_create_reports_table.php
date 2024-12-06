@@ -17,8 +17,6 @@ return new class extends Migration
             $table->date('measurement_date');
             $table->string('image_1')->nullable();
             $table->string('image_2')->nullable();
-            $table->string('location');
-            $table->string('process');
             $table->json('diagnosis')->nullable();
             $table->enum('condition',['Critico','Seguimiento','Alarma','Peligro']);
             $table->string('failure_mechanism');
@@ -29,7 +27,7 @@ return new class extends Migration
             $table->string('status_ot')->nullable();
             $table->date('execution_date')->nullable();
             $table->text('verification_recommendation')->nullable();
-            $table->string('analist');
+            $table->foreignId('analist_id')->constrained('users')->onDelete('cascade');
             $table->enum('status',['active','inactive'])->default('active');
             $table->softDeletes();
             $table->timestamps();

@@ -8,6 +8,7 @@ use Livewire\Component;
 use App\Models\Company;
 use App\Models\Component as ModelsComponent;
 use App\Models\ComponentType;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -20,7 +21,7 @@ class Report extends Component
     use WithFileUploads,WithPagination;
 
     public $equipment_search,$condition_search,$priority_search,$company_search,$reportIdToUpdate;
-    public $equipment,$location,$process,$diagnosis,$measurement_date,$image_1,$image_2,$condition,$failure_mechanism,$component_failure,$priority,$ot_created,$status_ot,$execution_date,$verification_recommendation,$analist;
+    public $equipment,$equipment_name,$location,$process,$diagnosis,$measurement_date,$image_1,$image_2,$condition,$failure_mechanism,$component_failure,$priority,$ot_created,$status_ot,$execution_date,$verification_recommendation,$analist,$equipmentType;
 
     public $reportData;
     public $recommendations = [];
@@ -32,6 +33,7 @@ class Report extends Component
     public function render()
     {
        $companies = Company::whereNull('deleted_at')->where('status','active')->get();
+       $users = User::where('status','active')->get();
 
         $reports = ModelsReport::query();
         if (!empty($this->equipment_search)) {
@@ -52,9 +54,10 @@ class Report extends Component
 
         $reports =$reports->paginate(10); 
         return view('livewire.report.report', [
-            'reports'   =>$reports,
+            'reports'      =>$reports,
             'equipments'   =>$equipments,
-            'companies'        =>$companies,
+            'companies'    =>$companies,
+            'users'        =>$users,
         ])->layout('layouts.app');
     }
 
@@ -89,7 +92,8 @@ class Report extends Component
                 'failure_mechanism'   => 'required',
                 'component_failure'   => 'required',
                 'priority'            => 'required',
-                'analist'             => 'required',
+                'analist'            =>'required|integer|exists:users,id',
+
             ];
             $this->validate($rules);
             try {
@@ -102,8 +106,6 @@ class Report extends Component
                 $dataCreate = [
                     'equipment_id'                => $this->equipment,
                     'measurement_date'            => $this->measurement_date,
-                    'location'                    => $this->location,
-                    'process'                     => $this->process,
                     'condition'                   => $this->condition,
                     'priority'                    => $this->priority,
                     'failure_mechanism'           => $this->failure_mechanism,
@@ -112,7 +114,7 @@ class Report extends Component
                     'status_ot'                   => $this->status_ot,
                     'execution_date'              => $this->execution_date,
                     'verification_recommendation' => $this->verification_recommendation,
-                    'analist'                     => $this->analist,
+                    'analist_id'                  => $this->analist,
                 ];
                 if (!empty($this->diagnostics)) {
                     $dataCreate['diagnosis'] = json_encode($this->diagnostics);
@@ -155,9 +157,11 @@ class Report extends Component
             $recommendations = $report->recommendations;
         }
         $this->equipment = $report->equipment_id;
+        $this->equipment_name = $report->equipment->name;
         $this->measurement_date = $report->measurement_date;
-        $this->location = $report->location;
-        $this->process = $report->process;
+        $this->location = $report->equipment->ubication->name;
+        $this->process = $report->equipment->process->name;
+        $this->equipmentType = $report->equipment->equipmentType->name;
         $this->diagnostics = $report->diagnosis ? json_decode($report->diagnosis,true) : [];
         $this->condition = $report->condition;
         $this->priority = $report->priority;
@@ -168,7 +172,7 @@ class Report extends Component
         $this->status_ot = $report->status_ot;
         $this->execution_date = $report->execution_date;
         $this->verification_recommendation = $report->verification_recommendation;
-        $this->analist = $report->analist;
+        $this->analist = $report->analist_id;
         $this->reportIdToUpdate = $reportId;
         $this->reportIdToUpdate = $reportId;
         $this->components = ModelsComponent::where('equipment_id',$report->equipment_id)->where('status','active')->get();
@@ -184,13 +188,11 @@ class Report extends Component
                 'equipment'           => 'required|integer|exists:equipment,id',
                 'measurement_date'    => 'required|date',
                 'image_2'             => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'location'            => 'required|string|max:255',
-                'process'             => 'required|string|max:255',
                 'condition'           => 'required',
                 'failure_mechanism'   => 'required',
                 'component_failure'   => 'required',
                 'priority'            => 'required',
-                'analist'             => 'required',
+                'analist'          => 'required|integer|exists:users,id',
             ];
             $imagePath1 = null;
             $imagePath2 = null;
@@ -208,8 +210,6 @@ class Report extends Component
                 $dataToUpdate = [
                     'equipment_id'                => $this->equipment,
                     'measurement_date'            => $this->measurement_date,
-                    'location'                    => $this->location,
-                    'process'                     => $this->process,
                     'condition'                   => $this->condition,
                     'priority'                    => $this->priority,
                     'failure_mechanism'           => $this->failure_mechanism,
@@ -218,7 +218,7 @@ class Report extends Component
                     'status_ot'                   => $this->status_ot,
                     'execution_date'              => $this->execution_date,
                     'verification_recommendation' => $this->verification_recommendation,
-                    'analist'                     => $this->analist,
+                    'analist_id'                  => $this->analist,
                 ];
                 if (!empty($this->diagnostics)) {
                     $dataToUpdate['diagnosis'] = json_encode($this->diagnostics);
@@ -240,7 +240,7 @@ class Report extends Component
         }
     }
     public function resetForm(){
-        $this->reset(['reportIdToUpdate','equipment','location','process','measurement_date','image_1','image_2','condition','failure_mechanism','component_failure','priority','ot_created','status_ot','execution_date','verification_recommendation','analist']);
+        $this->reset(['reportIdToUpdate','equipment','location','process','measurement_date','equipment_name','image_1','image_2','condition','failure_mechanism','component_failure','priority','ot_created','status_ot','execution_date','verification_recommendation','analist','equipmentType']);
         $this->diagnostics = [];
         $this->components = [];
         $this->recommendations = [];
@@ -277,7 +277,7 @@ class Report extends Component
 
             // Añadir encabezados
             $headings = [
-                'EMPRESA', 'EQUIPO', 'FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO', 'TIPO COMPONENTE', 'TAG', 'DESCRIPCIÓN','CODIGO', 'POT (HP)', 
+                'EMPRESA', 'EQUIPO', 'TIPO EQUIPO','FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO', 'TIPO COMPONENTE', 'TAG', 'DESCRIPCIÓN','CODIGO', 'POT (HP)', 
                 'RPM', 'MARCA', 'REFERENCIA MOTOR', 'FRAME', 'RODA. LL', 'ROD. LA', 'REF. CHUMACERAS', 'ROD. CHUMACERAS', 
                 'DIAGNÓSTICO', 'CONDICIÓN', 'MECANISMO FALLA', 'COMPONENTE EN FALLA', 'RECOMENDACIÓN', 'PRIORIDAD', 'OT CREADA', 
                 'ESTADO DE OT', 'FECHA EJECUCIÓN', 'VERIFICACIÓN RECOMENDACIÓN', 'ANALISTA', 'Mes', 'Año'
@@ -329,27 +329,29 @@ class Report extends Component
                 foreach ($report->equipment->components as $component) {
                     $sheet->setCellValue('A' . $row, $report->equipment->company->name);
                     $sheet->setCellValue('B' . $row, $report->equipment->name);
-                    $sheet->setCellValue('C' . $row, $report->measurement_date);
-                    $sheet->setCellValue('D' . $row, $report->location);
-                    $sheet->setCellValue('E' . $row, $report->process);
-                    $sheet->setCellValue('F' . $row, $component->componentType->name);
+                    $sheet->setCellValue('C' . $row, $report->equipment->equipmentType->name);
+
+                    $sheet->setCellValue('D' . $row, $report->measurement_date);
+                    $sheet->setCellValue('E' . $row, $report->equipment->ubication->name);
+                    $sheet->setCellValue('F' . $row, $report->equipment->process->name);
+                    $sheet->setCellValue('G' . $row, $component->componentType->name);
     
-                    $sheet->setCellValue('G' . $row, $report->equipment->tag);
-                    $sheet->setCellValue('H' . $row, $report->equipment->description);
-                    $sheet->setCellValue('I' . $row, $report->equipment->code);
+                    $sheet->setCellValue('H' . $row, $report->equipment->tag);
+                    $sheet->setCellValue('I' . $row, $report->equipment->description);
+                    $sheet->setCellValue('J' . $row, $report->equipment->code);
 
                     foreach($component->fields as $field){
-                        if($field['name'] == 'Potencia' && $field->value)$sheet->setCellValue('J' . $row, $field->value->value);
-                        if($field['name'] == 'Velocidad' && $field->value)$sheet->setCellValue('K' . $row, $field->value->value);
-                         $sheet->setCellValue('L' . $row, $component->brand->name);
-                         if($field['name'] == 'Referencia' && $field->value)$sheet->setCellValue('M' . $row, $field->value->value);
+                        if($field['name'] == 'Potencia' && $field->value)$sheet->setCellValue('K' . $row, $field->value->value);
+                        if($field['name'] == 'Velocidad' && $field->value)$sheet->setCellValue('L' . $row, $field->value->value);
+                         $sheet->setCellValue('M' . $row, $component->brand->name);
+                         if($field['name'] == 'Referencia' && $field->value)$sheet->setCellValue('N' . $row, $field->value->value);
 
 
-                        if($field['name'] == 'Frame' && $field->value)$sheet->setCellValue('N' . $row, $field->value->value);
-                        if($field['name'] == 'Rodamiento lado libre' && $field->value)$sheet->setCellValue('O' . $row, $field->value->value);
-                        if($field['name'] == 'Rodamiento lado acople' && $field->value)$sheet->setCellValue('P' . $row, $field->value->value);
-                        if($field['name'] == 'Referencia Chumacera' && $field->value)$sheet->setCellValue('Q' . $row, $field->value->value);
-                        if($field['name'] == 'Referencia Rodamientos' && $field->value)$sheet->setCellValue('R' . $row, $field->value->value);
+                        if($field['name'] == 'Frame' && $field->value)$sheet->setCellValue('O' . $row, $field->value->value);
+                        if($field['name'] == 'Rodamiento lado libre' && $field->value)$sheet->setCellValue('P' . $row, $field->value->value);
+                        if($field['name'] == 'Rodamiento lado acople' && $field->value)$sheet->setCellValue('Q' . $row, $field->value->value);
+                        if($field['name'] == 'Referencia Chumacera' && $field->value)$sheet->setCellValue('R' . $row, $field->value->value);
+                        if($field['name'] == 'Referencia Rodamientos' && $field->value)$sheet->setCellValue('S' . $row, $field->value->value);
                     }
                     $recommendations = ($report->recommendations);
                     $recommendationsString = (is_array($recommendations) && array_key_exists($component->id, $recommendations) && is_array($recommendations[$component->id])) 
@@ -357,19 +359,19 @@ class Report extends Component
                         : '';
                     $diagnosis = json_decode($report->diagnosis,true);
                     $componentDiagnosis = (is_array($diagnosis) && array_key_exists($component->id, $diagnosis)) ? $diagnosis[$component->id] : '';
-                    $sheet->setCellValue('S' . $row,$componentDiagnosis );
-                    $sheet->setCellValue('T' . $row, $report->condition);
-                    $sheet->setCellValue('U' . $row, $report->failure_mechanism);
-                    $sheet->setCellValue('V' . $row, $report->component_failure);
-                    $sheet->setCellValue('W' . $row, $recommendationsString);
-                    $sheet->setCellValue('X' . $row, $report->priority);
-                    $sheet->setCellValue('Y' . $row, $report->ot_created);
-                    $sheet->setCellValue('Z' . $row, $report->status_ot);
-                    $sheet->setCellValue('AA' . $row, $report->execution_date);
-                    $sheet->setCellValue('AB' . $row, $report->verification_recommendation);
-                    $sheet->setCellValue('AC' . $row, $report->analist);
-                    $sheet->setCellValue('AD' . $row, date('m', strtotime($report->execution_date)));
-                    $sheet->setCellValue('AE' . $row, date('Y', strtotime($report->execution_date)));
+                    $sheet->setCellValue('T' . $row,$componentDiagnosis );
+                    $sheet->setCellValue('U' . $row, $report->condition);
+                    $sheet->setCellValue('V' . $row, $report->failure_mechanism);
+                    $sheet->setCellValue('W' . $row, $report->component_failure);
+                    $sheet->setCellValue('X' . $row, $recommendationsString);
+                    $sheet->setCellValue('Y' . $row, $report->priority);
+                    $sheet->setCellValue('Z' . $row, $report->ot_created);
+                    $sheet->setCellValue('AA' . $row, $report->status_ot);
+                    $sheet->setCellValue('AB' . $row, $report->execution_date);
+                    $sheet->setCellValue('AC' . $row, $report->verification_recommendation);
+                    $sheet->setCellValue('AD' . $row, $report->analist->name);
+                    $sheet->setCellValue('AE' . $row, date('m', strtotime($report->execution_date)));
+                    $sheet->setCellValue('AF' . $row, date('Y', strtotime($report->execution_date)));
                     $row++;
                 }
 
@@ -473,6 +475,10 @@ class Report extends Component
 
     public function updatedEquipment($value)
     {
+        $equipment = Equipment::findOrFail($value);
+        $this->location = $equipment->ubication->name;
+        $this->process = $equipment->process->name;
+        $this->equipmentType = $equipment->equipmentType->name;
         $this->components = ModelsComponent::where('equipment_id',$value)->where('status','active')->get();
         foreach ($this->components as $component) {
             $this->recommendations[$component->id] = []; 

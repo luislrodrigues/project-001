@@ -18,6 +18,9 @@ class Equipment extends Model
     Protected $fillable = [
         'id',
         'company_id',
+        'process_id',
+        'ubication_id',
+        'equipment_type_id',
         'name',
         'code',
         'tag',
@@ -28,6 +31,18 @@ class Equipment extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+    public function equipmentType()
+    {
+        return $this->belongsTo(EquipmentType::class);
+    }
+    public function process()
+    {
+        return $this->belongsTo(Process::class);
+    }
+    public function ubication()
+    {
+        return $this->belongsTo(Ubication::class);
     }
 
     public function reports()

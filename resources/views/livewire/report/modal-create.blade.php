@@ -50,6 +50,13 @@
                         @enderror
                     </div>
                     <div>
+                        <label for="equipmentType"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipo equipo</label>
+                        <input type="text" id="equipmentType"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            placeholder="Ingresar ubicacion" wire:model.defer="equipmentType" disabled>
+                    </div>
+                    <div>
                         <label for="measurement_date"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha medicion</label>
                         <input type="date" id="measurement_date"
@@ -64,20 +71,14 @@
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ubicacion</label>
                         <input type="text" id="location"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Ingresar ubicacion" wire:model.defer="location">
-                        @error('location')
-                            <span class="text-sm text-red-500">{{ $message }}</span>
-                        @enderror
+                            placeholder="Ingresar ubicacion" wire:model.defer="location" disabled>
                     </div>
                     <div>
                         <label for="process"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Proceso</label>
                         <input type="text" id="process"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Ingresar Proceso" wire:model.defer="process">
-                        @error('process')
-                            <span class="text-sm text-red-500">{{ $message }}</span>
-                        @enderror
+                            placeholder="Ingresar Proceso" wire:model.defer="process" disabled>
                     </div>
                     <div>
                         <label for="condition"
@@ -164,9 +165,16 @@
                     <div>
                         <label for="analist"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Analista</label>
-                        <input type="text" id="analist"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Ingresar analista" wire:model.defer="analist">
+                        <select id="analist"
+                            class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"
+                            wire:model.lazy="analist">
+                            <option value="">Selecione</option>
+                            @foreach ($users as $analist)
+                                <option value="{{ $analist->id }}">{{ $analist->name }}</option>
+                            @endforeach
+                        </select>
+
+
                         @error('analist')
                             <span class="text-sm text-red-500">{{ $message }}</span>
                         @enderror
