@@ -23,8 +23,8 @@ class Report extends Model
         'image_2',
         'diagnosis',
         'condition',
-        'failure_mechanism',
-        'component_failure',
+        'mechanism_fail_id',
+        'component_fail_id',
         'recommendations',
         'ot_created',
         'status_ot',
@@ -45,5 +45,13 @@ class Report extends Model
     public function analist()
     {
         return $this->belongsTo(User::class);
+    }
+    public function componentFail()
+    {
+        return $this->belongsTo(ComponentFail::class);
+    }
+    public function mechanismFail()
+    {
+        return $this->belongsTo(MechanismFail::class);
     }
 }

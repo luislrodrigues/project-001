@@ -192,7 +192,7 @@ class Report extends Component
                 'failure_mechanism'   => 'required',
                 'component_failure'   => 'required',
                 'priority'            => 'required',
-                'analist'          => 'required|integer|exists:users,id',
+                'analist'             => 'required|integer|exists:users,id',
             ];
             $imagePath1 = null;
             $imagePath2 = null;
@@ -475,13 +475,27 @@ class Report extends Component
 
     public function updatedEquipment($value)
     {
-        $equipment = Equipment::findOrFail($value);
-        $this->location = $equipment->ubication->name;
-        $this->process = $equipment->process->name;
-        $this->equipmentType = $equipment->equipmentType->name;
-        $this->components = ModelsComponent::where('equipment_id',$value)->where('status','active')->get();
-        foreach ($this->components as $component) {
-            $this->recommendations[$component->id] = []; 
+        if($value){
+            $equipment = Equipment::findOrFail($value);
+            if($equipment){
+                $this->location = $equipment->ubication->name;
+                $this->process = $equipment->process->name;
+                $this->equipmentType = $equipment->equipmentType->name;
+                $this->components = ModelsComponent::where('equipment_id',$value)->where('status','active')->get();
+                if($this->components){
+                    foreach ($this->components as $component) {
+                        $this->recommendations[$component->id] = []; 
+                    }
+                }else{
+                    $this->recommendations = [];
+                }
+            }else{
+                $this->recommendations = [];
+                $this->reset(['location','process','equipmentType']);
+            }
+        }else{
+            $this->recommendations = [];
+            $this->reset(['location','process','equipmentType']);
         }
     }
 }

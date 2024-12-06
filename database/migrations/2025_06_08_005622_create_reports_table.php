@@ -18,9 +18,9 @@ return new class extends Migration
             $table->string('image_1')->nullable();
             $table->string('image_2')->nullable();
             $table->json('diagnosis')->nullable();
-            $table->enum('condition',['Critico','Seguimiento','Alarma','Peligro']);
-            $table->string('failure_mechanism');
-            $table->string('component_failure');
+            $table->foreignId('condition_id')->constrained('conditions')->onDelete('cascade');
+            $table->foreignId('component_fail_id')->constrained('component_fails')->onDelete('cascade');
+            $table->foreignId('mechanism_fail_id')->constrained('mechanism_fails')->onDelete('cascade');
             $table->json('recommendations')->nullable();
             $table->enum('priority',['Alta','Media']);
             $table->string('ot_created')->nullable();
