@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             UserSeeder::class,
             ComponentTypeSeeder::class,
-            CompanySeeder::class,
+            // CompanySeeder::class,
             BrandSeeder::class,
             ComponentTypeFieldSeeder::class,
         ]);
