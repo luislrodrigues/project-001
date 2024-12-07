@@ -505,13 +505,19 @@ class Report extends Component
                     }
                 }else{
                     $this->recommendations = [];
+                    $this->diagnostics = [];
+                    $this->components = [];
                 }
             }else{
                 $this->recommendations = [];
+                $this->diagnostics = [];
+                $this->components = [];
                 $this->reset(['location','process','equipmentType']);
             }
         }else{
             $this->recommendations = [];
+            $this->diagnostics = [];
+            $this->components = [];
             $this->reset(['location','process','equipmentType']);
         }
     }
