@@ -3,7 +3,10 @@
 namespace App\Livewire\ModalCreateSelect;
 
 use App\Models\Brand;
+use App\Models\ComponentFail;
+use App\Models\Condition;
 use App\Models\EquipmentType;
+use App\Models\MechanismFail;
 use App\Models\Process;
 use App\Models\Ubication;
 use Illuminate\Validation\Rule;
@@ -28,6 +31,12 @@ class ModalCreateSelect extends Component
             $rules['valueNew'] = ['bail', 'required', 'string', 'max:255', Rule::unique('processes', 'name')->whereNull('deleted_at')];
         }else if($this->field == 'ubication'){
             $rules['valueNew'] = ['bail', 'required', 'string', 'max:255', Rule::unique('ubications', 'name')->whereNull('deleted_at')];
+        }else if($this->field == 'condition'){
+            $rules['valueNew'] = ['bail', 'required', 'string', 'max:255', Rule::unique('conditions', 'name')->whereNull('deleted_at')];
+        }else if($this->field == 'component_failure'){
+            $rules['valueNew'] = ['bail', 'required', 'string', 'max:255', Rule::unique('component_fails', 'name')->whereNull('deleted_at')];
+        }else if($this->field == 'failure_mechanism'){
+            $rules['valueNew'] = ['bail', 'required', 'string', 'max:255', Rule::unique('mechanism_fails', 'name')->whereNull('deleted_at')];
         }
         $this->validate($rules);
         try{
@@ -45,6 +54,18 @@ class ModalCreateSelect extends Component
                 ]);
             }else if($this->field == 'ubication'){
                 Ubication::create([
+                    'name' => ucfirst($this->valueNew)
+                ]);
+            }else if($this->field == 'condition'){
+                Condition::create([
+                    'name' => ucfirst($this->valueNew)
+                ]);
+            }else if($this->field == 'failure_mechanism'){
+                MechanismFail::create([
+                    'name' => ucfirst($this->valueNew)
+                ]);
+            }else if($this->field == 'component_failure'){
+                ComponentFail::create([
                     'name' => ucfirst($this->valueNew)
                 ]);
             }

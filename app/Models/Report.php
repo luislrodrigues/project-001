@@ -22,7 +22,7 @@ class Report extends Model
         'image_1',
         'image_2',
         'diagnosis',
-        'condition',
+        'condition_id',
         'mechanism_fail_id',
         'component_fail_id',
         'recommendations',
@@ -53,5 +53,9 @@ class Report extends Model
     public function mechanismFail()
     {
         return $this->belongsTo(MechanismFail::class);
+    }
+    public function condition()
+    {
+        return $this->belongsTo(Condition::class);
     }
 }

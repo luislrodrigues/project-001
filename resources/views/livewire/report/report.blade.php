@@ -147,7 +147,7 @@
                                     {{ $report->equipment->process->name }}
                                 </td>
                                 <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                    {{ $report->condition }}
+                                    {{ $report->condition->name }}
                                 </td>
                                 <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                     {{ $report->priority }}

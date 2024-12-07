@@ -7,7 +7,10 @@ use App\Models\Report as ModelsReport;
 use Livewire\Component;
 use App\Models\Company;
 use App\Models\Component as ModelsComponent;
+use App\Models\ComponentFail;
 use App\Models\ComponentType;
+use App\Models\Condition;
+use App\Models\MechanismFail;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -21,14 +24,26 @@ class Report extends Component
     use WithFileUploads,WithPagination;
 
     public $equipment_search,$condition_search,$priority_search,$company_search,$reportIdToUpdate;
-    public $equipment,$equipment_name,$location,$process,$diagnosis,$measurement_date,$image_1,$image_2,$condition,$failure_mechanism,$component_failure,$priority,$ot_created,$status_ot,$execution_date,$verification_recommendation,$analist,$equipmentType;
+    public $equipment,$equipment_name,$location,$process,$diagnosis,$measurement_date,$image_1,$image_2,$condition,$failure_mechanism,$component_failure,$priority,$ot_created,$status_ot,$execution_date,$verification_recommendation,$analist,$equipmentType,$condition_name,$failure_mechanism_name,$component_failure_name;
 
     public $reportData;
     public $recommendations = [];
     public $components = [];
     public $diagnostics = [];
+    public $component_fails = [];
+    public $mechanism_fails = [];
+    public $conditions = [];
     
+    
+    protected $listeners = ['destroy','updatedConditions','updatedmechanismFails','updatedcomponentFails'];
 
+
+    public function mount()
+    {
+        $this->conditions = Condition::where('status','active')->whereNull('deleted_at')->get();
+        $this->mechanism_fails = MechanismFail::where('status','active')->whereNull('deleted_at')->get();
+        $this->component_fails = ComponentFail::where('status','active')->whereNull('deleted_at')->get();
+    }
 
     public function render()
     {
@@ -61,7 +76,6 @@ class Report extends Component
         ])->layout('layouts.app');
     }
 
-    protected $listeners = ['destroy'];
     public function destroy($id)
     {
         if (auth()->user()->can('delete report')) {
@@ -88,9 +102,9 @@ class Report extends Component
                 'image_2'             => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'location'            => 'required|string|max:255',
                 'process'             => 'required|string|max:255',
-                'condition'           => 'required',
-                'failure_mechanism'   => 'required',
-                'component_failure'   => 'required',
+                'condition'           => 'required|integer|exists:conditions,id',
+                'failure_mechanism'   => 'required|integer|exists:conditions,id',
+                'component_failure'   => 'required|integer|exists:mechanism_fails,id',
                 'priority'            => 'required',
                 'analist'            =>'required|integer|exists:users,id',
 
@@ -106,10 +120,10 @@ class Report extends Component
                 $dataCreate = [
                     'equipment_id'                => $this->equipment,
                     'measurement_date'            => $this->measurement_date,
-                    'condition'                   => $this->condition,
+                    'condition_id'                   => $this->condition,
                     'priority'                    => $this->priority,
-                    'failure_mechanism'           => $this->failure_mechanism,
-                    'component_failure'           => $this->component_failure,
+                    'mechanism_fail_id'           => $this->failure_mechanism,
+                    'component_fail_id'           => $this->component_failure,
                     'ot_created'                  => $this->ot_created,
                     'status_ot'                   => $this->status_ot,
                     'execution_date'              => $this->execution_date,
@@ -163,10 +177,13 @@ class Report extends Component
         $this->process = $report->equipment->process->name;
         $this->equipmentType = $report->equipment->equipmentType->name;
         $this->diagnostics = $report->diagnosis ? json_decode($report->diagnosis,true) : [];
-        $this->condition = $report->condition;
+        $this->condition = $report->condition->id;
+        $this->condition_name = $report->condition->name;
         $this->priority = $report->priority;
-        $this->failure_mechanism = $report->failure_mechanism;
-        $this->component_failure = $report->component_failure;
+        $this->failure_mechanism = $report->mechanismFail->id;
+        $this->failure_mechanism_name = $report->mechanismFail->name;
+        $this->component_failure = $report->componentFail->id;
+        $this->component_failure_name = $report->componentFail->name;
         $this->recommendations = $recommendations ;
         $this->ot_created = $report->ot_created;
         $this->status_ot = $report->status_ot;
@@ -188,9 +205,9 @@ class Report extends Component
                 'equipment'           => 'required|integer|exists:equipment,id',
                 'measurement_date'    => 'required|date',
                 'image_2'             => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'condition'           => 'required',
-                'failure_mechanism'   => 'required',
-                'component_failure'   => 'required',
+                'condition'           => 'required|integer|exists:conditions,id',
+                'failure_mechanism'   => 'required|integer|exists:conditions,id',
+                'component_failure'   => 'required|integer|exists:mechanism_fails,id',
                 'priority'            => 'required',
                 'analist'             => 'required|integer|exists:users,id',
             ];
@@ -210,10 +227,10 @@ class Report extends Component
                 $dataToUpdate = [
                     'equipment_id'                => $this->equipment,
                     'measurement_date'            => $this->measurement_date,
-                    'condition'                   => $this->condition,
+                    'condition_id'                => $this->condition,
                     'priority'                    => $this->priority,
-                    'failure_mechanism'           => $this->failure_mechanism,
-                    'component_failure'           => $this->component_failure,
+                    'mechanism_fail_id'           => $this->failure_mechanism,
+                    'component_fail_id'           => $this->component_failure,
                     'ot_created'                  => $this->ot_created,
                     'status_ot'                   => $this->status_ot,
                     'execution_date'              => $this->execution_date,
@@ -240,7 +257,7 @@ class Report extends Component
         }
     }
     public function resetForm(){
-        $this->reset(['reportIdToUpdate','equipment','location','process','measurement_date','equipment_name','image_1','image_2','condition','failure_mechanism','component_failure','priority','ot_created','status_ot','execution_date','verification_recommendation','analist','equipmentType']);
+        $this->reset(['reportIdToUpdate','equipment','location','process','measurement_date','equipment_name','image_1','image_2','condition','failure_mechanism','component_failure','priority','ot_created','status_ot','execution_date','verification_recommendation','analist','equipmentType','condition_name','failure_mechanism_name','component_failure_name']);
         $this->diagnostics = [];
         $this->components = [];
         $this->recommendations = [];
@@ -360,9 +377,9 @@ class Report extends Component
                     $diagnosis = json_decode($report->diagnosis,true);
                     $componentDiagnosis = (is_array($diagnosis) && array_key_exists($component->id, $diagnosis)) ? $diagnosis[$component->id] : '';
                     $sheet->setCellValue('T' . $row,$componentDiagnosis );
-                    $sheet->setCellValue('U' . $row, $report->condition);
-                    $sheet->setCellValue('V' . $row, $report->failure_mechanism);
-                    $sheet->setCellValue('W' . $row, $report->component_failure);
+                    $sheet->setCellValue('U' . $row, $report->condition->name);
+                    $sheet->setCellValue('V' . $row, $report->mechanismFail->name);
+                    $sheet->setCellValue('W' . $row, $report->componentFail->name);
                     $sheet->setCellValue('X' . $row, $recommendationsString);
                     $sheet->setCellValue('Y' . $row, $report->priority);
                     $sheet->setCellValue('Z' . $row, $report->ot_created);
@@ -497,5 +514,31 @@ class Report extends Component
             $this->recommendations = [];
             $this->reset(['location','process','equipmentType']);
         }
+    }
+
+    public function handleSelectChange($value, $field)
+    {
+        if ($value === 'add_new') {
+            $this->dispatch('open-modal-select', $field);
+        }
+    }
+
+    public function updatedConditions()
+    {
+        $this->condition = '';
+        $this->conditions = Condition::where('status', 'active')->whereNull('deleted_at')->get();
+        $this->dispatch('updateOptions', $this->conditions);
+    }
+    public function updatedmechanismFails()
+    {
+        $this->failure_mechanism = '';
+        $this->mechanism_fails = mechanismFail::where('status', 'active')->whereNull('deleted_at')->get();
+        $this->dispatch('updateOptions', $this->mechanism_fails);
+    }
+    public function updatedcomponentFails()
+    {
+        $this->component_failure = '';
+        $this->component_fails = componentFail::where('status', 'active')->whereNull('deleted_at')->get();
+        $this->dispatch('updateOptions', $this->component_fails);
     }
 }

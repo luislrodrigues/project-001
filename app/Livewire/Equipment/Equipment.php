@@ -187,11 +187,13 @@ class Equipment extends Component
     }
     public function updatedProcesses()
     {
+        $this->process = '';
         $this->processes = Process::where('status', 'active')->whereNull('deleted_at')->get();
         $this->dispatch('updateOptions', $this->processes);
     }
     public function updatedUbications()
     {
+        $this->ubication = '';
         $this->ubications = Ubication::where('status', 'active')->whereNull('deleted_at')->get();
         $this->dispatch('updateOptions', $this->ubications);
     }

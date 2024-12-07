@@ -52,19 +52,19 @@
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Condición</label>
                         <span
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $condition }}</span>
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $condition_name }}</span>
                     </div>
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Mecanismo
                             falla</label>
                         <span
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $failure_mechanism }}</span>
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $failure_mechanism_name }}</span>
                     </div>
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Componente
                             falla</label>
                         <span
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $component_failure }}</span>
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $component_failure_name }}</span>
                     </div>
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Prioridad</label>

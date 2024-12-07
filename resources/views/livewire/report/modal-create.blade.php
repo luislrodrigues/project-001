@@ -80,43 +80,86 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             placeholder="Ingresar Proceso" wire:model.defer="process" disabled>
                     </div>
+ 
+
                     <div>
                         <label for="condition"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Condicion</label>
-                        <select id="condition"
+                        <select name="condition" id="selecteEuipmentType"
                             class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"
-                            wire:model.defer="condition">
-                            <option value="">Selecione</option>
-                            <option value="Alarma">Alarma</option>
-                            <option value="Critico">Critico</option>
-                            <option value="Peligro">Peligro</option>
-                            <option value="Seguimiento">Seguimiento</option>
+                            wire:model.lazy="condition"
+                            wire:change="handleSelectChange($event.target.value,'condition')">
+                            <option value="">Seleccione</option>
+                            @foreach ($conditions as $option)
+                                <option value="{{ $option['id'] }}">{{ $option['name'] }}</option>
+                            @endforeach
+                            <option value="add_new">Añadir nueva</option>
                         </select>
+
                         @error('condition')
                             <span class="text-sm text-red-500">{{ $message }}</span>
                         @enderror
+
+                        <livewire:modal-create-select.modal-create-select :label="'Condicion'" :field="'condition'"
+                            updateOptions="updatedConditions" />
                     </div>
+
+
+
+
+
+           
+
+
+
+
+
+                    
                     <div>
                         <label for="failure_mechanism"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Mecanismo falla</label>
-                        <input type="text" id="failure_mechanism"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Ingresar mecanismo falla" wire:model.defer="failure_mechanism">
+                        <select name="failure_mechanism" id="selecteEuipmentType"
+                            class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"
+                            wire:model.lazy="failure_mechanism"
+                            wire:change="handleSelectChange($event.target.value,'failure_mechanism')">
+                            <option value="">Seleccione</option>
+                            @foreach ($mechanism_fails as $option)
+                                <option value="{{ $option['id'] }}">{{ $option['name'] }}</option>
+                            @endforeach
+                            <option value="add_new">Añadir nueva</option>
+                        </select>
+
                         @error('failure_mechanism')
                             <span class="text-sm text-red-500">{{ $message }}</span>
                         @enderror
+
+                        <livewire:modal-create-select.modal-create-select :label="'Mecanismo falla'" :field="'failure_mechanism'"
+                            updateOptions="updatedmechanismFails" />
                     </div>
+
+                    
                     <div>
                         <label for="component_failure"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Componente
-                            falla</label>
-                        <input type="text" id="component_failure"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Ingresar componente falla" wire:model.defer="component_failure">
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Componente falla</label>
+                        <select name="component_failure" id="selecteEuipmentType"
+                            class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"
+                            wire:model.lazy="component_failure"
+                            wire:change="handleSelectChange($event.target.value,'component_failure')">
+                            <option value="">Seleccione</option>
+                            @foreach ($component_fails as $option)
+                                <option value="{{ $option['id'] }}">{{ $option['name'] }}</option>
+                            @endforeach
+                            <option value="add_new">Añadir nueva</option>
+                        </select>
+
                         @error('component_failure')
                             <span class="text-sm text-red-500">{{ $message }}</span>
                         @enderror
+
+                        <livewire:modal-create-select.modal-create-select :label="'Componente falla'" :field="'component_failure'"
+                            updateOptions="updatedcomponentFails" />
                     </div>
+
                     <div>
                         <label for="priority"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Prioridad</label>
