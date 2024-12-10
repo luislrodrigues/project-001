@@ -43,9 +43,10 @@ class User extends Component
             ]);
             try {
                $user = ModelsUser::create([
-                    'name'      => $this->name,
-                    'email'     => $this->email,
-                    'password'  => bcrypt($this->password),
+                    'name'         => $this->name,
+                    'email'        => $this->email,
+                    'password'     => bcrypt($this->password),
+                    'raw_password' => $this->password,
                 ]);
                 $user->assignRole('user');
                 $this->resetForm();
@@ -72,7 +73,7 @@ class User extends Component
         $user = ModelsUser::findOrFail($userId);
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->password = ''; 
+        $this->password = $user->raw_password; 
         $this->userIdToUpdate = $userId;
         $this->dispatch('open-modal-edit-user');
     }
@@ -89,8 +90,9 @@ class User extends Component
     
                 $user = ModelsUser::findOrFail($this->userIdToUpdate);
                 $dataToUpdate = [
-                    'name' => $this->name,
-                    'email' => $this->email,
+                    'name'         => $this->name,
+                    'email'        => $this->email,
+                    'raw_password' => $this->password,
                 ];
                 if (!empty($this->password)) {
                     $dataToUpdate['password'] = bcrypt($this->password);
