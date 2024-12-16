@@ -169,6 +169,7 @@
                             <option value="">Selecione</option>
                             <option value="Alta">Alta</option>
                             <option value="Media">Media</option>
+                            <option value="Baja">Baja</option>
                         </select>
                         @error('priority')
                             <span class="text-sm text-red-500">{{ $message }}</span>

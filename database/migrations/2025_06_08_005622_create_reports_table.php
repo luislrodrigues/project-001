@@ -22,7 +22,7 @@ return new class extends Migration
             $table->foreignId('component_fail_id')->constrained('component_fails')->onDelete('cascade');
             $table->foreignId('mechanism_fail_id')->constrained('mechanism_fails')->onDelete('cascade');
             $table->json('recommendations')->nullable();
-            $table->enum('priority',['Alta','Media']);
+            $table->enum('priority',['Alta','Media','Baja']);
             $table->string('ot_created')->nullable();
             $table->string('status_ot')->nullable();
             $table->date('execution_date')->nullable();

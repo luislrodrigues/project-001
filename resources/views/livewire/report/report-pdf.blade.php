@@ -153,8 +153,14 @@
     </div>
     <div class="infoImg">
         <div class="image-container">
-            <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
-            <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2">
+            @if ($reportData->image_1)
+                <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
+            @endif
+            
+            @if ($reportData->image_2)
+                <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2">
+            @endif
+        
         </div>
     </div>
 
@@ -170,7 +176,7 @@
             </ul>
 
             @if(isset($reportData->diagnosis[$component->id]) && !empty($reportData->diagnosis[$component->id]))
-                <p><strong>Diagnóstico:</strong><br> {{ $reportData->diagnosis[$component->id] }}</p>
+                <p style="text-align: justify; margin: 0; padding: 0;"><strong>Diagnóstico:</strong><br> {{ $reportData->diagnosis[$component->id] }}</p>
             @else
                 <p><strong>Diagnóstico:</strong></p>
             @endif
