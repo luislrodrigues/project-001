@@ -50,7 +50,7 @@
                 @if (count($additionalFields ) > 0)
                     <div>
                         <label for="brand"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">marca</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Marca</label>
                         <select name="brand" id="selecteEuipmentType"
                             class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"
                             wire:model.lazy="brand"
