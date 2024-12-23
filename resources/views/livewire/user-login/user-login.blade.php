@@ -26,16 +26,27 @@
                                     <span class="text-red-500">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="mb-6">
-                                <label for="password" class="sr-only">Password</label>
-                                <input id="password" name="password" type="password" autocomplete="current-password"
-                                    required
-                                    class="appearance-none rounded-none relative block w-96 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                    placeholder="Contraseña" wire:model="password">
+                            <div class="relative">
+                                <div class="relative">
+                                    <input type="password" id="password"
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 pr-10 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                        placeholder="Contraseña" wire:model="password">
+                                    <span id="toggle-password"
+                                        class="absolute inset-y-0 right-3 flex items-center pointer-events-auto cursor-pointer text-gray-500 hover:text-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="w-5 h-5" id="eye-icon">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15.75 12c0 2.071-1.679 3.75-3.75 3.75S8.25 14.071 8.25 12s1.679-3.75 3.75-3.75 3.75 1.679 3.75 3.75z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M2.25 12c2.11 3.472 5.398 5.25 9 5.25s6.89-1.778 9-5.25c-2.11-3.472-5.398-5.25-9-5.25S4.36 8.528 2.25 12z" />
+                                        </svg>
+                                    </span>
+                                </div>
                                 @error('password')
-                                    <span class="text-red-500">{{ $message }}</span>
+                                    <span class="text-sm text-red-500">{{ $message }}</span>
                                 @enderror
                             </div>
+                            
                         </div>
                         <div>
                             <button type="submit"
@@ -70,3 +81,30 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        
+        const passwordInput = document.getElementById('password');
+        const togglePassword = document.getElementById('toggle-password');
+        const eyeIcon = document.getElementById('eye-icon');
+
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+
+            if (type === 'text') {
+                eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223C2.845 9.528 2.25 11.24 2.25 12c2.11 3.472 5.398 5.25 9 5.25a10.923 10.923 0 004.782-1.047" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 12c0 2.071-1.679 3.75-3.75 3.75S8.25 14.071 8.25 12s1.679-3.75 3.75-3.75 3.75 1.679 3.75 3.75z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.35 19.65L19.65 4.35" />
+            `;
+            } else {
+                eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 12c0 2.071-1.679 3.75-3.75 3.75S8.25 14.071 8.25 12s1.679-3.75 3.75-3.75 3.75 1.679 3.75 3.75z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12c2.11 3.472 5.398 5.25 9 5.25s6.89-1.778 9-5.25c-2.11-3.472-5.398-5.25-9-5.25S4.36 8.528 2.25 12z" />
+            `;
+            }
+        });
+    </script>    
+@endpush
