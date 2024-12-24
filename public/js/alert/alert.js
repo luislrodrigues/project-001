@@ -23,7 +23,7 @@ const  alertSuccess  = (message) => {
 };
 const  alertInfo  = (message) => {
     Swal.fire({
-        title: "Éxito!",
+        title: "Atencion!",
         text: message,
         icon: "info"
       });

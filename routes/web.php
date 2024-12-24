@@ -2,6 +2,7 @@
 
 use App\Livewire\Company\Company;
 use App\Livewire\ComponentManager\ComponentManager;
+use App\Livewire\ComponentType\ComponentType;
 use App\Livewire\Equipment\Equipment;
 use App\Livewire\Report\Report;
 use App\Livewire\User\User;
@@ -37,5 +38,6 @@ Route::middleware([
     Route::get('/component', ComponentManager::class)->name('component');
     Route::get('/equipment', Equipment::class)->name('equipment')->middleware('permission:consult equipment');
     Route::get('/user', User::class)->name('user')->middleware('permission:consult user');
+    Route::get('/componentType', ComponentType::class)->name('componentType');
 });
 

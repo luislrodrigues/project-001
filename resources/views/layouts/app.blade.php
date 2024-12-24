@@ -37,6 +37,10 @@
                 <i class="fas fa-weight"></i>
                 <span class="font-medium transition-all duration-200 opacity-0">Componentes</span>
             </a>
+            <a href="{{ route('componentType') }}" title="Tipo de componentes" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('componentType')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
+                <i class="fas fa-snowplow"></i>
+                <span class="font-medium transition-all duration-200 opacity-0">Tipo de Componentes</span>
+            </a>
             <a href="{{ route('equipment') }}" title="Equipos" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('equipment')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
                 <i class="fas fa-cog"></i>
                 <span class="font-medium transition-all duration-200 opacity-0">Equipos</span>
