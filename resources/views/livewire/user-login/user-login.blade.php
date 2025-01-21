@@ -76,6 +76,9 @@
                             </div>
                         </div>
                     </form>
+                    <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer" wire:click="rememberPassword" >
+                        {{ __('¿Olvidaste tu contraseña?') }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -105,6 +108,14 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12c2.11 3.472 5.398 5.25 9 5.25s6.89-1.778 9-5.25c-2.11-3.472-5.398-5.25-9-5.25S4.36 8.528 2.25 12z" />
             `;
             }
+        });
+
+        Livewire.on('alertSuccess', (message) => {
+            alertSuccess(message);
+        });
+
+        Livewire.on('alertFailed', (message) => {
+            alertFailed(message);
         });
     </script>    
 @endpush

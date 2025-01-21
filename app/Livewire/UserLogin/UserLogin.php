@@ -6,6 +6,8 @@ use App\Models\User;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+
 class UserLogin extends Component
 {
     public $email;
@@ -49,6 +51,17 @@ class UserLogin extends Component
 
         $request->session()->regenerateToken();
         return redirect()->intended('/'); 
+    }
+
+    public function rememberPassword(){
+        $recipient = 'luisleonardor4@gmail.com';
+        Mail::send([], [], function ($message) use ($recipient) {
+            $message->to($recipient)
+                    ->subject('Envio de reporte')
+                    ->html('Este es un correo de prueba.');
+        });
+
+        $this->dispatch('alertSuccess', 'Se envio la contraseña a su correo electronico');
     }
     public function render()
     {
