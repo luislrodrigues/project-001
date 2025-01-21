@@ -63,7 +63,7 @@
                                 </span>
                                 Iniciar sesión
                             </button>
-                            <div wire:loading wire:target="attemptLogin">
+                            <div wire:loading wire:target="attemptLogin,rememberPassword">
                                 <div class="fixed top-0 left-0 w-full h-full flex items-center justify-center  z-50">
                                     <svg class="animate-spin h-16 w-16 text-blue-600 mr-3"
                                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
