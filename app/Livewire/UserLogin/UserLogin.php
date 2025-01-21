@@ -54,14 +54,18 @@ class UserLogin extends Component
     }
 
     public function rememberPassword(){
-        $recipient = 'luisleonardor4@gmail.com';
-        Mail::send([], [], function ($message) use ($recipient) {
-            $message->to($recipient)
-                    ->subject('Envio de reporte')
-                    ->html('Este es un correo de prueba.');
-        });
-
-        $this->dispatch('alertSuccess', 'Se envio la contraseña a su correo electronico');
+        
+        $user = User::where('email',$this->email)->first();
+        if($user){
+            Mail::send([], [], function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Envio de contraseña')
+                        ->html("Su contraseña actual es $user->raw_password.");
+            });
+            $this->dispatch('alertSuccess', 'Se envio la contraseña a su correo electronico');
+        }else{
+            $this->dispatch('alertFailed', 'El correo que ingreso no se encuentra registrado.');
+        }
     }
     public function render()
     {
