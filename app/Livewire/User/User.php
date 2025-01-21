@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User;
 
+use App\Models\Company;
 use App\Models\User as ModelsUser;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Validation\Rule;
@@ -12,21 +13,30 @@ class User extends Component
 
 {
     use WithPagination;
-    public  $search, $status,$name,$email,$password,$userIdToUpdate;
+    public  $search, $status,$name,$email,$password,$userIdToUpdate,$area,$workstation,$company_id,$company_search,$companies;
     
+
+    
+    public function mount()
+    {
+        $this->companies = Company::whereNull('deleted_at')->where('status','active')->get();
+    }
     public function render()
     {
         $users = ModelsUser::query();
         if (!empty($this->status)) {
             $users->where('status', $this->status);
         }
+        if (!empty($this->company_search)) {
+            $users->where('company_id', $this->company_search);
+         }
         if (!empty($this->search)) {
             $users->where(function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                       ->orWhere('email', 'like', '%' . $this->search . '%');
             });
         }
-        $users = $users->paginate(10); 
+        $users = $users->with('company')->paginate(10); 
         return view('livewire.user.user', [
             'users'   => $users
         ])->layout('layouts.app');
@@ -37,9 +47,12 @@ class User extends Component
     {
         if (auth()->user()->can('save user')) {
             $this->validate([
-                'name'      => ['bail', 'required', 'string','max:255'],
-                'email'     => ['bail', 'required', 'email', Rule::unique('users')->whereNull('deleted_at')],
-                'password'  => ['bail','string', 'nullable', 'min:8'],
+                'name'       => ['bail', 'required', 'string','max:255'],
+                'workstation'=> ['bail', 'required', 'string','max:255'],
+                'area'       => ['bail', 'required', 'string','max:255'],
+                'company_id' => ['required', 'integer','exists:companies,id'],
+                'email'      => ['bail', 'required', 'email', Rule::unique('users')->whereNull('deleted_at')],
+                'password'   => ['bail','string', 'nullable', 'min:8'],
             ]);
             try {
                $user = ModelsUser::create([
@@ -64,7 +77,7 @@ class User extends Component
 
     public function resetForm()
     {
-        $this->reset(['name', 'email', 'password','userIdToUpdate']);
+        $this->reset(['name', 'email', 'password','userIdToUpdate','company_id','workstation','area']);
         $this->resetValidation();
     }
 
@@ -72,6 +85,9 @@ class User extends Component
     {
         $user = ModelsUser::findOrFail($userId);
         $this->name = $user->name;
+        $this->area = $user->area;
+        $this->workstation = $user->workstation;
+        $this->company_id = $user->company_id;
         $this->email = $user->email;
         $this->password = $user->raw_password; 
         $this->userIdToUpdate = $userId;
@@ -82,15 +98,22 @@ class User extends Component
     {
         if (auth()->user()->can('edit user')) {
             $this->validate([
-                'name'      => ['bail', 'required', 'string','max:255'],
-                'email'     => ['bail', 'required', 'email', Rule::unique('users')->ignore($this->userIdToUpdate)->whereNull('deleted_at')],
-                'password'  => ['bail','string', 'nullable', 'min:8'],
+                'name'       => ['bail', 'required', 'string','max:255'],
+                'workstation'=> ['bail', 'required', 'string','max:255'],
+                'company_id' => ['required', 'integer','exists:companies,id'],
+                'area'       => ['bail', 'required', 'string','max:255'],
+                'email'      => ['bail', 'required', 'email', Rule::unique('users')->ignore($this->userIdToUpdate)->whereNull('deleted_at')],
+                'password'   => ['bail','string', 'nullable', 'min:8'],
             ]);
             try{
     
                 $user = ModelsUser::findOrFail($this->userIdToUpdate);
                 $dataToUpdate = [
                     'name'         => $this->name,
+                    'email'        => $this->email,
+                    'company_id'   => $this->company_id,
+                    'workstation'  => $this->workstation,
+                    'area'         => $this->area,
                     'email'        => $this->email,
                     'raw_password' => $this->password,
                 ];

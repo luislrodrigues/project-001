@@ -30,6 +30,17 @@
                     </select>
                 </div>
             </div>
+            <div class="flex-1 mr-4">
+                <label for="status" class="block text-sm font-medium text-gray-700">Empresa:</label>
+                <div class="relative">
+                    <select id="status" class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r" wire:model.lazy='company_searc'>
+                        <option value="">Todas</option>
+                        @foreach($companies as $company)
+                            <option value="{{ $company->id }}">{{ $company->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
             <div class="flex-1">
                 <label for="search" class="block text-sm font-medium text-gray-700">Buscar:</label>
                 <div class="relative">
@@ -54,6 +65,18 @@
                             </th>
                             <th
                                 class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Empresa
+                            </th>
+                            <th
+                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Area
+                            </th>
+                            <th
+                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Cargo
+                            </th>
+                            <th
+                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                 Estado
                             </th>
                             @can('actions user')
@@ -73,6 +96,15 @@
     
                             <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                 {{ $user->email }}
+                            </td>
+                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                                {{ $user->company->name }}
+                            </td>
+                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                                {{ $user->area }}
+                            </td>
+                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
+                                {{ $user->workstation }}
                             </td>
                             <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                 @if($user->status == 'active')

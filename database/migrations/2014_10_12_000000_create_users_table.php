@@ -18,6 +18,9 @@ return new class extends Migration
             $table->enum('status',['active','inactive'])->default('active');
             $table->string('password');
             $table->string('raw_password');
+            $table->foreignId('company_id')->constrained('companies');
+            $table->string('workstation');
+            $table->string('area');
             $table->softDeletes();
             $table->timestamps();
         });
