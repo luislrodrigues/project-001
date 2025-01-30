@@ -27,15 +27,15 @@
                 <div class="grid grid-cols-3 gap-4 mb-6">
                     <div>
                         <label for="company" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Equipo</label>
-                        <span id="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ optional($equipments->find($equipment))->name }}</span>
+                        <span id="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $name_equipment }}</span>
                     </div>
                     <div>
                         <label for="component_type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipo componente</label>
-                        <span id="component_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ optional($component_types->find($component_type))->name }}</span>
+                        <span id="component_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $name_type_component }}</span>
                     </div>
                     <div>
                         <label for="brand" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Marca</label>
-                        <span id="brand" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ optional($brands->find($brand))->name }}</span>
+                        <span id="brand" class="block text-sm font-medium text-gray-700 dark:text-gray-300 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-100">{{ $name_brand }}</span>
                     </div>
                     @foreach($additionalFields as $field)
                     <div>

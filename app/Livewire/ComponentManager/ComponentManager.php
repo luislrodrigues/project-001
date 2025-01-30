@@ -16,7 +16,7 @@ class ComponentManager extends Component
 {
     use WithPagination;
     public $type_search,$equipment_search,$company_search,$brand_search;
-    public $componentIdToUpdate,$component_type,$equipment,$brand;
+    public $componentIdToUpdate,$component_type,$equipment,$brand,$name_equipment,$name_type_component,$name_brand;
     public $additionalFields = [];
     public $fieldValues = [];
     public $brands = [];
@@ -71,6 +71,9 @@ class ComponentManager extends Component
         $component = ModelsComponent::findOrFail($componentId);
 
         if($component){
+            $this->name_equipment= $component->equipment->name;
+            $this->name_type_component= $component->componentType->name;
+            $this->name_brand= $component->brand->name;
             $this->componentIdToUpdate = $component->id;
             $this->equipment = $component->equipment_id;
             $this->brand = $component->brand_id;
