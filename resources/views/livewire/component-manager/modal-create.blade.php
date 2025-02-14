@@ -47,25 +47,23 @@
                     @error('component_type') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                 </div>
 
-                @if (count($additionalFields ) > 0)
-                    <div>
-                        <label for="brand"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Marca</label>
-                        <select name="brand" id="selecteEuipmentType"
-                            class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"
-                            wire:model.lazy="brand"
-                            wire:change="handleSelectChange($event.target.value,'brand')">
-                            <option value="">Seleccione</option>
-                            @foreach ($brands as $option)
-                                <option value="{{ $option['id'] }}">{{ $option['name'] }}</option>
-                            @endforeach
-                            <option value="add_new">Añadir nueva</option>
-                        </select>
+                <div>
+                    <label for="brand"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Marca</label>
+                    <select name="brand" id="selecteEuipmentType"
+                        class="block appearance-none w-full bg-white border border-gray-400 text-gray-700 py-2 px-4 pr-8 rounded-l leading-tight focus:outline-none focus:border-gray-500 focus:bg-white focus:border-l focus:border-r"
+                        wire:model.lazy="brand"
+                        wire:change="handleSelectChange($event.target.value,'brand')">
+                        <option value="">Seleccione</option>
+                        @foreach ($brands as $option)
+                            <option value="{{ $option['id'] }}">{{ $option['name'] }}</option>
+                        @endforeach
+                        <option value="add_new">Añadir nueva</option>
+                    </select>
 
-                        <livewire:modal-create-select.modal-create-select :label="'marca'" :field="'brand'"
-                            updateOptions="updatedBrands" />
-                    </div>
-                @endif
+                    <livewire:modal-create-select.modal-create-select :label="'marca'" :field="'brand'"
+                        updateOptions="updatedBrands" />
+                </div>
                 @foreach($additionalFields as $field)
                     <div>
                         <label for="campo{{$field->id}}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"> {{ $field->name }}     @if(isset($field->unit) && $field->unit) ({{ $field->unit }})@endif </label>
