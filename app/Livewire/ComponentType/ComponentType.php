@@ -105,7 +105,7 @@ class ComponentType extends Component
                     ]);
                     foreach ($this->fields as $field) {
                         $options = null;
-                        if($field['id']){
+                        if(isset($field['id'])){
                             if($field['type'] == 'select'){
                                 $options = json_encode( explode(';',$field['options']));
                             }
