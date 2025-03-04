@@ -41,26 +41,31 @@ class ComponentType extends Component
     public function saveTypeComponent(){
 
         if (auth()->user()->can('save equipment')) {
-            $rules = [
-                'name'         => ['bail','required','string','max:255',Rule::unique('component_types')->whereNull('deleted_at')]
-            ];
-            $this->validate($rules);
             if(count($this->fields) > 0){
                 foreach ($this->fields as $index => $field) {
-                    $this->validate([
+                    $rules = [
                         "fields.$index.name" => 'required|string|max:255',
                         "fields.$index.type" => 'required|string|max:255',
-                    ]);
+                    ];
+                    if($field['type'] == 'select'){
+                        $rules["fields.$index.options"] = 'required|string';
+                    }
+                    $this->validate($rules);
                 }
                 try {
                     $type_component = ModelsComponentType::create([
                         'name'               => $this->name,
                     ]);
                     foreach ($this->fields as $field) {
+                        $options = null;
+                        if($field['type'] == 'select'){
+                            $options = json_encode( explode(';',$field['options']));
+                        }
                         $type_component->componentTypeFields()->create([
                             'name' => $field['name'],
                             'type' => $field['type'],
                             'unit' => $field['unit'],
+                            'options' => $options,
                         ]);
                     }
                     $this->resetForm();
@@ -81,16 +86,16 @@ class ComponentType extends Component
     public function updateTypeComponent(){
 
         if (auth()->user()->can('save equipment')) {
-            $rules = [
-                'name'         => ['bail','required','string','max:255',Rule::unique('component_types')->ignore($this->IdToUpdate)->whereNull('deleted_at')]
-            ];
-            $this->validate($rules);
             if(count($this->fields) > 0){
                 foreach ($this->fields as $index => $field) {
-                    $this->validate([
+                    $rules = [
                         "fields.$index.name" => 'required|string|max:255',
                         "fields.$index.type" => 'required|string|max:255',
-                    ]);
+                    ];
+                    if($field['type'] == 'select'){
+                        $rules["fields.$index.options"] = 'required|string';
+                    }
+                    $this->validate($rules);
                 }
                 try {
                     $type_component = ModelsComponentType::findOrFail($this->IdToUpdate);
@@ -99,17 +104,23 @@ class ComponentType extends Component
                         'name'               => $this->name,
                     ]);
                     foreach ($this->fields as $field) {
+                        $options = null;
                         if($field['id']){
+                            if($field['type'] == 'select'){
+                                $options = json_encode( explode(';',$field['options']));
+                            }
                             $type_component->componentTypeFields()->where('id', $field['id'])->update([
                                 'name' => $field['name'],
                                 'type' => $field['type'],
                                 'unit' => $field['unit'],
+                                'options' => $options,
                             ]);
                         }else{
                             $type_component->componentTypeFields()->create([
                                 'name' => $field['name'],
                                 'type' => $field['type'],
                                 'unit' => $field['unit'],
+                                'options' => $options,
                             ]);
                         }
                     }
@@ -148,7 +159,7 @@ class ComponentType extends Component
 
     public function addField()
     {
-        $this->fields[] = ['name' => '', 'type' => '', 'unit' => ''];
+        $this->fields[] = ['name' => '', 'type' => '', 'unit' => '','options'=>[]];
     }
 
 
@@ -160,11 +171,16 @@ class ComponentType extends Component
 
     public function loadEquipment($id){
         $type_component = ModelsComponentType::findOrFail($id);
-
         if($type_component){
             $this->IdToUpdate = $type_component->id;
             $this->name = $type_component->name;
             $this->fields =  $type_component->componentTypeFields->toArray();
+            foreach ($this->fields as &$field) {
+                if ($field['type'] == 'select') {
+                    $field['options'] = implode(';', json_decode($field['options']));
+                }
+            }
+            unset($field);
         }
     }
 

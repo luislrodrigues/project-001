@@ -46,7 +46,7 @@
                     <div class="mb-6">
                         <h4 class="font-semibold text-lg mb-2">Atributos</h4>
                         @foreach ($fields as $index => $field)
-                            <div class="grid grid-cols-4 gap-4 mb-4">
+                            <div class="grid grid-cols-5 gap-4 mb-4">
                                 <div>
                                     <label for="name"
                                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre</label>
@@ -81,6 +81,17 @@
                                         placeholder="Ingresar unidad"
                                         wire:model.defer="fields.{{ $index }}.unit">
                                     @error("fields.$index.unit")
+                                        <span class="text-sm text-red-500">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="options"
+                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Opciones</label>
+                                    <input type="text" id="options"
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                        placeholder="Ingresar opciones"
+                                        wire:model.defer="fields.{{ $index }}.options">
+                                    @error("fields.$index.options")
                                         <span class="text-sm text-red-500">{{ $message }}</span>
                                     @enderror
                                 </div>
