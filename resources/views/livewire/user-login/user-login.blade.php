@@ -1,9 +1,6 @@
-<div class="flex min-h-screen w-full">
-    <div class="w-3/5 sm:w-3/5 hidden sm:block ">
-        <img src="{{ asset('images/login.jpg') }}" alt="Descripción de la imagen" class="w-full h-full object-cover">
-    </div>
-    <div class="flex-1  flex justify-center items-center">
-        <div class="min-h-screen flex items-center justify-center  py-12 px-4 sm:px-6 lg:px-8">
+<div class="flex min-h-screen w-full justify-center items-center bg-gray-50">
+    <div class="flex-1 flex justify-center items-center">
+    <div class="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-md w-full  overflow-hidden sm:rounded-lg sm:overflow-hidden">
                 <div class="px-6 py-8">
                     <div class="flex justify-center">
@@ -46,7 +43,7 @@
                                     <span class="text-sm text-red-500">{{ $message }}</span>
                                 @enderror
                             </div>
-                            
+
                         </div>
                         <div>
                             <button type="submit"
@@ -87,7 +84,7 @@
 
 @push('scripts')
     <script>
-        
+
         const passwordInput = document.getElementById('password');
         const togglePassword = document.getElementById('toggle-password');
         const eyeIcon = document.getElementById('eye-icon');
@@ -117,5 +114,5 @@
         Livewire.on('alertFailed', (message) => {
             alertFailed(message);
         });
-    </script>    
+    </script>
 @endpush
