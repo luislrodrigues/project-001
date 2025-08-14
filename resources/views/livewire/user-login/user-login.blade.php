@@ -1,5 +1,4 @@
 <div class="relative min-h-screen w-full flex flex-col justify-center items-center" style="background: url('{{ asset('images/login-1.jpg') }}') no-repeat center center/cover;">
-    <div class="absolute inset-0 bg-white bg-opacity-10"></div>
     <div class="relative w-full flex flex-col justify-center items-center min-h-screen">
         <div class="w-full max-w-md min-h-[600px] flex flex-col justify-center items-center border-2 border-white-200 shadow-2xl rounded-2xl bg-white p-8">
                 <div class="px-6 py-8">
