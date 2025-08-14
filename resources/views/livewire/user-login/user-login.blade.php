@@ -3,7 +3,7 @@
         <div class="w-full max-w-md min-h-[600px] flex flex-col justify-center items-center border-2 border-white shadow-2xl rounded-2xl bg-white p-8">
                 <div class="px-6 py-8">
                     <div class="flex justify-center mb-12 mt-2">
-                        <img src="{{ asset('images/logo-2.jpg') }}" width="290px">
+                        <img src="{{ asset('images/logo-2.jpg') }}" width="400px">
                     </div>
                     </svg>
                     <form class="mt-8 space-y-6" wire:submit.prevent="attemptLogin">
