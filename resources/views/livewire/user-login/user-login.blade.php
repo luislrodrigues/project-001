@@ -1,14 +1,14 @@
-<div class="flex min-h-screen w-full justify-center items-center bg-gray-50">
-    <div class="flex-1 flex justify-center items-center">
-    <div class="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-md w-full  overflow-hidden sm:rounded-lg sm:overflow-hidden">
+<div class="relative min-h-screen w-full flex flex-col justify-center items-center" style="background: url('{{ asset('images/login.jpg') }}') no-repeat center center/cover;">
+    <div class="absolute inset-0 bg-white bg-opacity-10"></div>
+    <div class="relative w-full flex flex-col justify-center items-center min-h-screen">
+        <div class="w-full max-w-md min-h-[600px] flex flex-col justify-center items-center border-2 border-white-200 shadow-2xl rounded-2xl bg-white p-8">
                 <div class="px-6 py-8">
-                    <div class="flex justify-center">
-                        <img src="{{ asset('images/logo-1.JPG') }}" width="180px">
+                    <div class="flex justify-center mb-12 mt-2">
+                        <img src="{{ asset('images/logo-1.JPG') }}" width="260px">
                     </div>
                     </svg>
                     <form class="mt-8 space-y-6" wire:submit.prevent="attemptLogin">
-                        <div class="rounded-md shadow-sm space-y-4">
+                        <div class="rounded-md shadow-sm space-y-12">
                             @if (session()->has('error'))
                                 <div class="mb-6">
                                     <span class="text-red-500">{{ session('error') }}</span>
@@ -47,17 +47,7 @@
                         </div>
                         <div>
                             <button type="submit"
-                                class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-indigo-500 group-hover:text-indigo-400"
-                                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                        aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                        <path fill-rule="evenodd"
-                                            d="M3 4a3 3 0 013-3h8a3 3 0 013 3v8a3 3 0 01-3 3H6a3 3 0 01-3-3V4zm10 2a1 1 0 10-2 0v6a1 1 0 102 0V6z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </span>
+                                class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-lg font-bold rounded-md text-white bg-blue-900 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-900">
                                 Iniciar sesión
                             </button>
                             <div wire:loading wire:target="attemptLogin,rememberPassword">
@@ -73,7 +63,7 @@
                             </div>
                         </div>
                     </form>
-                    <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer" wire:click="rememberPassword" >
+                    <a class="block text-center text-lg font-semibold underline text-blue-900 hover:text-blue-800 rounded-md mt-8 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer" wire:click="rememberPassword" >
                         {{ __('¿Olvidaste tu contraseña?') }}
                     </a>
                 </div>
