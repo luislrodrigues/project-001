@@ -8,18 +8,20 @@ use GuzzleHttp\Psr7\Request;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
 
 class User extends Component
 
 {
     use WithPagination;
-    public  $search, $status,$name,$email,$password,$userIdToUpdate,$area,$workstation,$company_id,$company_search,$companies;
-    
+    public  $search, $status,$name,$email,$password,$userIdToUpdate,$workstation,$company_id,$company_search,$companies,$role_id,$roles;
 
-    
+
+
     public function mount()
     {
         $this->companies = Company::whereNull('deleted_at')->where('status','active')->get();
+        $this->roles = Role::where('guard_name', 'web')->get();
     }
     public function render()
     {
@@ -36,7 +38,7 @@ class User extends Component
                       ->orWhere('email', 'like', '%' . $this->search . '%');
             });
         }
-        $users = $users->with('company')->paginate(10); 
+        $users = $users->with('company')->paginate(10);
         return view('livewire.user.user', [
             'users'   => $users
         ])->layout('layouts.app');
@@ -49,7 +51,6 @@ class User extends Component
             $this->validate([
                 'name'       => ['bail', 'required', 'string','max:255'],
                 'workstation'=> ['bail', 'required', 'string','max:255'],
-                'area'       => ['bail', 'required', 'string','max:255'],
                 'company_id' => ['required', 'integer','exists:companies,id'],
                 'email'      => ['bail', 'required', 'email', Rule::unique('users')->whereNull('deleted_at')],
                 'password'   => ['bail','string', 'nullable', 'min:8'],
@@ -58,10 +59,17 @@ class User extends Component
                $user = ModelsUser::create([
                     'name'         => $this->name,
                     'email'        => $this->email,
+                    'company_id'   => $this->company_id,
+                    'workstation'  => $this->workstation,
                     'password'     => bcrypt($this->password),
                     'raw_password' => $this->password,
                 ]);
-                $user->assignRole('user');
+                if ($this->role_id) {
+                    $role = Role::find($this->role_id);
+                    if ($role) {
+                        $user->assignRole($role->name);
+                    }
+                }
                 $this->resetForm();
                 $this->dispatch('close-modal-user');
                 $this->dispatch('alertSuccess','Se guardo el usuario correctamente');
@@ -73,11 +81,11 @@ class User extends Component
         }
     }
 
-    
+
 
     public function resetForm()
     {
-        $this->reset(['name', 'email', 'password','userIdToUpdate','company_id','workstation','area']);
+        $this->reset(['name', 'email', 'password','userIdToUpdate','company_id','workstation']);
         $this->resetValidation();
     }
 
@@ -85,12 +93,14 @@ class User extends Component
     {
         $user = ModelsUser::findOrFail($userId);
         $this->name = $user->name;
-        $this->area = $user->area;
         $this->workstation = $user->workstation;
         $this->company_id = $user->company_id;
         $this->email = $user->email;
-        $this->password = $user->raw_password; 
+        $this->password = $user->raw_password;
         $this->userIdToUpdate = $userId;
+        // Obtener el primer rol asignado al usuario
+        $role = $user->roles->first();
+        $this->role_id = $role ? $role->id : null;
         $this->dispatch('open-modal-edit-user');
     }
 
@@ -101,19 +111,17 @@ class User extends Component
                 'name'       => ['bail', 'required', 'string','max:255'],
                 'workstation'=> ['bail', 'required', 'string','max:255'],
                 'company_id' => ['required', 'integer','exists:companies,id'],
-                'area'       => ['bail', 'required', 'string','max:255'],
                 'email'      => ['bail', 'required', 'email', Rule::unique('users')->ignore($this->userIdToUpdate)->whereNull('deleted_at')],
                 'password'   => ['bail','string', 'nullable', 'min:8'],
             ]);
             try{
-    
+
                 $user = ModelsUser::findOrFail($this->userIdToUpdate);
                 $dataToUpdate = [
                     'name'         => $this->name,
                     'email'        => $this->email,
                     'company_id'   => $this->company_id,
                     'workstation'  => $this->workstation,
-                    'area'         => $this->area,
                     'email'        => $this->email,
                     'raw_password' => $this->password,
                 ];
@@ -121,6 +129,12 @@ class User extends Component
                     $dataToUpdate['password'] = bcrypt($this->password);
                 }
                 $user->update($dataToUpdate);
+                if ($this->role_id) {
+                    $role = Role::find($this->role_id);
+                    if ($role) {
+                        $user->syncRoles([$role->name]);
+                    }
+                }
                 $this->resetForm();
                 $this->dispatch('close-modal-user');
                 $this->dispatch('alertSuccess', 'Se actualizó el usuario correctamente');

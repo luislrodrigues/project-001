@@ -58,7 +58,7 @@
                                 class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                 Nombre
                             </th>
-                
+
                             <th
                                 class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                 Correo
@@ -66,10 +66,6 @@
                             <th
                                 class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
                                 Empresa
-                            </th>
-                            <th
-                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
-                                Area
                             </th>
                             <th
                                 class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
@@ -93,7 +89,7 @@
                             <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                 {{ $user->name }}
                             </td>
-    
+
                             <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                 {{ $user->email }}
                             </td>
@@ -101,10 +97,7 @@
                                 {{ $user->company->name }}
                             </td>
                             <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                {{ $user->area }}
-                            </td>
-                            <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
-                                {{ $user->workstation }}
+                                {{ $user->getRoleNames()->first() }}
                             </td>
                             <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm text-center">
                                 @if($user->status == 'active')
