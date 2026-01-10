@@ -72,6 +72,13 @@
 
         <!-- Navigation -->
         <nav class="px-4 py-4 space-y-2 overflow-y-auto" style="max-height: calc(100vh - 200px);">
+            <a href="{{ route('home') }}" wire:navigate
+               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('home') || request()->routeIs('dashboard')) nav-item-active @else nav-item-hover @endif"
+               title="Inicio">
+                <i class="fas fa-home text-lg w-5"></i>
+                <span id="nav-text-home" class="font-medium transition-opacity duration-300">Inicio</span>
+            </a>
+
             <a href="{{ route('report') }}" wire:navigate
                class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('report')) nav-item-active @else nav-item-hover @endif"
                title="Informes">
@@ -141,6 +148,8 @@
                     @php
                         $routeName = request()->route()->getName();
                         $titles = [
+                            'home' => 'Dashboard',
+                            'dashboard' => 'Dashboard',
                             'report' => 'Informes',
                             'component' => 'Componentes',
                             'componentType' => 'Tipos de Componentes',
@@ -150,6 +159,8 @@
                             'profile' => 'Mi Perfil',
                         ];
                         $descriptions = [
+                            'home' => 'Panel principal del sistema',
+                            'dashboard' => 'Panel principal del sistema',
                             'report' => 'Gestiona y visualiza los informes del sistema',
                             'component' => 'Administra los componentes de los equipos',
                             'componentType' => 'Configura los tipos de componentes disponibles',

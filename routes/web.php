@@ -3,6 +3,7 @@
 use App\Livewire\Company\Company;
 use App\Livewire\ComponentManager\ComponentManager;
 use App\Livewire\ComponentType\ComponentType;
+use App\Livewire\Dashboard\Dashboard;
 use App\Livewire\Equipment\Equipment;
 use App\Livewire\Report\Report;
 use App\Livewire\User\User;
@@ -34,6 +35,8 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::post('/logoutUser', [UserLogin::class, 'logoutUser'])->name('logoutUser');
+    Route::get('/home', Dashboard::class)->name('home');
+    Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/profile', UserProfile::class)->name('profile');
     Route::get('/report', Report::class)->name('report')->middleware('permission:consult report');
     Route::get('/company', Company::class)->name('company')->middleware('permission:consult company');
