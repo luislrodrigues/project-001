@@ -28,11 +28,22 @@ class Component extends Model
     }
     public function values()
     {
-        return $this->hasMany(ComponentTypeValue::class,'id_component');
+        return $this->hasMany(ComponentTypeValue::class, 'component_id');
     }
+    /**
+     * Campos del tipo de componente (no son directos del componente)
+     */
     public function fields()
     {
-        return $this->hasMany(ComponentTypeField::class,'component_type_id','component_type_id');
+        return $this->hasMany(ComponentTypeField::class, 'component_type_id', 'component_type_id');
+    }
+
+    /**
+     * Valores de los campos dinámicos del componente
+     */
+    public function fieldValues()
+    {
+        return $this->hasMany(ComponentTypeValue::class, 'component_id');
     }
     public function brand()
     {

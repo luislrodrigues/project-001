@@ -80,10 +80,14 @@ class ComponentManager extends Component
             $this->component_type = $component->component_type_id;
             $this->updatedComponentType($component->component_type_id);
     
-            $componentTypeValues = ComponentTypeValue::where('id_component', $component->id)->get();
+            // Cargar valores del componente (corregido: usar component_id)
+            $componentTypeValues = ComponentTypeValue::where('component_id', $component->id)->get();
     
             foreach ($componentTypeValues as $value) {
-                $this->fieldValues[$value->component_type_field_id] = $value->value;
+                // Si tiene opción asociada, usar el value de la opción, sino el valor directo
+                $this->fieldValues[$value->component_type_field_id] = $value->option_id 
+                    ? $value->option->value 
+                    : $value->value;
             }
          }
     }
@@ -112,10 +116,27 @@ class ComponentManager extends Component
                     "brand_id"          => $this->brand,
                 ]);
                 foreach ($this->fieldValues as $typeId => $value) {
+                    if (empty($value)) continue; // Saltar valores vacíos
+                    
+                    $field = ComponentTypeField::find($typeId);
+                    $optionId = null;
+                    $storedValue = $value;
+                    
+                    // Si el campo tiene opciones, buscar si el valor corresponde a una opción
+                    if ($field && $field->hasOptions()) {
+                        $option = $field->options()->where('value', $value)->first();
+                        if ($option) {
+                            $optionId = $option->id;
+                            $storedValue = $option->value;
+                        }
+                    }
+                    
                     ComponentTypeValue::create([
-                        'id_component'            => $component->id,
+                        'component_id'            => $component->id,
                         'component_type_field_id' => $typeId,
-                        'value'                   => $value,
+                        'option_id'               => $optionId,
+                        'value'                   => $storedValue,
+                        'raw_value'               => $value, // Guardar valor original
                     ]);
                 }
                 $this->resetForm();
@@ -155,16 +176,31 @@ class ComponentManager extends Component
                     "component_type_id" => $this->component_type,
                     "brand_id"          => $this->brand,
                 ]);
-                ComponentTypeValue::where('id_component', $component->id)->delete();
+                // Eliminar valores antiguos y crear nuevos
+                ComponentTypeValue::where('component_id', $component->id)->delete();
+                
                 foreach ($this->fieldValues as $typeId => $value) {
-                    ComponentTypeValue::updateOrCreate(
-                        ['id_component' => $component->id, 'component_type_field_id' => $typeId],
-                        ['value' => $value]
-                    );
+                    if (empty($value)) continue; // Saltar valores vacíos
+                    
+                    $field = ComponentTypeField::find($typeId);
+                    $optionId = null;
+                    $storedValue = $value;
+                    
+                    // Si el campo tiene opciones, buscar si el valor corresponde a una opción
+                    if ($field && $field->hasOptions()) {
+                        $option = $field->options()->where('value', $value)->first();
+                        if ($option) {
+                            $optionId = $option->id;
+                            $storedValue = $option->value;
+                        }
+                    }
+                    
                     ComponentTypeValue::create([
-                        'id_component'            => $component->id,
+                        'component_id'            => $component->id,
                         'component_type_field_id' => $typeId,
-                        'value'                   => $value,
+                        'option_id'               => $optionId,
+                        'value'                   => $storedValue,
+                        'raw_value'               => $value,
                     ]);
                 }
     
@@ -183,10 +219,24 @@ class ComponentManager extends Component
     public function updatedComponentType($value)
     {
         $this->component_type = $value;
-        $this->additionalFields = ComponentTypeField::where('component_type_id', $this->component_type)->get();
+        // Cargar campos con sus opciones (nuevo sistema)
+        $this->additionalFields = ComponentTypeField::with('options')
+            ->where('component_type_id', $this->component_type)
+            ->ordered()
+            ->get();
+        
+        // Para compatibilidad: asegurar que opciones estén disponibles
         foreach ($this->additionalFields as $field) {
-            if ($field->type == 'select') {
-                $field->options = json_decode($field->options);
+            if (in_array($field->type, ['select', 'multiselect'])) {
+                // Usar nuevas opciones si existen, sino usar formato antiguo
+                if ($field->options->count() > 0) {
+                    $field->optionsArray = $field->options->pluck('value')->toArray();
+                } elseif (!empty($field->options)) {
+                    // Fallback a formato antiguo
+                    $field->optionsArray = json_decode($field->options, true) ?? [];
+                } else {
+                    $field->optionsArray = [];
+                }
             }
         }
         $this->fieldValues = [];
@@ -198,7 +248,7 @@ class ComponentManager extends Component
         $this->reset(['componentIdToUpdate','component_type','equipment','brand']);
         $this->resetValidation();
     }
-    protected $listeners = ['destroy','updatedBrands'];
+    protected $listeners = ['destroy','updatedBrands','item-saved'];
 
     public function destroy($id)
     {
@@ -218,10 +268,23 @@ class ComponentManager extends Component
         }
     }
 
-    public function handleSelectChange($value, $field)
+    // Método para abrir el modal de gestión (si se necesita desde algún lugar)
+    public function openManageModal($field)
     {
-        if ($value === 'add_new') {
-            $this->dispatch('open-modal-select', $field);
+        $this->dispatch('open-modal-select', $field);
+    }
+    public function itemSaved($data)
+    {
+        $field = $data['field'] ?? null;
+        $id = $data['id'] ?? null;
+
+        if ($field && $id) {
+            // Actualizar la propiedad correspondiente con el ID del nuevo registro
+            switch ($field) {
+                case 'brand':
+                    $this->brand = $id;
+                    break;
+            }
         }
     }
     public function updatedBrands()

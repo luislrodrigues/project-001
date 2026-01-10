@@ -33,9 +33,9 @@ class Report extends Component
     public $component_fails = [];
     public $mechanism_fails = [];
     public $conditions = [];
-    
-    
-    protected $listeners = ['destroy','updatedConditions','updatedmechanismFails','updatedcomponentFails'];
+
+
+    protected $listeners = ['destroy','updatedConditions','updatedmechanismFails','updatedcomponentFails','item-saved'];
 
 
     public function mount()
@@ -67,7 +67,7 @@ class Report extends Component
          }
         $equipments = Equipment::where('status','active')->get();
 
-        $reports =$reports->paginate(10); 
+        $reports =$reports->paginate(10);
         return view('livewire.report.report', [
             'reports'      =>$reports,
             'equipments'   =>$equipments,
@@ -116,7 +116,7 @@ class Report extends Component
 
                 if ($this->image_1)$imagePath1 = $this->image_1->store('images', 'public');
                 if ($this->image_2)$imagePath2 = $this->image_2->store('images', 'public');
-                
+
                 $dataCreate = [
                     'equipment_id'                => $this->equipment,
                     'measurement_date'            => $this->measurement_date,
@@ -195,8 +195,8 @@ class Report extends Component
         $this->components = ModelsComponent::where('equipment_id',$report->equipment_id)->where('status','active')->get();
     }
 
-    
-    
+
+
 
     public function updateReport()
     {
@@ -294,9 +294,9 @@ class Report extends Component
 
             // Añadir encabezados
             $headings = [
-                'EMPRESA', 'EQUIPO', 'TIPO EQUIPO','FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO', 'TIPO COMPONENTE', 'TAG', 'DESCRIPCIÓN','CODIGO', 'POT (HP)', 
-                'RPM', 'MARCA', 'REFERENCIA MOTOR', 'FRAME', 'RODA. LL', 'ROD. LA', 'REF. CHUMACERAS', 'ROD. CHUMACERAS', 
-                'DIAGNÓSTICO', 'CONDICIÓN', 'MECANISMO FALLA', 'COMPONENTE EN FALLA', 'RECOMENDACIÓN', 'PRIORIDAD', 'OT CREADA', 
+                'EMPRESA', 'EQUIPO', 'TIPO EQUIPO','FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO', 'TIPO COMPONENTE', 'TAG', 'DESCRIPCIÓN','CODIGO', 'POT (HP)',
+                'RPM', 'MARCA', 'REFERENCIA MOTOR', 'FRAME', 'RODA. LL', 'ROD. LA', 'REF. CHUMACERAS', 'ROD. CHUMACERAS',
+                'DIAGNÓSTICO', 'CONDICIÓN', 'MECANISMO FALLA', 'COMPONENTE EN FALLA', 'RECOMENDACIÓN', 'PRIORIDAD', 'OT CREADA',
                 'ESTADO DE OT', 'FECHA EJECUCIÓN', 'VERIFICACIÓN RECOMENDACIÓN', 'ANALISTA', 'Mes', 'Año'
             ];
             $sheet->fromArray($headings, NULL, 'A1');
@@ -331,10 +331,10 @@ class Report extends Component
                     ],
                 ],
             ];
-        
+
             // Aplicar estilo verde hasta la columna AB
             $sheet->getStyle('A1:AC1')->applyFromArray($greenStyle);
-        
+
             // Aplicar estilo azul a las columnas AC y AD
             $sheet->getStyle('AD1:AE1')->applyFromArray($blueStyle);
 
@@ -342,7 +342,7 @@ class Report extends Component
             $row = 2;
             foreach ($reports as $report) {
 
-     
+
                 foreach ($report->equipment->components as $component) {
                     $sheet->setCellValue('A' . $row, $report->equipment->company->name);
                     $sheet->setCellValue('B' . $row, $report->equipment->name);
@@ -352,7 +352,7 @@ class Report extends Component
                     $sheet->setCellValue('E' . $row, $report->equipment->ubication->name);
                     $sheet->setCellValue('F' . $row, $report->equipment->process->name);
                     $sheet->setCellValue('G' . $row, $component->componentType->name);
-    
+
                     $sheet->setCellValue('H' . $row, $report->equipment->tag);
                     $sheet->setCellValue('I' . $row, $report->equipment->description);
                     $sheet->setCellValue('J' . $row, $report->equipment->code);
@@ -371,8 +371,8 @@ class Report extends Component
                         if($field['name'] == 'Referencia Rodamientos' && $field->value)$sheet->setCellValue('S' . $row, $field->value->value);
                     }
                     $recommendations = ($report->recommendations);
-                    $recommendationsString = (is_array($recommendations) && array_key_exists($component->id, $recommendations) && is_array($recommendations[$component->id])) 
-                        ? implode(' ; ', $recommendations[$component->id]) 
+                    $recommendationsString = (is_array($recommendations) && array_key_exists($component->id, $recommendations) && is_array($recommendations[$component->id]))
+                        ? implode(' ; ', $recommendations[$component->id])
                         : '';
                     $diagnosis = json_decode($report->diagnosis,true);
                     $componentDiagnosis = (is_array($diagnosis) && array_key_exists($component->id, $diagnosis)) ? $diagnosis[$component->id] : '';
@@ -398,7 +398,7 @@ class Report extends Component
             for ($i = 0; $i < 31; $i++) { // Adjust the number (31) for your required range
                 $columns[] = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
             }
-            
+
             foreach ($columns as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
@@ -423,7 +423,7 @@ class Report extends Component
         $components = $this->reportData->equipment->components;
         $this->reportData->diagnosis = json_decode($this->reportData->diagnosis,true);
         // $this->reportData->recommendations = json_decode($this->reportData->recommendations,true);
-        
+
         $pdf = Pdf::loadView('livewire.report.report-pdf', [
             'reportData' => $this->reportData,
             'components' => $components
@@ -451,21 +451,21 @@ class Report extends Component
 
             if(is_array($recipients) && !empty($recipients)){
                 $pdf = $this->generatePdf($this->reportIdToUpdate);
-        
+
                 $tempPath = storage_path('app/temp');
-        
+
                 if (!file_exists($tempPath)) {
                     mkdir($tempPath, 0755, true);
                 }
-        
+
                 $pdfPath = $tempPath . '/reporte.pdf';
                 $pdf->save($pdfPath);
-                
+
                 Mail::send([], [], function ($message) use ($pdfPath,$recipients) {
                     $message->to($recipients)
                             ->subject('Envio de reporte')
                             ->html('Este es un correo de prueba.');
-        
+
                     $message->attach($pdfPath);
                 });
                 $this->dispatch('alertSuccess', 'Se envio correctamente');
@@ -501,7 +501,7 @@ class Report extends Component
                 $this->components = ModelsComponent::where('equipment_id',$value)->where('status','active')->get();
                 if($this->components){
                     foreach ($this->components as $component) {
-                        $this->recommendations[$component->id] = []; 
+                        $this->recommendations[$component->id] = [];
                     }
                 }else{
                     $this->recommendations = [];
@@ -522,10 +522,30 @@ class Report extends Component
         }
     }
 
-    public function handleSelectChange($value, $field)
+    public function openManageModal($field)
     {
-        if ($value === 'add_new') {
-            $this->dispatch('open-modal-select', $field);
+        $this->dispatch('open-modal-select', $field);
+    }
+
+    // Escuchar cuando se guarda un item para seleccionarlo automáticamente
+    public function itemSaved($data)
+    {
+        $field = $data['field'] ?? null;
+        $id = $data['id'] ?? null;
+
+        if ($field && $id) {
+            // Actualizar la propiedad correspondiente con el ID del nuevo registro
+            switch ($field) {
+                case 'condition':
+                    $this->condition = $id;
+                    break;
+                case 'failure_mechanism':
+                    $this->failure_mechanism = $id;
+                    break;
+                case 'component_failure':
+                    $this->component_failure = $id;
+                    break;
+            }
         }
     }
 

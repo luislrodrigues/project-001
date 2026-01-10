@@ -20,7 +20,7 @@ class Equipment extends Component
     public $ubications = [];
     public $companies = [];
 
-    protected $listeners = ['destroy','updatedEquipmentTypes','updatedProcesses','updatedUbications'];
+    protected $listeners = ['destroy','updatedEquipmentTypes','updatedProcesses','updatedUbications','item-saved'];
 
 
     public function mount()
@@ -47,7 +47,7 @@ class Equipment extends Component
                 $query->where('name', 'like', '%' . $this->search . '%');
             });
         }
-       $equipments =$equipments->paginate(10); 
+       $equipments =$equipments->paginate(10);
         return view('livewire.equipment.equipment', [
             'equipments'  =>$equipments,
         ])->layout('layouts.app');
@@ -97,14 +97,14 @@ class Equipment extends Component
                     'ubication_id'       => $this->ubication,
                     'equipment_type_id'  => $this->equipment_type,
                 ]);
-    
+
                 $this->resetForm();
                 $this->dispatch('close-modal-equipment');
                 $this->dispatch('alertSuccess','Se guardo el equipo correctamente');
             } catch (\Exception $e) {
                     $this->dispatch('alertFailed', 'Error al guardar el equipo: ' . $e->getMessage());
             }
- 
+
         } else {
             abort(403, 'No tienes los permisos requeridos.');
         }
@@ -167,7 +167,7 @@ class Equipment extends Component
             } catch (\Exception $e) {
                 $this->dispatch('alertFailed', 'Error al actualizar el equipo: ' . $e->getMessage());
             }
- 
+
         } else {
             abort(403, 'No tienes los permisos requeridos.');
         }
@@ -198,10 +198,30 @@ class Equipment extends Component
         $this->dispatch('updateOptions', $this->ubications);
     }
 
-    public function handleSelectChange($value, $field)
+    public function openManageModal($field)
     {
-        if ($value === 'add_new') {
-            $this->dispatch('open-modal-select', $field);
+        $this->dispatch('open-modal-select', $field);
+    }
+
+    // Escuchar cuando se guarda un item para seleccionarlo automáticamente
+    public function itemSaved($data)
+    {
+        $field = $data['field'] ?? null;
+        $id = $data['id'] ?? null;
+
+        if ($field && $id) {
+            // Actualizar la propiedad correspondiente con el ID del nuevo registro
+            switch ($field) {
+                case 'equipment_type':
+                    $this->equipment_type = $id;
+                    break;
+                case 'process':
+                    $this->process = $id;
+                    break;
+                case 'ubication':
+                    $this->ubication = $id;
+                    break;
+            }
         }
     }
 }
