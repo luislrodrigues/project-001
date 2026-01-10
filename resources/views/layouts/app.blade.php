@@ -9,10 +9,9 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Scripts -->
     <script type="text/javascript" src="{{ asset('js/alert/alert.js') }}"></script>
@@ -21,103 +20,257 @@
 
     <!-- Styles -->
     @livewireStyles
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 70px;
+        }
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+        .nav-item-active {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-left: 3px solid #fbbf24;
+        }
+        .nav-item-hover:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+    </style>
 </head>
-<body class="font-sans antialiased h-screen flex">
+<body class="font-sans antialiased bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
     @auth
-    <div id="sidebar" class="w-16 bg-white h-full flex flex-col transition-all duration-200 ease-in-out">
-        <div class="p-2 space-y-4 flex flex-col items-center">
-            <button id="menu-button" class="focus:outline-none self-center" onclick="expandSidebar()">
-                <i class="fas fa-bars text-cyan-500 text-lg text-black"></i>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-screen sidebar-gradient shadow-2xl z-40 transition-all duration-300 ease-in-out" style="width: var(--sidebar-width);">
+        <!-- Logo and Toggle -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-blue-400/30">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <i class="fas fa-cog text-white text-xl"></i>
+                </div>
+                <span id="logo-text" class="text-white font-bold text-xl transition-opacity duration-300">3Sanchez</span>
+            </div>
+            <button id="sidebar-toggle" onclick="toggleSidebar()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
+                <i class="fas fa-bars text-lg"></i>
             </button>
-            <a href="{{ route('report') }}" title="Informes" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('report')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
-                <i class="fas fa-file-alt"></i>
-                <span class="font-medium transition-all duration-200 opacity-0">Informes</span>
-            </a>
-            <a href="{{ route('component') }}" title="Componentes" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('component')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
-                <i class="fas fa-weight"></i>
-                <span class="font-medium transition-all duration-200 opacity-0">Componentes</span>
-            </a>
-            <a href="{{ route('componentType') }}" title="Tipo de componentes" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('componentType')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
-                <i class="fas fa-snowplow"></i>
-                <span class="font-medium transition-all duration-200 opacity-0">Tipo de Componentes</span>
-            </a>
-            <a href="{{ route('equipment') }}" title="Equipos" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('equipment')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
-                <i class="fas fa-cog"></i>
-                <span class="font-medium transition-all duration-200 opacity-0">Equipos</span>
-            </a>
-            <a href="{{ route('company') }}" title="Empresas" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('company')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
-                <i class="fas fa-building"></i>
-                <span class="font-medium transition-all duration-200 opacity-0">Empresas</span>
-            </a>
-            <a href="{{ route('user') }}" title="Usuarios" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group @if(request()->routeIs('user')) bg-blue-300 text-white @endif" onclick="highlightSidebarItem(this)">
-                <i class="fas fa-users"></i>
-                <span class="font-medium transition-all duration-200 opacity-0">Usuarios</span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-end w-full" aria-labelledby="navbarDropdown">
-                <a title="Cerrar sesión" id="logout" class="relative w-full px-3 py-3 flex items-center space-x-4 justify-start text-gray-500 rounded-lg group" href="{{ route('logoutUser') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span class="font-medium transition-all duration-200 opacity-0">Cerrar sesión</span>
-                </a>
-                <form id="logout-form" action="{{ route('logoutUser') }}" method="POST" class="hidden">
-                    @csrf
-                </form>
-            </div>
         </div>
-    </div>
 
-    <div class="flex-1 flex flex-col">
-        {{-- <nav class="bg-white border-b border-gray-300 w-full">
-            <div class="flex justify-between items-center px-6 bg-blue-300" style="height: 60px">
-                <!-- Removed the button from here -->
-            </div>
-        </nav> --}}
-        <div id="main-content" class="flex-1 bg-gray-100 transition-all duration-200 ease-in-out">
-            <main class="p-4">
-                {{$slot}}
-            </main>
+        <!-- User Profile Section -->
+        <div id="user-profile-section" class="px-4 py-4 border-b border-blue-400/30">
+            <a href="{{ route('profile') }}" wire:navigate class="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/15 transition-colors cursor-pointer">
+                <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg">
+                    {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+                </div>
+                <div id="user-info" class="flex-1 min-w-0 transition-opacity duration-300">
+                    <p class="text-white font-semibold text-sm truncate">{{ auth()->user()->name }}</p>
+                    <p class="text-blue-100 text-xs truncate">{{ auth()->user()->email }}</p>
+                </div>
+                <i class="fas fa-chevron-right text-blue-200 text-xs transition-opacity duration-300"></i>
+            </a>
         </div>
-        <footer class="bg-light text-center text-lg-start w-full h-0">
-            <div class="text-center p-3 bg-blue-300 ">
-                <span class="text-gray-700">© 2024 3Sanchez</span>
+
+        <!-- Navigation -->
+        <nav class="px-4 py-4 space-y-2 overflow-y-auto" style="max-height: calc(100vh - 200px);">
+            <a href="{{ route('report') }}" wire:navigate
+               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('report')) nav-item-active @else nav-item-hover @endif"
+               title="Informes">
+                <i class="fas fa-file-alt text-lg w-5"></i>
+                <span id="nav-text-report" class="font-medium transition-opacity duration-300">Informes</span>
+            </a>
+
+            <a href="{{ route('component') }}" wire:navigate
+               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('component')) nav-item-active @else nav-item-hover @endif"
+               title="Componentes">
+                <i class="fas fa-cubes text-lg w-5"></i>
+                <span id="nav-text-component" class="font-medium transition-opacity duration-300">Componentes</span>
+            </a>
+
+            <a href="{{ route('componentType') }}" wire:navigate
+               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('componentType')) nav-item-active @else nav-item-hover @endif"
+               title="Tipos de Componentes">
+                <i class="fas fa-tags text-lg w-5"></i>
+                <span id="nav-text-componentType" class="font-medium transition-opacity duration-300">Tipos de Componentes</span>
+            </a>
+
+            <a href="{{ route('equipment') }}" wire:navigate
+               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('equipment')) nav-item-active @else nav-item-hover @endif"
+               title="Equipos">
+                <i class="fas fa-toolbox text-lg w-5"></i>
+                <span id="nav-text-equipment" class="font-medium transition-opacity duration-300">Equipos</span>
+            </a>
+
+            <a href="{{ route('company') }}" wire:navigate
+               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('company')) nav-item-active @else nav-item-hover @endif"
+               title="Empresas">
+                <i class="fas fa-building text-lg w-5"></i>
+                <span id="nav-text-company" class="font-medium transition-opacity duration-300">Empresas</span>
+            </a>
+
+            @can('consult user')
+            <a href="{{ route('user') }}" wire:navigate
+               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('user')) nav-item-active @else nav-item-hover @endif"
+               title="Usuarios">
+                <i class="fas fa-users text-lg w-5"></i>
+                <span id="nav-text-user" class="font-medium transition-opacity duration-300">Usuarios</span>
+            </a>
+            @endcan
+        </nav>
+
+        <!-- Logout Button -->
+        <div class="absolute bottom-0 left-0 right-0 px-4 py-4 border-t border-blue-400/30">
+            <a href="{{ route('logoutUser') }}"
+               onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl bg-red-500/20 hover:bg-red-500/30 transition-all duration-200"
+               title="Cerrar Sesión">
+                <i class="fas fa-sign-out-alt text-lg w-5"></i>
+                <span id="nav-text-logout" class="font-medium transition-opacity duration-300">Cerrar Sesión</span>
+            </a>
+            <form id="logout-form" action="{{ route('logoutUser') }}" method="POST" class="hidden">
+                @csrf
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex flex-col" style="margin-left: var(--sidebar-width); transition: margin-left 0.3s ease-in-out;">
+        <!-- Top Header -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 sticky top-0 z-30">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div>
+                    @php
+                        $routeName = request()->route()->getName();
+                        $titles = [
+                            'report' => 'Informes',
+                            'component' => 'Componentes',
+                            'componentType' => 'Tipos de Componentes',
+                            'equipment' => 'Equipos',
+                            'company' => 'Empresas',
+                            'user' => 'Usuarios',
+                            'profile' => 'Mi Perfil',
+                        ];
+                        $descriptions = [
+                            'report' => 'Gestiona y visualiza los informes del sistema',
+                            'component' => 'Administra los componentes de los equipos',
+                            'componentType' => 'Configura los tipos de componentes disponibles',
+                            'equipment' => 'Gestiona el inventario de equipos',
+                            'company' => 'Administra las empresas registradas',
+                            'user' => 'Gestiona los usuarios del sistema',
+                            'profile' => 'Administra tu información personal',
+                        ];
+                    @endphp
+                    <h1 class="text-2xl font-bold text-gray-800">{{ $titles[$routeName] ?? 'Dashboard' }}</h1>
+                    <p class="text-sm text-gray-500 mt-1">{{ $descriptions[$routeName] ?? 'Bienvenido de vuelta' }}</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Notifications -->
+                    <button class="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <!-- Profile Quick Access -->
+                    <a href="{{ route('profile') }}" wire:navigate class="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-xs font-semibold">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+                        </div>
+                        <span class="text-sm font-medium">Mi Perfil</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 min-h-screen">
+            {{ $slot }}
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white/60 backdrop-blur-sm border-t border-gray-200/50 py-4">
+            <div class="px-6 flex items-center justify-between">
+                <p class="text-sm text-gray-600">
+                    © {{ date('Y') }} <span class="font-semibold text-blue-600">3Sanchez</span>. Todos los derechos reservados.
+                </p>
+                <div class="flex items-center space-x-4 text-sm text-gray-500">
+                    <span class="flex items-center">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        Sistema Seguro
+                    </span>
+                </div>
             </div>
         </footer>
-        
     </div>
     @endauth
 
     @guest
-
         <livewire:user-login.user-login />
     @endguest
+
     <script>
-        function expandSidebar() {
+        let sidebarCollapsed = false;
+
+        function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            const menuButton = document.getElementById('menu-button');
+            const mainContent = document.querySelector('div[style*="margin-left"]');
+            const logoText = document.getElementById('logo-text');
+            const userInfo = document.getElementById('user-info');
+            const navTexts = document.querySelectorAll('[id^="nav-text-"]');
+            const userProfileSection = document.getElementById('user-profile-section');
 
-            if (sidebar.style.width === '16rem') {
-                sidebar.style.width = '4rem';
-                menuButton.classList.remove('self-end');
-                menuButton.classList.add('self-center');
+            sidebarCollapsed = !sidebarCollapsed;
+
+            if (sidebarCollapsed) {
+                sidebar.style.width = 'var(--sidebar-collapsed-width)';
+                if (mainContent) mainContent.style.marginLeft = 'var(--sidebar-collapsed-width)';
+                if (logoText) {
+                    logoText.style.opacity = '0';
+                    logoText.style.width = '0';
+                    logoText.style.overflow = 'hidden';
+                }
+                if (userInfo) {
+                    userInfo.style.opacity = '0';
+                    userInfo.style.height = '0';
+                    userInfo.style.overflow = 'hidden';
+                }
+                if (userProfileSection) userProfileSection.style.padding = '0.5rem';
+                navTexts.forEach(text => {
+                    text.style.opacity = '0';
+                    text.style.width = '0';
+                    text.style.overflow = 'hidden';
+                });
             } else {
-                sidebar.style.width = '16rem';
-                menuButton.classList.remove('self-center');
-                menuButton.classList.add('self-end');
+                sidebar.style.width = 'var(--sidebar-width)';
+                if (mainContent) mainContent.style.marginLeft = 'var(--sidebar-width)';
+                if (logoText) {
+                    logoText.style.opacity = '1';
+                    logoText.style.width = 'auto';
+                    logoText.style.overflow = 'visible';
+                }
+                if (userInfo) {
+                    userInfo.style.opacity = '1';
+                    userInfo.style.height = 'auto';
+                    userInfo.style.overflow = 'visible';
+                }
+                if (userProfileSection) userProfileSection.style.padding = '1rem';
+                navTexts.forEach(text => {
+                    text.style.opacity = '1';
+                    text.style.width = 'auto';
+                    text.style.overflow = 'visible';
+                });
             }
-
-            const labels = sidebar.querySelectorAll('span');
-            labels.forEach(label => label.classList.toggle('opacity-0'));
         }
 
-        function highlightSidebarItem(element) {
-            const links = document.querySelectorAll("#sidebar a");
-            links.forEach(link => {
-                link.classList.remove('bg-blue-300', 'text-white');
-                link.querySelector('i').classList.remove('text-white');
+        // Highlight active nav item
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('nav-item-active');
+                }
             });
-            element.classList.add('bg-blue-300', 'text-white');
-            element.querySelector('i').classList.add('text-white');
-        }
+        });
     </script>
+
     @livewireScripts
     @stack('scripts')
 </body>

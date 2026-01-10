@@ -17,7 +17,9 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Livewire\WithPagination;
+use Carbon\Carbon;
 
 class Report extends Component
 {
@@ -266,155 +268,330 @@ class Report extends Component
 
     public function export()
     {
-        // Obtener los datos del request
-        $reports = ModelsReport::query();
-        if (!empty($this->equipment_search)) {
-            $reports->where('equipment_id', $this->equipment_search);
-         }
-        if (!empty($this->condition_search)) {
-            $reports->where('condition', $this->condition_search);
-         }
-        if (!empty($this->priority_search)) {
-            $reports->where('priority', $this->priority_search);
-         }
-        if (!empty($this->company_search)) {
-            $reports->whereHas('equipment', function ($query) {
-                $query->where('company_id', $this->company_search);
-            });
-        }
-        $reports = $reports->get();
+        try {
+            // Obtener los datos con eager loading para evitar N+1 queries
+            $reports = ModelsReport::query()
+                ->with([
+                    'equipment.company',
+                    'equipment.equipmentType',
+                    'equipment.ubication',
+                    'equipment.process',
+                    'equipment.components.componentType',
+                    'equipment.components.brand',
+                    'equipment.components.fields.value',
+                    'condition',
+                    'mechanismFail',
+                    'componentFail',
+                    'analist'
+                ]);
 
-        if(count($reports) > 0){
+            // Aplicar filtros
+            if (!empty($this->equipment_search)) {
+                $reports->where('equipment_id', $this->equipment_search);
+            }
+            if (!empty($this->condition_search)) {
+                $reports->where('condition_id', $this->condition_search);
+            }
+            if (!empty($this->priority_search)) {
+                $reports->where('priority', $this->priority_search);
+            }
+            if (!empty($this->company_search)) {
+                $reports->whereHas('equipment', function ($query) {
+                    $query->where('company_id', $this->company_search);
+                });
+            }
+
+            $reports = $reports->get();
+
+            if(count($reports) === 0){
+                $this->dispatch('alertFailed', 'No se encontraron reportes con los filtros seleccionados.');
+                return;
+            }
+
             // Crear un nuevo objeto Spreadsheet
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
-
-            // Cambiar el nombre de la hoja
             $sheet->setTitle('DIAGNÓSTICOS');
 
-            // Añadir encabezados
+            // Encabezado del documento
+            $sheet->setCellValue('A1', 'REPORTE DE DIAGNÓSTICOS');
+            $sheet->mergeCells('A1:AF1');
+            $sheet->getStyle('A1')->applyFromArray([
+                'font' => [
+                    'bold' => true,
+                    'size' => 16,
+                    'color' => ['argb' => 'FFFFFFFF'],
+                ],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FF1e40af'],
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+            $sheet->getRowDimension(1)->setRowHeight(30);
+
+            // Información adicional
+            $sheet->setCellValue('A2', 'Fecha de Exportación: ' . now()->format('d/m/Y H:i:s'));
+            $sheet->setCellValue('A3', 'Total de Reportes: ' . $reports->count());
+            $sheet->mergeCells('A2:AF2');
+            $sheet->mergeCells('A3:AF3');
+            $sheet->getStyle('A2:A3')->applyFromArray([
+                'font' => ['size' => 10, 'italic' => true],
+                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+            ]);
+
+            // Encabezados de columnas (empiezan en la fila 4)
             $headings = [
-                'EMPRESA', 'EQUIPO', 'TIPO EQUIPO','FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO', 'TIPO COMPONENTE', 'TAG', 'DESCRIPCIÓN','CODIGO', 'POT (HP)',
-                'RPM', 'MARCA', 'REFERENCIA MOTOR', 'FRAME', 'RODA. LL', 'ROD. LA', 'REF. CHUMACERAS', 'ROD. CHUMACERAS',
-                'DIAGNÓSTICO', 'CONDICIÓN', 'MECANISMO FALLA', 'COMPONENTE EN FALLA', 'RECOMENDACIÓN', 'PRIORIDAD', 'OT CREADA',
-                'ESTADO DE OT', 'FECHA EJECUCIÓN', 'VERIFICACIÓN RECOMENDACIÓN', 'ANALISTA', 'Mes', 'Año'
+                'EMPRESA', 'EQUIPO', 'TIPO EQUIPO', 'FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO',
+                'TIPO COMPONENTE', 'TAG', 'DESCRIPCIÓN', 'CODIGO', 'POT (HP)', 'RPM', 'MARCA',
+                'REFERENCIA MOTOR', 'FRAME', 'RODA. LL', 'ROD. LA', 'REF. CHUMACERAS', 'ROD. CHUMACERAS',
+                'DIAGNÓSTICO', 'CONDICIÓN', 'MECANISMO FALLA', 'COMPONENTE EN FALLA', 'RECOMENDACIÓN',
+                'PRIORIDAD', 'OT CREADA', 'ESTADO DE OT', 'FECHA EJECUCIÓN', 'VERIFICACIÓN RECOMENDACIÓN',
+                'ANALISTA', 'Mes', 'Año'
             ];
-            $sheet->fromArray($headings, NULL, 'A1');
+            $sheet->fromArray($headings, NULL, 'A4');
 
-            // Establecer colores para las cabeceras
-            $greenStyle = [
+            // Estilos para encabezados
+            $headerStyle = [
                 'font' => [
                     'bold' => true,
-                    'color' => [
-                        'argb' => 'FF000000', // Letra negra
-                    ],
+                    'size' => 11,
+                    'color' => ['argb' => 'FFFFFFFF'],
                 ],
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => [
-                        'argb' => 'A9D08E',
+                    'startColor' => ['argb' => 'FF3b82f6'],
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                    'wrapText' => true,
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['argb' => 'FF000000'],
                     ],
                 ],
             ];
+            $sheet->getStyle('A4:AF4')->applyFromArray($headerStyle);
+            $sheet->getRowDimension(4)->setRowHeight(40);
 
-            $blueStyle = [
-                'font' => [
-                    'bold' => true,
-                    'color' => [
-                        'argb' => 'FFFFFFFF', // Letra blanca
+            // Estilo para datos
+            $dataStyle = [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['argb' => 'FFCCCCCC'],
                     ],
                 ],
-                'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => [
-                        'argb' => '0070C0',
-                    ],
+                'alignment' => [
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                    'wrapText' => true,
                 ],
             ];
 
-            // Aplicar estilo verde hasta la columna AB
-            $sheet->getStyle('A1:AC1')->applyFromArray($greenStyle);
-
-            // Aplicar estilo azul a las columnas AC y AD
-            $sheet->getStyle('AD1:AE1')->applyFromArray($blueStyle);
-
-            // Añadir datos al sheet
-            $row = 2;
+            // Llenar datos
+            $row = 5;
             foreach ($reports as $report) {
+                $diagnosis = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : ($report->diagnosis ?? []);
+                $recommendations = is_array($report->recommendations) ? $report->recommendations : (is_string($report->recommendations) ? json_decode($report->recommendations, true) : []);
 
+                if($report->equipment && $report->equipment->components) {
+                    foreach ($report->equipment->components as $component) {
+                        // Inicializar campos del componente
+                        $potencia = '';
+                        $velocidad = '';
+                        $marca = $component->brand->name ?? '';
+                        $referencia = '';
+                        $frame = '';
+                        $rodamientoLL = '';
+                        $rodamientoLA = '';
+                        $refChumacera = '';
+                        $rodChumaceras = '';
 
-                foreach ($report->equipment->components as $component) {
-                    $sheet->setCellValue('A' . $row, $report->equipment->company->name);
-                    $sheet->setCellValue('B' . $row, $report->equipment->name);
-                    $sheet->setCellValue('C' . $row, $report->equipment->equipmentType->name);
+                        // Extraer campos del componente
+                        if($component->fields) {
+                            foreach($component->fields as $field) {
+                                $fieldName = $field->name ?? '';
+                                $fieldValue = $field->value->value ?? null;
 
-                    $sheet->setCellValue('D' . $row, $report->measurement_date);
-                    $sheet->setCellValue('E' . $row, $report->equipment->ubication->name);
-                    $sheet->setCellValue('F' . $row, $report->equipment->process->name);
-                    $sheet->setCellValue('G' . $row, $component->componentType->name);
+                                switch($fieldName) {
+                                    case 'Potencia':
+                                        $potencia = $fieldValue ?? '';
+                                        break;
+                                    case 'Velocidad':
+                                        $velocidad = $fieldValue ?? '';
+                                        break;
+                                    case 'Referencia':
+                                        $referencia = $fieldValue ?? '';
+                                        break;
+                                    case 'Frame':
+                                        $frame = $fieldValue ?? '';
+                                        break;
+                                    case 'Rodamiento lado libre':
+                                        $rodamientoLL = $fieldValue ?? '';
+                                        break;
+                                    case 'Rodamiento lado acople':
+                                        $rodamientoLA = $fieldValue ?? '';
+                                        break;
+                                    case 'Referencia Chumacera':
+                                        $refChumacera = $fieldValue ?? '';
+                                        break;
+                                    case 'Referencia Rodamientos':
+                                        $rodChumaceras = $fieldValue ?? '';
+                                        break;
+                                }
+                            }
+                        }
 
-                    $sheet->setCellValue('H' . $row, $report->equipment->tag);
-                    $sheet->setCellValue('I' . $row, $report->equipment->description);
-                    $sheet->setCellValue('J' . $row, $report->equipment->code);
+                        // Diagnóstico y recomendaciones
+                        $componentDiagnosis = (is_array($diagnosis) && array_key_exists($component->id, $diagnosis))
+                            ? $diagnosis[$component->id]
+                            : '';
 
-                    foreach($component->fields as $field){
-                        if($field['name'] == 'Potencia' && $field->value)$sheet->setCellValue('K' . $row, $field->value->value);
-                        if($field['name'] == 'Velocidad' && $field->value)$sheet->setCellValue('L' . $row, $field->value->value);
-                         $sheet->setCellValue('M' . $row, $component->brand->name);
-                         if($field['name'] == 'Referencia' && $field->value)$sheet->setCellValue('N' . $row, $field->value->value);
+                        $recommendationsString = '';
+                        if (is_array($recommendations) && array_key_exists($component->id, $recommendations)) {
+                            if (is_array($recommendations[$component->id])) {
+                                $recommendationsString = implode(' ; ', array_filter($recommendations[$component->id]));
+                            } else {
+                                $recommendationsString = $recommendations[$component->id];
+                            }
+                        }
 
+                        // Fechas formateadas
+                        $measurementDate = null;
+                        if ($report->measurement_date) {
+                            try {
+                                $measurementDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Carbon::parse($report->measurement_date));
+                            } catch (\Exception $e) {
+                                $measurementDate = null;
+                            }
+                        }
 
-                        if($field['name'] == 'Frame' && $field->value)$sheet->setCellValue('O' . $row, $field->value->value);
-                        if($field['name'] == 'Rodamiento lado libre' && $field->value)$sheet->setCellValue('P' . $row, $field->value->value);
-                        if($field['name'] == 'Rodamiento lado acople' && $field->value)$sheet->setCellValue('Q' . $row, $field->value->value);
-                        if($field['name'] == 'Referencia Chumacera' && $field->value)$sheet->setCellValue('R' . $row, $field->value->value);
-                        if($field['name'] == 'Referencia Rodamientos' && $field->value)$sheet->setCellValue('S' . $row, $field->value->value);
+                        $executionDate = null;
+                        if ($report->execution_date) {
+                            try {
+                                $executionDate = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Carbon::parse($report->execution_date));
+                            } catch (\Exception $e) {
+                                $executionDate = null;
+                            }
+                        }
+
+                        $month = '';
+                        $year = '';
+                        if ($report->execution_date) {
+                            try {
+                                $execDate = Carbon::parse($report->execution_date);
+                                $month = $execDate->format('m');
+                                $year = $execDate->format('Y');
+                            } catch (\Exception $e) {
+                                $month = '';
+                                $year = '';
+                            }
+                        }
+
+                        // Llenar datos
+                        $sheet->setCellValue('A' . $row, $report->equipment->company->name ?? '');
+                        $sheet->setCellValue('B' . $row, $report->equipment->name ?? '');
+                        $sheet->setCellValue('C' . $row, $report->equipment->equipmentType->name ?? '');
+
+                        if ($measurementDate) {
+                            $sheet->setCellValue('D' . $row, $measurementDate);
+                            $sheet->getStyle('D' . $row)->getNumberFormat()->setFormatCode('dd/mm/yyyy');
+                        }
+
+                        $sheet->setCellValue('E' . $row, $report->equipment->ubication->name ?? '');
+                        $sheet->setCellValue('F' . $row, $report->equipment->process->name ?? '');
+                        $sheet->setCellValue('G' . $row, $component->componentType->name ?? '');
+                        $sheet->setCellValue('H' . $row, $report->equipment->tag ?? '');
+                        $sheet->setCellValue('I' . $row, $report->equipment->description ?? '');
+                        $sheet->setCellValue('J' . $row, $report->equipment->code ?? '');
+                        $sheet->setCellValue('K' . $row, $potencia);
+                        $sheet->setCellValue('L' . $row, $velocidad);
+                        $sheet->setCellValue('M' . $row, $marca);
+                        $sheet->setCellValue('N' . $row, $referencia);
+                        $sheet->setCellValue('O' . $row, $frame);
+                        $sheet->setCellValue('P' . $row, $rodamientoLL);
+                        $sheet->setCellValue('Q' . $row, $rodamientoLA);
+                        $sheet->setCellValue('R' . $row, $refChumacera);
+                        $sheet->setCellValue('S' . $row, $rodChumaceras);
+                        $sheet->setCellValue('T' . $row, $componentDiagnosis);
+                        $sheet->setCellValue('U' . $row, $report->condition->name ?? '');
+                        $sheet->setCellValue('V' . $row, $report->mechanismFail->name ?? '');
+                        $sheet->setCellValue('W' . $row, $report->componentFail->name ?? '');
+                        $sheet->setCellValue('X' . $row, $recommendationsString);
+                        $sheet->setCellValue('Y' . $row, $report->priority ?? '');
+                        $sheet->setCellValue('Z' . $row, $report->ot_created ?? '');
+                        $sheet->setCellValue('AA' . $row, $report->status_ot ?? '');
+
+                        if ($executionDate) {
+                            $sheet->setCellValue('AB' . $row, $executionDate);
+                            $sheet->getStyle('AB' . $row)->getNumberFormat()->setFormatCode('dd/mm/yyyy');
+                        }
+
+                        $sheet->setCellValue('AC' . $row, $report->verification_recommendation ?? '');
+                        $sheet->setCellValue('AD' . $row, $report->analist->name ?? '');
+                        $sheet->setCellValue('AE' . $row, $month ?: '');
+                        $sheet->setCellValue('AF' . $row, $year ?: '');
+
+                        // Aplicar estilo a la fila
+                        $sheet->getStyle('A' . $row . ':AF' . $row)->applyFromArray($dataStyle);
+
+                        // Alternar colores de filas para mejor legibilidad
+                        if ($row % 2 == 0) {
+                            $sheet->getStyle('A' . $row . ':AF' . $row)->getFill()
+                                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                                ->getStartColor()->setARGB('FFF9FAFB');
+                        }
+
+                        $row++;
                     }
-                    $recommendations = ($report->recommendations);
-                    $recommendationsString = (is_array($recommendations) && array_key_exists($component->id, $recommendations) && is_array($recommendations[$component->id]))
-                        ? implode(' ; ', $recommendations[$component->id])
-                        : '';
-                    $diagnosis = json_decode($report->diagnosis,true);
-                    $componentDiagnosis = (is_array($diagnosis) && array_key_exists($component->id, $diagnosis)) ? $diagnosis[$component->id] : '';
-                    $sheet->setCellValue('T' . $row,$componentDiagnosis );
-                    $sheet->setCellValue('U' . $row, $report->condition->name);
-                    $sheet->setCellValue('V' . $row, $report->mechanismFail->name);
-                    $sheet->setCellValue('W' . $row, $report->componentFail->name);
-                    $sheet->setCellValue('X' . $row, $recommendationsString);
-                    $sheet->setCellValue('Y' . $row, $report->priority);
-                    $sheet->setCellValue('Z' . $row, $report->ot_created);
-                    $sheet->setCellValue('AA' . $row, $report->status_ot);
-                    $sheet->setCellValue('AB' . $row, $report->execution_date);
-                    $sheet->setCellValue('AC' . $row, $report->verification_recommendation);
-                    $sheet->setCellValue('AD' . $row, $report->analist->name);
-                    $sheet->setCellValue('AE' . $row, date('m', strtotime($report->execution_date)));
-                    $sheet->setCellValue('AF' . $row, date('Y', strtotime($report->execution_date)));
-                    $row++;
                 }
+            }
 
-            }
-            // Ajustar el ancho de las columnas al contenido
-            $columns = [];
-            for ($i = 0; $i < 31; $i++) { // Adjust the number (31) for your required range
-                $columns[] = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
-            }
+            // Ajustar ancho de columnas
+            $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+                       'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF'];
 
             foreach ($columns as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
+
+                // Limitar ancho máximo para columnas largas
+                if (in_array($column, ['X', 'T', 'I', 'AC'])) {
+                    $sheet->getColumnDimension($column)->setWidth(30);
+                }
             }
+
+            // Congelar primera fila de datos (fila 4)
+            $sheet->freezePane('A5');
+
+            // Agregar filtros automáticos
+            $sheet->setAutoFilter('A4:AF' . ($row - 1));
+
+            // Proteger hoja (opcional, puede comentarse si no se necesita)
+            // $sheet->getProtection()->setSheet(true);
+
+            // Generar nombre de archivo con fecha
+            $fileName = 'diagnosticos_' . now()->format('Y-m-d_His') . '.xlsx';
+
             // Guardar el archivo Excel
             $writer = new Xlsx($spreadsheet);
-            $fileName = 'reports.xlsx';
-            $temp_file = tempnam(sys_get_temp_dir(), $fileName);
+            $temp_file = tempnam(sys_get_temp_dir(), 'report_');
             $writer->save($temp_file);
 
+            $this->dispatch('alertSuccess', 'Excel generado correctamente');
+
             return response()->download($temp_file, $fileName)->deleteFileAfterSend(true);
-        }else{
-            $this->dispatch('alertFailed', 'No se encontraron reportes.');
+
+        } catch (\Exception $e) {
+            $this->dispatch('alertFailed', 'Error al generar el Excel: ' . $e->getMessage());
+            \Log::error('Error al exportar Excel: ' . $e->getMessage());
+            return null;
         }
-
-
-
     }
 
     public function generatePdf($id)

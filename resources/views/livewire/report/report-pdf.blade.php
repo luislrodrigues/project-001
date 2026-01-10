@@ -156,11 +156,11 @@
             @if ($reportData->image_1)
                 <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
             @endif
-            
+
             @if ($reportData->image_2)
                 <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2">
             @endif
-        
+
         </div>
     </div>
 

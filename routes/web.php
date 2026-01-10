@@ -7,6 +7,7 @@ use App\Livewire\Equipment\Equipment;
 use App\Livewire\Report\Report;
 use App\Livewire\User\User;
 use App\Livewire\UserLogin\UserLogin;
+use App\Livewire\UserProfile\UserProfile;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,6 +34,7 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::post('/logoutUser', [UserLogin::class, 'logoutUser'])->name('logoutUser');
+    Route::get('/profile', UserProfile::class)->name('profile');
     Route::get('/report', Report::class)->name('report')->middleware('permission:consult report');
     Route::get('/company', Company::class)->name('company')->middleware('permission:consult company');
     Route::get('/component', ComponentManager::class)->name('component');
