@@ -94,9 +94,9 @@
                                   Marca
                                   <span class="text-red-500 ml-1">*</span>
                               </label>
-                              <div class="flex space-x-2">
+                              <div class="flex space-x-2 items-stretch">
                                   <select name="brand"
-                                          class="flex-1 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white transition-all duration-200"
+                                          class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white transition-all duration-200"
                                           wire:model.lazy="brand">
                                       <option value="">Seleccione</option>
                                       @foreach ($brands as $option)
@@ -105,9 +105,9 @@
                                   </select>
                                   <button type="button"
                                           wire:click="openManageModal('brand')"
-                                          class="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                          class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
                                           title="Gestionar marcas">
-                                      <i class="fas fa-cog"></i>
+                                      <i class="fas fa-cog text-sm"></i>
                                   </button>
                               </div>
                               <livewire:modal-create-select.modal-create-select :label="'marca'" :field="'brand'"

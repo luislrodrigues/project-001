@@ -217,7 +217,10 @@
     @endguest
 
     <script>
-        let sidebarCollapsed = false;
+        // Usar window para evitar redeclaración cuando Livewire navega
+        if (typeof window.sidebarCollapsed === 'undefined') {
+            window.sidebarCollapsed = false;
+        }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -271,15 +274,394 @@
         }
 
         // Highlight active nav item
-        document.addEventListener('DOMContentLoaded', function() {
+        function highlightActiveNavItem() {
             const currentPath = window.location.pathname;
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(item => {
-                if (item.getAttribute('href') === currentPath) {
+                const href = item.getAttribute('href');
+                if (href && (currentPath === href || currentPath.startsWith(href + '/'))) {
                     item.classList.add('nav-item-active');
+                } else {
+                    item.classList.remove('nav-item-active');
                 }
             });
+        }
+
+        // Ejecutar al cargar y cuando Livewire navegue
+        document.addEventListener('DOMContentLoaded', highlightActiveNavItem);
+
+        // Escuchar eventos de navegación de Livewire
+        document.addEventListener('livewire:navigated', highlightActiveNavItem);
+        window.addEventListener('popstate', highlightActiveNavItem);
+
+        // Función para reinicializar listeners de Livewire después de la navegación
+        function reinitializeLivewireModalListeners() {
+            // Asegurar que los listeners globales estén inicializados
+            initializeLivewireEventListeners();
+        }
+
+        // Reinicializar botones y listeners de modales después de la navegación
+        function reinitializeModals() {
+            // Reinicializar botones de abrir modal
+            const openModalButtons = document.querySelectorAll('[id^="openModalButton"]');
+            openModalButtons.forEach(button => {
+                // Remover atributo de listener previo si existe
+                if (button.hasAttribute('data-listener-attached')) {
+                    return; // Ya tiene listener, no duplicar
+                }
+
+                button.setAttribute('data-listener-attached', 'true');
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const modalId = this.getAttribute('data-modal-id') || 'modalCreate';
+                    const modal = document.getElementById(modalId);
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Reinicializar botones de cerrar modal
+            const closeButtons = document.querySelectorAll('[id^="closeModalButton"], [id^="closeModalShowButton"]');
+            closeButtons.forEach(button => {
+                if (button.hasAttribute('data-close-listener-attached')) {
+                    return; // Ya tiene listener
+                }
+
+                button.setAttribute('data-close-listener-attached', 'true');
+
+                // Crear una copia del botón para remover listeners anteriores
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+
+                // Agregar nuevo listener
+                newButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Intentar encontrar el modal padre (modalCreate o modalShow)
+                    let modal = null;
+                    const modalId = this.getAttribute('data-modal-id');
+                    if (modalId) {
+                        modal = document.getElementById(modalId);
+                    } else {
+                        // Buscar el modal más cercano
+                        const parent = this.closest('[id^="modal"]');
+                        if (parent && parent.id) {
+                            modal = document.getElementById(parent.id);
+                        } else {
+                            // Buscar por IDs comunes
+                            modal = document.getElementById('modalCreate') ||
+                                   document.getElementById('modalShow') ||
+                                   document.getElementById('modalEdit');
+                        }
+                    }
+                    if (modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            });
+
+            // Reinicializar overlays de modales (clics fuera del modal)
+            // Buscar overlays que tienen onclick inline (estos necesitan ser actualizados)
+            const modals = document.querySelectorAll('[id^="modal"]');
+            modals.forEach(modal => {
+                // Buscar el overlay dentro del modal
+                const overlay = modal.querySelector('div[class*="fixed"][class*="inset-0"]:first-child');
+                if (overlay) {
+                    // Si ya tiene un listener, no duplicar
+                    if (overlay.hasAttribute('data-overlay-listener-attached')) {
+                        return;
+                    }
+
+                    overlay.setAttribute('data-overlay-listener-attached', 'true');
+
+                    // Remover onclick inline si existe y reemplazarlo con listener
+                    if (overlay.hasAttribute('onclick')) {
+                        overlay.removeAttribute('onclick');
+                    }
+
+                    overlay.addEventListener('click', function(e) {
+                        // Solo cerrar si el clic fue directamente en el overlay (no en el contenido)
+                        if (e.target === overlay) {
+                            const parentModal = overlay.closest('[id^="modal"]');
+                            if (parentModal) {
+                                parentModal.classList.add('hidden');
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Reinicializar listeners de Livewire si están disponibles
+            if (typeof Livewire !== 'undefined' && window.Livewire) {
+                // Los listeners globales deberían persistir, pero verificamos eventos comunes
+                // Esto se hace para asegurar que funcionen después de la navegación
+            }
+        }
+
+        // Función para inicializar listeners de Livewire
+        function initializeLivewireEventListeners() {
+            if (typeof Livewire === 'undefined') {
+                return;
+            }
+
+            // Estos listeners globales deberían funcionar en todas las páginas
+            // Solo los registramos una vez si no existen
+            if (!window.livewireListenersInitialized) {
+                window.livewireListenersInitialized = true;
+
+                // Listener global para abrir modales (común a todos los componentes)
+                Livewire.on('open-modal', (event) => {
+                    if (typeof event === 'string') {
+                        const modalId = event;
+                        const modal = document.getElementById(`modal-${modalId}`) || document.getElementById(modalId);
+                        if (modal) {
+                            modal.classList.remove('hidden');
+                        }
+                    } else if (event && event.detail) {
+                        const modalId = event.detail.id || event.detail;
+                        const modal = document.getElementById(`modal-${modalId}`) || document.getElementById(modalId);
+                        if (modal) {
+                            modal.classList.remove('hidden');
+                        }
+                    }
+                });
+
+                // Listener global para cerrar modales
+                Livewire.on('close-modal', (event) => {
+                    let modalId = null;
+                    if (typeof event === 'string') {
+                        modalId = event;
+                    } else if (event && event.detail) {
+                        modalId = event.detail.id || event.detail;
+                    }
+
+                    if (modalId) {
+                        const modal = document.getElementById(`modal-${modalId}`) || document.getElementById(modalId);
+                        if (modal) {
+                            modal.classList.add('hidden');
+                        }
+                    } else {
+                        // Cerrar todos los modales visibles
+                        const modals = document.querySelectorAll('[id^="modal"]');
+                        modals.forEach(modal => {
+                            if (!modal.classList.contains('hidden')) {
+                                modal.classList.add('hidden');
+                            }
+                        });
+                    }
+                });
+
+                // Listeners específicos para cada componente
+                const closeEvents = [
+                    'close-modal-equipment',
+                    'close-modal-report',
+                    'close-modal-company',
+                    'close-modal-user',
+                    'close-modal-component',
+                    'close-modal-type-component'
+                ];
+
+                closeEvents.forEach(eventName => {
+                    Livewire.on(eventName, () => {
+                        // Buscar el modal correspondiente
+                        let modal = document.getElementById('modalCreate');
+                        if (!modal) {
+                            modal = document.querySelector('[id^="modal"]:not(.hidden)');
+                        }
+                        if (modal) {
+                            modal.classList.add('hidden');
+                        }
+                    });
+                });
+
+                // Listener para abrir modal de selección
+                Livewire.on('open-modal-select', (field) => {
+                    const fieldValue = typeof field === 'string' ? field : (field?.detail || field);
+                    if (fieldValue && window.openModalSelect) {
+                        window.openModalSelect(fieldValue);
+                    }
+                });
+
+                // Listener para cerrar modal de selección
+                Livewire.on('close-modal-select', (field) => {
+                    const fieldValue = typeof field === 'string' ? field : (field?.detail || field);
+                    if (fieldValue && window.closeModalSelect) {
+                        window.closeModalSelect(fieldValue);
+                    }
+                });
+
+                // Listeners para abrir modales de edición (todos los componentes)
+                const openEditEvents = [
+                    'open-modal-edit-equipment',
+                    'open-modal-edit-report',
+                    'open-modal-edit-company',
+                    'open-modal-edit-user',
+                    'open-modal-edit-component',
+                    'open-modal-edit-type-component'
+                ];
+
+                openEditEvents.forEach(eventName => {
+                    Livewire.on(eventName, () => {
+                        const modal = document.getElementById('modalCreate');
+                        if (modal) {
+                            modal.classList.remove('hidden');
+                        }
+                    });
+                });
+
+                // Listeners para abrir modales de mostrar detalles
+                const openShowEvents = [
+                    'open-modal-show-equipment',
+                    'open-modal-show-report',
+                    'open-modal-show-component'
+                ];
+
+                openShowEvents.forEach(eventName => {
+                    Livewire.on(eventName, () => {
+                        const modal = document.getElementById('modalShow');
+                        if (modal) {
+                            modal.classList.remove('hidden');
+                        }
+                    });
+                });
+            }
+        }
+
+        // Escuchar cuando Livewire completa la navegación
+        document.addEventListener('livewire:navigated', function() {
+            // Delay para asegurar que el DOM está actualizado
+            setTimeout(() => {
+                highlightActiveNavItem();
+                reinitializeModals();
+                initializeLivewireEventListeners();
+            }, 150);
         });
+
+        // Inicializar en la carga inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                highlightActiveNavItem();
+                reinitializeModals();
+                reinitializeSelectModals(); // Reinicializar modales de selección
+                reinitializeLivewireModalListeners(); // Reinicializar listeners de Livewire
+                initializeLivewireEventListeners();
+            }, 300);
+        });
+
+        // También inicializar cuando Livewire está listo
+        document.addEventListener('livewire:initialized', function() {
+            setTimeout(() => {
+                reinitializeModals();
+                reinitializeSelectModals(); // Reinicializar modales de selección
+                reinitializeLivewireModalListeners(); // Reinicializar listeners de Livewire
+                initializeLivewireEventListeners();
+            }, 100);
+        });
+
+        // Hook de Livewire para reinicializar después de cada actualización
+        if (typeof Livewire !== 'undefined') {
+            document.addEventListener('livewire:init', () => {
+                Livewire.hook('morph.updated', ({ el, component }) => {
+                    // Reinicializar modales después de cada actualización del DOM
+                    setTimeout(() => {
+                        reinitializeModals();
+                        reinitializeSelectModals(); // Reinicializar modales de selección
+                        reinitializeLivewireModalListeners(); // Reinicializar listeners de Livewire
+                    }, 50);
+                });
+            });
+        }
+
+        // Asegurar que closeModalSelect esté disponible globalmente después de la navegación
+        window.closeModalSelect = function(field) {
+            // Verificar si el clic fue en el input para evitar cerrar cuando se escribe
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.id === `input-value-new-${field}`) {
+                return; // No cerrar si el input está activo
+            }
+
+            const container = document.getElementById(`modal-${field}-container`);
+            if (container) {
+                // Desmarcar como debe estar abierto
+                container.removeAttribute('data-should-be-open');
+                container.classList.add('hidden');
+                const overlay = document.getElementById(`modal-${field}-overlay`);
+                if (overlay) {
+                    overlay.classList.add('hidden');
+                }
+            }
+
+            // Resetear el formulario del modal si está abierto
+            if (typeof Livewire !== 'undefined') {
+                if (Livewire.dispatch) {
+                    Livewire.dispatch('reset-modal-select', { field: field });
+                } else if (window.Livewire && window.Livewire.dispatch) {
+                    window.Livewire.dispatch('reset-modal-select', { field: field });
+                }
+            }
+        };
+
+        // Función para abrir el modal de selección
+        window.openModalSelect = function(field) {
+            const container = document.getElementById(`modal-${field}-container`);
+            if (container) {
+                // Marcar como debe estar abierto
+                container.setAttribute('data-should-be-open', 'true');
+                container.classList.remove('hidden');
+                const overlay = document.getElementById(`modal-${field}-overlay`);
+                if (overlay) {
+                    overlay.classList.remove('hidden');
+                }
+            }
+        };
+
+        // Reinicializar modales de selección específicamente
+        function reinitializeSelectModals() {
+            // Buscar todos los modales de selección
+            const selectModalContainers = document.querySelectorAll('[id^="modal-"][id$="-container"]');
+            selectModalContainers.forEach(container => {
+                const field = container.id.replace('modal-', '').replace('-container', '');
+
+                // Reinicializar overlay
+                const overlay = document.getElementById(`modal-${field}-overlay`);
+                if (overlay) {
+                    // Remover onclick inline si existe
+                    if (overlay.hasAttribute('onclick')) {
+                        overlay.removeAttribute('onclick');
+                    }
+
+                    // Asegurar que el listener esté adjunto
+                    if (!overlay.hasAttribute('data-select-overlay-listener')) {
+                        overlay.setAttribute('data-select-overlay-listener', 'true');
+                        overlay.addEventListener('click', function(e) {
+                            if (e.target === overlay) {
+                                window.closeModalSelect(field);
+                            }
+                        });
+                    }
+                }
+
+                // Reinicializar botones de cerrar dentro del modal
+                const closeButtons = container.querySelectorAll('[onclick*="closeModalSelect"]');
+                closeButtons.forEach(button => {
+                    if (!button.hasAttribute('data-select-close-listener')) {
+                        button.setAttribute('data-select-close-listener', 'true');
+
+                        // Remover onclick inline
+                        if (button.hasAttribute('onclick')) {
+                            button.removeAttribute('onclick');
+                        }
+
+                        // Agregar listener
+                        button.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.closeModalSelect(field);
+                        });
+                    }
+                });
+            });
+        }
     </script>
 
     @livewireScripts

@@ -28,8 +28,8 @@ class UserLogin extends Component
             }
             if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
                 session()->flash('message', 'Inicio de sesión exitoso.');
-                return redirect()->intended('/report'); 
-                
+                return redirect()->intended('/home');
+
             } else {
                 $this->addError('password', 'Las credenciales no coinciden con nuestros registros.');
                 $this->resetInputFields();
@@ -37,7 +37,7 @@ class UserLogin extends Component
         } catch (\Exception $e) {
             session()->flash('error', 'Ocurrió un error durante el inicio de sesión.');
             $this->resetInputFields();
-        } 
+        }
     }
     private function resetInputFields()
     {
@@ -50,11 +50,11 @@ class UserLogin extends Component
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
-        return redirect()->intended('/'); 
+        return redirect()->intended('/');
     }
 
     public function rememberPassword(){
-        
+
         $user = User::where('email',$this->email)->first();
         if($user){
             Mail::send([], [], function ($message) use ($user) {

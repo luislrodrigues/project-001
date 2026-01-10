@@ -127,9 +127,9 @@
                                     Condición
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
-                                <div class="flex space-x-2">
+                                <div class="flex space-x-2 items-stretch">
                                     <select name="condition"
-                                        class="flex-1 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white transition-all duration-200"
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white transition-all duration-200"
                                         wire:model.lazy="condition">
                                         <option value="">Seleccione</option>
                                         @foreach ($conditions as $option)
@@ -138,9 +138,9 @@
                                     </select>
                                     <button type="button"
                                             wire:click="openManageModal('condition')"
-                                            class="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                            class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
                                             title="Gestionar condiciones">
-                                        <i class="fas fa-cog"></i>
+                                        <i class="fas fa-cog text-sm"></i>
                                     </button>
                                 </div>
                                 @error('condition')
@@ -189,9 +189,9 @@
                                     <i class="fas fa-cog mr-2 text-blue-600"></i>
                                     Componente Falla
                                 </label>
-                                <div class="flex space-x-2">
+                                <div class="flex space-x-2 items-stretch">
                                     <select name="component_failure"
-                                        class="flex-1 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white transition-all duration-200"
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white transition-all duration-200"
                                         wire:model.lazy="component_failure">
                                         <option value="">Seleccione</option>
                                         @foreach ($component_fails as $option)
@@ -200,9 +200,9 @@
                                     </select>
                                     <button type="button"
                                             wire:click="openManageModal('component_failure')"
-                                            class="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                            class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
                                             title="Gestionar componentes de falla">
-                                        <i class="fas fa-cog"></i>
+                                        <i class="fas fa-cog text-sm"></i>
                                     </button>
                                 </div>
                                 @error('component_failure')
