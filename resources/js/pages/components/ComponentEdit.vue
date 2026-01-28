@@ -1,0 +1,375 @@
+<template>
+    <div class="container mx-auto px-4 sm:px-8">
+        <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
+            <div class="flex flex-col items-center justify-center h-full">
+                <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
+                    <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
+                </svg>
+                <p class="text-gray-700 font-medium">Cargando...</p>
+            </div>
+        </div>
+
+        <div v-else class="py-6">
+            <!-- Header -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-weight text-blue-600 mr-3"></i>
+                            Editar Componente
+                        </h2>
+                        <p class="text-gray-500 text-sm mt-1">Modifica la información del componente</p>
+                    </div>
+                    <router-link
+                        :to="{ name: 'components' }"
+                        class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Volver"
+                    >
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </router-link>
+                </div>
+            </div>
+
+            <!-- Form (similar a Create pero con datos precargados) -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <form @submit.prevent="updateComponent" class="space-y-6">
+                    <!-- Información Básica (igual que Create) -->
+                    <div>
+                        <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Información Básica</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-cog mr-2 text-blue-600"></i>
+                                    Equipo
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <select
+                                    v-model="form.equipment_id"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione</option>
+                                    <option v-for="eq in equipments" :key="eq.id" :value="eq.id">
+                                        {{ eq.name }}
+                                    </option>
+                                </select>
+                                <p v-if="errors.equipment_id" class="mt-1 text-sm text-red-600">{{ errors.equipment_id }}</p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-snowplow mr-2 text-blue-600"></i>
+                                    Tipo Componente
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <select
+                                    v-model="form.component_type_id"
+                                    @change="loadComponentTypeFields"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione</option>
+                                    <option v-for="type in componentTypes" :key="type.id" :value="type.id">
+                                        {{ type.name }}
+                                    </option>
+                                </select>
+                                <p v-if="errors.component_type_id" class="mt-1 text-sm text-red-600">{{ errors.component_type_id }}</p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-tag mr-2 text-blue-600"></i>
+                                    Marca
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="flex space-x-2 items-stretch">
+                                    <select
+                                        v-model="form.brand_id"
+                                        required
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    >
+                                        <option value="">Seleccione</option>
+                                        <option v-for="brand in brands" :key="brand.id" :value="brand.id">
+                                            {{ brand.name }}
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        @click="showBrandModal = true"
+                                        class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                        title="Gestionar marcas"
+                                    >
+                                        <i class="fas fa-cog text-sm"></i>
+                                    </button>
+                                </div>
+                                <p v-if="errors.brand_id" class="mt-1 text-sm text-red-600">{{ errors.brand_id }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos Adicionales (igual que Create) -->
+                    <div v-if="additionalFields.length > 0">
+                        <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                            <i class="fas fa-list-ul text-blue-600 mr-2"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Atributos Adicionales</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div
+                                v-for="field in additionalFields"
+                                :key="field.id"
+                                class="bg-gray-50 rounded-lg p-4"
+                            >
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                                    {{ field.name }}
+                                    <span v-if="field.unit" class="ml-2 text-xs text-gray-500">({{ field.unit }})</span>
+                                    <span v-if="field.is_required" class="text-red-500 ml-1">*</span>
+                                </label>
+
+                                <!-- Mismos campos que Create -->
+                                <select
+                                    v-if="field.type === 'select' || field.type === 'multiselect'"
+                                    :id="`field_${field.id}`"
+                                    v-model="form.field_values[field.id]"
+                                    :multiple="field.type === 'multiselect'"
+                                    :required="field.is_required"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione una opción</option>
+                                    <option v-for="option in field.options" :key="option.id" :value="option.value">
+                                        {{ option.label || option.value }}
+                                    </option>
+                                </select>
+
+                                <select
+                                    v-else-if="field.type === 'boolean'"
+                                    :id="`field_${field.id}`"
+                                    v-model="form.field_values[field.id]"
+                                    :required="field.is_required"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione</option>
+                                    <option value="1">Sí</option>
+                                    <option value="0">No</option>
+                                </select>
+
+                                <input
+                                    v-else-if="field.type === 'date' || field.type === 'datetime'"
+                                    :type="field.type === 'date' ? 'date' : 'datetime-local'"
+                                    :id="`field_${field.id}`"
+                                    v-model="form.field_values[field.id]"
+                                    :required="field.is_required"
+                                    :placeholder="field.placeholder || `Ingresar ${field.name}`"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                />
+
+                                <textarea
+                                    v-else-if="field.type === 'textarea'"
+                                    :id="`field_${field.id}`"
+                                    v-model="form.field_values[field.id]"
+                                    :required="field.is_required"
+                                    :placeholder="field.placeholder || `Ingresar ${field.name}`"
+                                    rows="3"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                ></textarea>
+
+                                <input
+                                    v-else
+                                    :type="getInputType(field.type)"
+                                    :id="`field_${field.id}`"
+                                    v-model="form.field_values[field.id]"
+                                    :required="field.is_required"
+                                    :placeholder="field.placeholder || `Ingresar ${field.name}`"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                />
+
+                                <p v-if="field.help_text" class="mt-1 text-xs text-gray-500">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    {{ field.help_text }}
+                                </p>
+                                <p v-if="errors[`field_values.${field.id}`]" class="mt-1 text-sm text-red-600">
+                                    {{ errors[`field_values.${field.id}`] }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                        <router-link
+                            :to="{ name: 'components' }"
+                            class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
+                        >
+                            Cancelar
+                        </router-link>
+                        <button
+                            type="submit"
+                            :disabled="saving"
+                            class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium shadow-sm disabled:opacity-50"
+                        >
+                            <i class="fas fa-save mr-2"></i>
+                            {{ saving ? 'Actualizando...' : 'Actualizar' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para gestionar marcas -->
+        <CreateSelectModal
+            v-model:show="showBrandModal"
+            field="brand"
+            label="Marca"
+            api-endpoint="/catalogs/brands"
+            @item-saved="handleItemSaved"
+            @options-updated="loadBrands"
+        />
+    </div>
+</template>
+
+<script setup>
+import { ref, onMounted, reactive } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
+import api from '../../services/api';
+import Swal from 'sweetalert2';
+import CreateSelectModal from '../../components/CreateSelectModal.vue';
+
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
+
+const form = reactive({
+    equipment_id: '',
+    component_type_id: '',
+    brand_id: '',
+    field_values: {},
+});
+
+const equipments = ref([]);
+const componentTypes = ref([]);
+const brands = ref([]);
+const additionalFields = ref([]);
+const loading = ref(true);
+const saving = ref(false);
+const errors = ref({});
+const showBrandModal = ref(false);
+
+onMounted(async () => {
+    await Promise.all([loadCatalogs(), loadComponent()]);
+});
+
+const loadCatalogs = async () => {
+    try {
+        const [equipmentsRes, componentTypesRes, brandsRes] = await Promise.all([
+            api.get('/equipment'),
+            api.get('/component-types'),
+            api.get('/catalogs/brands'),
+        ]);
+
+        equipments.value = equipmentsRes.data.data;
+        componentTypes.value = componentTypesRes.data.data;
+        brands.value = brandsRes.data.data;
+    } catch (error) {
+        Swal.fire('Error', 'Error al cargar catálogos', 'error');
+    }
+};
+
+const loadComponent = async () => {
+    loading.value = true;
+    try {
+        const response = await api.get(`/components/${route.params.id}`);
+        const component = response.data.data;
+
+        form.equipment_id = component.equipment_id;
+        form.component_type_id = component.component_type_id;
+        form.brand_id = component.brand_id;
+
+        // Cargar campos del tipo de componente
+        await loadComponentTypeFields();
+
+        // Cargar valores existentes
+        if (component.field_values) {
+            Object.keys(component.field_values).forEach(fieldId => {
+                form.field_values[fieldId] = component.field_values[fieldId].value || '';
+            });
+        }
+    } catch (error) {
+        Swal.fire('Error', 'Error al cargar el componente', 'error');
+        router.push({ name: 'components' });
+    } finally {
+        loading.value = false;
+    }
+};
+
+const loadComponentTypeFields = async () => {
+    if (!form.component_type_id) {
+        additionalFields.value = [];
+        form.field_values = {};
+        return;
+    }
+
+    try {
+        const response = await api.get(`/components/type/${form.component_type_id}/fields`);
+        additionalFields.value = response.data.data;
+        // Inicializar field_values si no existen
+        additionalFields.value.forEach(field => {
+            if (!form.field_values[field.id]) {
+                form.field_values[field.id] = '';
+            }
+        });
+    } catch (error) {
+        Swal.fire('Error', 'Error al cargar campos del tipo de componente', 'error');
+    }
+};
+
+const loadBrands = async () => {
+    try {
+        const response = await api.get('/catalogs/brands');
+        brands.value = response.data.data;
+    } catch (error) {
+        console.error('Error al cargar marcas:', error);
+    }
+};
+
+const handleItemSaved = (data) => {
+    // Seleccionar automáticamente el nuevo registro creado
+    if (data.field === 'brand' && data.id) {
+        form.brand_id = data.id;
+    }
+    loadBrands();
+};
+
+const getInputType = (fieldType) => {
+    const types = {
+        'numeric': 'number',
+        'email': 'email',
+        'url': 'url',
+        'text': 'text',
+    };
+    return types[fieldType] || 'text';
+};
+
+const updateComponent = async () => {
+    saving.value = true;
+    errors.value = {};
+
+    try {
+        await api.put(`/components/${route.params.id}`, form);
+        Swal.fire('Éxito', 'Componente actualizado correctamente', 'success');
+        router.push({ name: 'components' });
+    } catch (error) {
+        if (error.response?.data?.errors) {
+            errors.value = error.response.data.errors;
+        }
+        const message = error.response?.data?.message || 'Error al actualizar el componente';
+        Swal.fire('Error', message, 'error');
+    } finally {
+        saving.value = false;
+    }
+};
+</script>

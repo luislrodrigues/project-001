@@ -1,0 +1,266 @@
+<template>
+    <div class="container mx-auto px-4 sm:px-8">
+        <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
+            <div class="flex flex-col items-center justify-center h-full">
+                <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
+                    <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
+                </svg>
+                <p class="text-gray-700 font-medium">Cargando...</p>
+            </div>
+        </div>
+
+        <div v-else class="py-6">
+            <!-- Header -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-user-edit text-blue-600 mr-3"></i>
+                            Editar Usuario
+                        </h2>
+                        <p class="text-gray-500 text-sm mt-1">Modifica la información del usuario</p>
+                    </div>
+                    <router-link
+                        :to="{ name: 'users' }"
+                        class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Volver"
+                    >
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </router-link>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <form @submit.prevent="updateUser" class="space-y-6">
+                    <!-- Información del Usuario -->
+                    <div>
+                        <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Información del Usuario</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-user mr-2 text-blue-600"></i>
+                                    Nombre
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    v-model="form.name"
+                                    type="text"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    placeholder="Ingresar nombre"
+                                />
+                                <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-envelope mr-2 text-blue-600"></i>
+                                    Correo
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    v-model="form.email"
+                                    type="email"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    placeholder="correo@ejemplo.com"
+                                />
+                                <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-building mr-2 text-blue-600"></i>
+                                    Empresa
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <select
+                                    v-model="form.company_id"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione una compañía</option>
+                                    <option v-for="company in companies" :key="company.id" :value="company.id">
+                                        {{ company.name }}
+                                    </option>
+                                </select>
+                                <p v-if="errors.company_id" class="mt-1 text-sm text-red-600">{{ errors.company_id }}</p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-briefcase mr-2 text-blue-600"></i>
+                                    Cargo
+                                </label>
+                                <select
+                                    v-model="form.role_id"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione un cargo</option>
+                                    <option v-for="role in roles" :key="role.id" :value="role.id">
+                                        {{ role.name }}
+                                    </option>
+                                </select>
+                                <p v-if="errors.role_id" class="mt-1 text-sm text-red-600">{{ errors.role_id }}</p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-briefcase mr-2 text-blue-600"></i>
+                                    Puesto de Trabajo
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    v-model="form.workstation"
+                                    type="text"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    placeholder="Ingresar puesto de trabajo"
+                                />
+                                <p v-if="errors.workstation" class="mt-1 text-sm text-red-600">{{ errors.workstation }}</p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-lock mr-2 text-blue-600"></i>
+                                    Contraseña
+                                    <span class="ml-2 text-xs text-gray-500">(dejar vacío para no cambiar)</span>
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        v-model="form.password"
+                                        :type="showPassword ? 'text' : 'password'"
+                                        class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 pr-12 transition-all duration-200"
+                                        placeholder="Ingresar nueva contraseña"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="showPassword = !showPassword"
+                                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-gray-700"
+                                    >
+                                        <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                    </button>
+                                </div>
+                                <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                        <router-link
+                            :to="{ name: 'users' }"
+                            class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
+                        >
+                            Cancelar
+                        </router-link>
+                        <button
+                            type="submit"
+                            :disabled="saving"
+                            class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium shadow-sm disabled:opacity-50"
+                        >
+                            <i class="fas fa-save mr-2"></i>
+                            {{ saving ? 'Actualizando...' : 'Actualizar' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, onMounted, reactive } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
+import api from '../../services/api';
+import Swal from 'sweetalert2';
+
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
+
+const form = reactive({
+    name: '',
+    email: '',
+    password: '',
+    workstation: '',
+    company_id: '',
+    role_id: ''
+});
+
+const companies = ref([]);
+const roles = ref([]);
+const loading = ref(true);
+const saving = ref(false);
+const errors = ref({});
+const showPassword = ref(false);
+
+onMounted(async () => {
+    await Promise.all([loadCatalogs(), loadUser()]);
+});
+
+const loadCatalogs = async () => {
+    try {
+        const [companiesRes, rolesRes] = await Promise.all([
+            api.get('/catalogs/companies'),
+            api.get('/catalogs/roles'),
+        ]);
+
+        companies.value = companiesRes.data.data;
+        roles.value = rolesRes.data.data;
+    } catch (error) {
+        Swal.fire('Error', 'Error al cargar catálogos', 'error');
+    }
+};
+
+const loadUser = async () => {
+    loading.value = true;
+    try {
+        const response = await api.get(`/users/${route.params.id}`);
+        const user = response.data.data;
+
+        form.name = user.name;
+        form.email = user.email;
+        form.workstation = user.workstation;
+        form.company_id = user.company?.id || '';
+        form.role_id = user.role?.id || '';
+        form.password = '';
+    } catch (error) {
+        Swal.fire('Error', 'Error al cargar el usuario', 'error');
+        router.push({ name: 'users' });
+    } finally {
+        loading.value = false;
+    }
+};
+
+const updateUser = async () => {
+    saving.value = true;
+    errors.value = {};
+
+    try {
+        const data = { ...form };
+        // Solo enviar password si se proporciona
+        if (!data.password) {
+            delete data.password;
+        }
+
+        await api.put(`/users/${route.params.id}`, data);
+        Swal.fire('Éxito', 'Usuario actualizado correctamente', 'success');
+        router.push({ name: 'users' });
+    } catch (error) {
+        if (error.response?.data?.errors) {
+            errors.value = error.response.data.errors;
+        }
+        const message = error.response?.data?.message || 'Error al actualizar el usuario';
+        Swal.fire('Error', message, 'error');
+    } finally {
+        saving.value = false;
+    }
+};
+</script>

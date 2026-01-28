@@ -1,14 +1,5 @@
 <?php
 
-use App\Livewire\Company\Company;
-use App\Livewire\ComponentManager\ComponentManager;
-use App\Livewire\ComponentType\ComponentType;
-use App\Livewire\Dashboard\Dashboard;
-use App\Livewire\Equipment\Equipment;
-use App\Livewire\Report\Report;
-use App\Livewire\User\User;
-use App\Livewire\UserLogin\UserLogin;
-use App\Livewire\UserProfile\UserProfile;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,27 +13,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('guest')->get('/', function () {
-    return view('layouts.app');
-})->name('login');
-Route::middleware('guest')->get('/login', function () {
-    return view('layouts.app');
+// Ruta raíz para la aplicación Vue (SPA)
+Route::get('/', function () {
+    return view('app');
 });
 
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-])->group(function () {
-    Route::post('/logoutUser', [UserLogin::class, 'logoutUser'])->name('logoutUser');
-    Route::get('/home', Dashboard::class)->name('home');
-    Route::get('/dashboard', Dashboard::class)->name('dashboard');
-    Route::get('/profile', UserProfile::class)->name('profile');
-    Route::get('/report', Report::class)->name('report')->middleware('permission:consult report');
-    Route::get('/company', Company::class)->name('company')->middleware('permission:consult company');
-    Route::get('/component', ComponentManager::class)->name('component');
-    Route::get('/equipment', Equipment::class)->name('equipment')->middleware('permission:consult equipment');
-    Route::get('/user', User::class)->name('user')->middleware('permission:consult user');
-    Route::get('/componentType', ComponentType::class)->name('componentType');
-});
+// Ruta catch-all para todas las demás rutas (debe ir al final)
+// Esto permite que Vue Router maneje el enrutamiento del lado del cliente
+Route::get('/{any}', function () {
+    return view('app');
+})->where('any', '.*');
 

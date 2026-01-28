@@ -1,0 +1,680 @@
+<template>
+    <div class="container mx-auto px-4 sm:px-8">
+        <div class="py-6">
+            <!-- Header -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-file-alt text-blue-600 mr-3"></i>
+                            Crear Nuevo Reporte
+                        </h2>
+                        <p class="text-gray-500 text-sm mt-1">Completa el formulario para crear un nuevo reporte</p>
+                    </div>
+                    <router-link
+                        :to="{ name: 'reports' }"
+                        class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Volver"
+                    >
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </router-link>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <form @submit.prevent="saveReport" class="space-y-6">
+                    <!-- Información General -->
+                    <div>
+                        <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Información General</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Equipo -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-cog mr-2 text-blue-600"></i>
+                                    Equipo
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <select
+                                    v-model="form.equipment_id"
+                                    @change="loadEquipmentData"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione</option>
+                                    <option v-for="eq in equipments" :key="eq.id" :value="eq.id">
+                                        {{ eq.name }}
+                                    </option>
+                                </select>
+                                <p v-if="errors.equipment_id" class="mt-1 text-sm text-red-600">{{ errors.equipment_id }}</p>
+                            </div>
+
+                            <!-- Tipo Equipo (readonly) -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-tag mr-2 text-blue-600"></i>
+                                    Tipo Equipo
+                                </label>
+                                <input
+                                    :value="equipmentData.equipment_type"
+                                    type="text"
+                                    disabled
+                                    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg block w-full px-4 py-2.5 cursor-not-allowed"
+                                />
+                            </div>
+
+                            <!-- Fecha Medición -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-calendar mr-2 text-blue-600"></i>
+                                    Fecha Medición
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    v-model="form.measurement_date"
+                                    type="date"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                />
+                                <p v-if="errors.measurement_date" class="mt-1 text-sm text-red-600">{{ errors.measurement_date }}</p>
+                            </div>
+
+                            <!-- Ubicación (readonly) -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-map-marker-alt mr-2 text-blue-600"></i>
+                                    Ubicación
+                                </label>
+                                <input
+                                    :value="equipmentData.location"
+                                    type="text"
+                                    disabled
+                                    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg block w-full px-4 py-2.5 cursor-not-allowed"
+                                />
+                            </div>
+
+                            <!-- Proceso (readonly) -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-tasks mr-2 text-blue-600"></i>
+                                    Proceso
+                                </label>
+                                <input
+                                    :value="equipmentData.process"
+                                    type="text"
+                                    disabled
+                                    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg block w-full px-4 py-2.5 cursor-not-allowed"
+                                />
+                            </div>
+
+                            <!-- Condición -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>
+                                    Condición
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="flex space-x-2 items-stretch">
+                                    <select
+                                        v-model="form.condition_id"
+                                        required
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    >
+                                        <option value="">Seleccione</option>
+                                        <option v-for="condition in conditions" :key="condition.id" :value="condition.id">
+                                            {{ condition.name }}
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        @click="showConditionModal = true"
+                                        class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                        title="Gestionar condiciones"
+                                    >
+                                        <i class="fas fa-cog text-sm"></i>
+                                    </button>
+                                </div>
+                                <p v-if="errors.condition_id" class="mt-1 text-sm text-red-600">{{ errors.condition_id }}</p>
+                            </div>
+
+                            <!-- Mecanismo Falla -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-wrench mr-2 text-blue-600"></i>
+                                    Mecanismo Falla
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="flex space-x-2 items-stretch">
+                                    <select
+                                        v-model="form.mechanism_fail_id"
+                                        required
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    >
+                                        <option value="">Seleccione</option>
+                                        <option v-for="fail in mechanismFails" :key="fail.id" :value="fail.id">
+                                            {{ fail.name }}
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        @click="showMechanismFailModal = true"
+                                        class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                        title="Gestionar mecanismos de falla"
+                                    >
+                                        <i class="fas fa-cog text-sm"></i>
+                                    </button>
+                                </div>
+                                <p v-if="errors.mechanism_fail_id" class="mt-1 text-sm text-red-600">{{ errors.mechanism_fail_id }}</p>
+                            </div>
+
+                            <!-- Componente Falla -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-cog mr-2 text-blue-600"></i>
+                                    Componente Falla
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="flex space-x-2 items-stretch">
+                                    <select
+                                        v-model="form.component_fail_id"
+                                        required
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    >
+                                        <option value="">Seleccione</option>
+                                        <option v-for="fail in componentFails" :key="fail.id" :value="fail.id">
+                                            {{ fail.name }}
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        @click="showComponentFailModal = true"
+                                        class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                        title="Gestionar componentes de falla"
+                                    >
+                                        <i class="fas fa-cog text-sm"></i>
+                                    </button>
+                                </div>
+                                <p v-if="errors.component_fail_id" class="mt-1 text-sm text-red-600">{{ errors.component_fail_id }}</p>
+                            </div>
+
+                            <!-- Prioridad -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-flag mr-2 text-blue-600"></i>
+                                    Prioridad
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <select
+                                    v-model="form.priority"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione</option>
+                                    <option value="Alta">Alta</option>
+                                    <option value="Media">Media</option>
+                                    <option value="Baja">Baja</option>
+                                </select>
+                                <p v-if="errors.priority" class="mt-1 text-sm text-red-600">{{ errors.priority }}</p>
+                            </div>
+
+                            <!-- Analista -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-user mr-2 text-blue-600"></i>
+                                    Analista
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <select
+                                    v-model="form.analist_id"
+                                    required
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione</option>
+                                    <option v-for="user in users" :key="user.id" :value="user.id">
+                                        {{ user.name }}
+                                    </option>
+                                </select>
+                                <p v-if="errors.analist_id" class="mt-1 text-sm text-red-600">{{ errors.analist_id }}</p>
+                            </div>
+
+                            <!-- OT Creada -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-check-circle mr-2 text-blue-600"></i>
+                                    OT Creada
+                                </label>
+                                <input
+                                    v-model="form.ot_created"
+                                    type="text"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    placeholder="Ingresar OT creada"
+                                />
+                            </div>
+
+                            <!-- Estado de OT -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                                    Estado de OT
+                                </label>
+                                <input
+                                    v-model="form.status_ot"
+                                    type="text"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    placeholder="Ingresar estado de OT"
+                                />
+                            </div>
+
+                            <!-- Fecha de Ejecución -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-calendar-check mr-2 text-blue-600"></i>
+                                    Fecha de Ejecución
+                                </label>
+                                <input
+                                    v-model="form.execution_date"
+                                    type="date"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                />
+                            </div>
+
+                            <!-- Verificación Recomendación -->
+                            <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-check-double mr-2 text-blue-600"></i>
+                                    Verificación Recomendación
+                                </label>
+                                <textarea
+                                    v-model="form.verification_recommendation"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
+                                    placeholder="Ingresar verificación recomendación"
+                                ></textarea>
+                            </div>
+
+                            <!-- Imágenes -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-image mr-2 text-blue-600"></i>
+                                    Subir Imagen 1
+                                </label>
+                                <input
+                                    @change="handleImage1Change"
+                                    type="file"
+                                    accept="image/*"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                <p v-if="errors.image_1" class="mt-1 text-sm text-red-600">{{ errors.image_1 }}</p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-image mr-2 text-blue-600"></i>
+                                    Subir Imagen 2
+                                </label>
+                                <input
+                                    @change="handleImage2Change"
+                                    type="file"
+                                    accept="image/*"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                <p v-if="errors.image_2" class="mt-1 text-sm text-red-600">{{ errors.image_2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagnósticos y Recomendaciones -->
+                    <div v-if="components.length > 0">
+                        <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                            <i class="fas fa-stethoscope text-blue-600 mr-2"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Diagnósticos y Recomendaciones</h4>
+                        </div>
+                        <div class="space-y-6">
+                            <div
+                                v-for="(component, index) in components"
+                                :key="component.id"
+                                class="bg-gray-50 rounded-lg p-5 border border-gray-200"
+                            >
+                                <div class="flex items-center mb-4">
+                                    <div class="bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                                        <span class="text-blue-600 font-semibold text-sm">{{ index + 1 }}</span>
+                                    </div>
+                                    <h5 class="text-md font-semibold text-gray-800">
+                                        {{ component.component_type?.name || 'Componente' }}
+                                    </h5>
+                                </div>
+
+                                <!-- Diagnóstico -->
+                                <div class="mb-4">
+                                    <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                        <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
+                                        Diagnóstico
+                                    </label>
+                                    <textarea
+                                        v-model="form.diagnosis[component.id]"
+                                        class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
+                                        placeholder="Ingresar diagnóstico"
+                                    ></textarea>
+                                </div>
+
+                                <!-- Recomendaciones -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-3">
+                                        <label class="flex items-center text-sm font-medium text-gray-700">
+                                            <i class="fas fa-lightbulb mr-2 text-yellow-600"></i>
+                                            Recomendaciones
+                                            <span v-if="form.recommendations[component.id]?.length" class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                                                {{ form.recommendations[component.id]?.length }}
+                                            </span>
+                                        </label>
+                                        <button
+                                            @click="addRecommendation(component.id)"
+                                            type="button"
+                                            class="flex items-center px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-xs font-medium"
+                                        >
+                                            <i class="fas fa-plus mr-1"></i>
+                                            Agregar
+                                        </button>
+                                    </div>
+
+                                    <div v-if="form.recommendations[component.id]?.length" class="space-y-2">
+                                        <div
+                                            v-for="(rec, recIndex) in form.recommendations[component.id]"
+                                            :key="recIndex"
+                                            class="flex items-center space-x-2"
+                                        >
+                                            <div class="flex-1">
+                                                <div class="flex items-center mb-1">
+                                                    <span class="flex-shrink-0 bg-yellow-100 text-yellow-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mr-2">
+                                                        {{ recIndex + 1 }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-500">Recomendación {{ recIndex + 1 }}</span>
+                                                </div>
+                                                <input
+                                                    v-model="form.recommendations[component.id][recIndex]"
+                                                    type="text"
+                                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                                    :placeholder="`Recomendación ${recIndex + 1}`"
+                                                />
+                                            </div>
+                                            <button
+                                                @click="deleteRecommendation(component.id, recIndex)"
+                                                type="button"
+                                                class="px-3 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                                                title="Eliminar recomendación"
+                                            >
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div v-else class="text-center py-4 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                                        <p class="text-sm text-gray-500">No hay recomendaciones aún</p>
+                                        <p class="text-xs text-gray-400 mt-1">Haz clic en "Agregar" para crear una recomendación</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                        <router-link
+                            :to="{ name: 'reports' }"
+                            class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
+                        >
+                            <i class="fas fa-times mr-2"></i>
+                            Cancelar
+                        </router-link>
+                        <button
+                            type="submit"
+                            :disabled="saving"
+                            class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium shadow-sm disabled:opacity-50"
+                        >
+                            <i class="fas fa-save mr-2"></i>
+                            {{ saving ? 'Guardando...' : 'Guardar' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modales para gestionar opciones -->
+        <CreateSelectModal
+            v-model:show="showConditionModal"
+            field="condition"
+            label="Condición"
+            api-endpoint="/catalogs/conditions"
+            @item-saved="handleItemSaved"
+            @options-updated="loadConditions"
+        />
+        <CreateSelectModal
+            v-model:show="showMechanismFailModal"
+            field="failure_mechanism"
+            label="Mecanismo Falla"
+            api-endpoint="/catalogs/mechanism-fails"
+            @item-saved="handleItemSaved"
+            @options-updated="loadMechanismFails"
+        />
+        <CreateSelectModal
+            v-model:show="showComponentFailModal"
+            field="component_failure"
+            label="Componente Falla"
+            api-endpoint="/catalogs/component-fails"
+            @item-saved="handleItemSaved"
+            @options-updated="loadComponentFails"
+        />
+    </div>
+</template>
+
+<script setup>
+import { ref, onMounted, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
+import api from '../../services/api';
+import Swal from 'sweetalert2';
+import CreateSelectModal from '../../components/CreateSelectModal.vue';
+
+const router = useRouter();
+const authStore = useAuthStore();
+
+const form = reactive({
+    equipment_id: '',
+    measurement_date: '',
+    condition_id: '',
+    mechanism_fail_id: '',
+    component_fail_id: '',
+    priority: '',
+    analist_id: '',
+    ot_created: '',
+    status_ot: '',
+    execution_date: '',
+    verification_recommendation: '',
+    diagnosis: {},
+    recommendations: {},
+    image_1: null,
+    image_2: null,
+});
+
+const equipmentData = reactive({
+    equipment_type: '',
+    location: '',
+    process: '',
+});
+
+const equipments = ref([]);
+const conditions = ref([]);
+const mechanismFails = ref([]);
+const componentFails = ref([]);
+const users = ref([]);
+const components = ref([]);
+const saving = ref(false);
+const errors = ref({});
+
+// Variables para controlar los modales
+const showConditionModal = ref(false);
+const showMechanismFailModal = ref(false);
+const showComponentFailModal = ref(false);
+
+onMounted(async () => {
+    await loadCatalogs();
+});
+
+const loadCatalogs = async () => {
+    try {
+        const [equipmentsRes, conditionsRes, mechanismFailsRes, componentFailsRes, usersRes] = await Promise.all([
+            api.get('/equipment'),
+            api.get('/catalogs/conditions'),
+            api.get('/catalogs/mechanism-fails'),
+            api.get('/catalogs/component-fails'),
+            api.get('/catalogs/users'),
+        ]);
+
+        equipments.value = equipmentsRes.data.data;
+        conditions.value = conditionsRes.data.data;
+        mechanismFails.value = mechanismFailsRes.data.data;
+        componentFails.value = componentFailsRes.data.data;
+        users.value = usersRes.data.data;
+    } catch (error) {
+        Swal.fire('Error', 'Error al cargar catálogos', 'error');
+    }
+};
+
+const loadConditions = async () => {
+    try {
+        const response = await api.get('/catalogs/conditions');
+        conditions.value = response.data.data;
+    } catch (error) {
+        console.error('Error al cargar condiciones:', error);
+    }
+};
+
+const loadMechanismFails = async () => {
+    try {
+        const response = await api.get('/catalogs/mechanism-fails');
+        mechanismFails.value = response.data.data;
+    } catch (error) {
+        console.error('Error al cargar mecanismos de falla:', error);
+    }
+};
+
+const loadComponentFails = async () => {
+    try {
+        const response = await api.get('/catalogs/component-fails');
+        componentFails.value = response.data.data;
+    } catch (error) {
+        console.error('Error al cargar componentes de falla:', error);
+    }
+};
+
+const handleItemSaved = (data) => {
+    // Seleccionar automáticamente el nuevo registro creado
+    if (data.field === 'condition' && data.id) {
+        form.condition_id = data.id;
+    } else if (data.field === 'failure_mechanism' && data.id) {
+        form.mechanism_fail_id = data.id;
+    } else if (data.field === 'component_failure' && data.id) {
+        form.component_fail_id = data.id;
+    }
+};
+
+const loadEquipmentData = async () => {
+    if (!form.equipment_id) {
+        equipmentData.equipment_type = '';
+        equipmentData.location = '';
+        equipmentData.process = '';
+        components.value = [];
+        form.diagnosis = {};
+        form.recommendations = {};
+        return;
+    }
+
+    try {
+        const response = await api.get(`/equipment/${form.equipment_id}`);
+        const equipment = response.data.data;
+        
+        equipmentData.equipment_type = equipment.equipment_type?.name || '';
+        equipmentData.location = equipment.ubication?.name || '';
+        equipmentData.process = equipment.process?.name || '';
+        
+        // Cargar componentes del equipo
+        if (equipment.components) {
+            components.value = equipment.components;
+            // Inicializar arrays de diagnósticos y recomendaciones
+            components.value.forEach(component => {
+                if (!form.diagnosis[component.id]) {
+                    form.diagnosis[component.id] = '';
+                }
+                if (!form.recommendations[component.id]) {
+                    form.recommendations[component.id] = [];
+                }
+            });
+        } else {
+            components.value = [];
+        }
+    } catch (error) {
+        Swal.fire('Error', 'Error al cargar datos del equipo', 'error');
+    }
+};
+
+const handleImage1Change = (event) => {
+    form.image_1 = event.target.files[0];
+};
+
+const handleImage2Change = (event) => {
+    form.image_2 = event.target.files[0];
+};
+
+const addRecommendation = (componentId) => {
+    if (!form.recommendations[componentId]) {
+        form.recommendations[componentId] = [];
+    }
+    form.recommendations[componentId].push('');
+};
+
+const deleteRecommendation = (componentId, index) => {
+    if (form.recommendations[componentId]) {
+        form.recommendations[componentId].splice(index, 1);
+    }
+};
+
+const saveReport = async () => {
+    saving.value = true;
+    errors.value = {};
+
+    try {
+        const formData = new FormData();
+        
+        // Agregar campos básicos
+        Object.keys(form).forEach(key => {
+            if (key === 'image_1' || key === 'image_2') {
+                if (form[key]) {
+                    formData.append(key, form[key]);
+                }
+            } else if (key === 'diagnosis' || key === 'recommendations') {
+                formData.append(key, JSON.stringify(form[key]));
+            } else if (form[key] !== null && form[key] !== '') {
+                formData.append(key, form[key]);
+            }
+        });
+
+        await api.post('/reports', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        Swal.fire('Éxito', 'Reporte creado correctamente', 'success');
+        router.push({ name: 'reports' });
+    } catch (error) {
+        if (error.response?.data?.errors) {
+            errors.value = error.response.data.errors;
+        }
+        const message = error.response?.data?.message || 'Error al guardar el reporte';
+        Swal.fire('Error', message, 'error');
+    } finally {
+        saving.value = false;
+    }
+};
+</script>
