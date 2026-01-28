@@ -294,34 +294,6 @@
                                 ></textarea>
                             </div>
 
-                            <!-- Imágenes -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-image mr-2 text-blue-600"></i>
-                                    Subir Imagen 1
-                                </label>
-                                <input
-                                    @change="handleImage1Change"
-                                    type="file"
-                                    accept="image/*"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                                <p v-if="errors.image_1" class="mt-1 text-sm text-red-600">{{ errors.image_1 }}</p>
-                            </div>
-
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-image mr-2 text-blue-600"></i>
-                                    Subir Imagen 2
-                                </label>
-                                <input
-                                    @change="handleImage2Change"
-                                    type="file"
-                                    accept="image/*"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                                <p v-if="errors.image_2" class="mt-1 text-sm text-red-600">{{ errors.image_2 }}</p>
-                            </div>
                         </div>
                     </div>
 
@@ -357,6 +329,67 @@
                                         class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
                                         placeholder="Ingresar diagnóstico"
                                     ></textarea>
+                                </div>
+
+                                <!-- Imágenes del Componente -->
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <label class="flex items-center text-sm font-medium text-gray-700">
+                                            <i class="fas fa-image mr-2 text-purple-600"></i>
+                                            Imágenes
+                                            <span v-if="form.component_images[component.id]?.length" class="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                                                {{ form.component_images[component.id]?.length }}
+                                            </span>
+                                        </label>
+                                        <button
+                                            @click="addComponentImage(component.id)"
+                                            type="button"
+                                            class="flex items-center px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-xs font-medium"
+                                        >
+                                            <i class="fas fa-plus mr-1"></i>
+                                            Agregar Imagen
+                                        </button>
+                                    </div>
+
+                                    <div v-if="form.component_images[component.id]?.length" class="space-y-3">
+                                        <div
+                                            v-for="(image, imgIndex) in form.component_images[component.id]"
+                                            :key="imgIndex"
+                                            class="bg-white rounded-lg p-3 border border-gray-200"
+                                        >
+                                            <div class="flex items-center space-x-3">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center mb-2">
+                                                        <span class="flex-shrink-0 bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mr-2">
+                                                            {{ imgIndex + 1 }}
+                                                        </span>
+                                                        <span class="text-xs text-gray-500">Imagen {{ imgIndex + 1 }}</span>
+                                                    </div>
+                                                    <input
+                                                        @change="handleComponentImageChange(component.id, imgIndex, $event)"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                                                    />
+                                                    <div v-if="image.preview" class="mt-2">
+                                                        <img :src="image.preview" alt="Preview" class="max-w-full h-32 object-cover rounded-lg border border-gray-200" />
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    @click="removeComponentImage(component.id, imgIndex)"
+                                                    type="button"
+                                                    class="px-3 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                                                    title="Eliminar imagen"
+                                                >
+                                                    <i class="fas fa-trash text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else class="text-center py-4 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                                        <p class="text-sm text-gray-500">No hay imágenes aún</p>
+                                        <p class="text-xs text-gray-400 mt-1">Haz clic en "Agregar Imagen" para subir una imagen</p>
+                                    </div>
                                 </div>
 
                                 <!-- Recomendaciones -->
@@ -493,8 +526,7 @@ const form = reactive({
     verification_recommendation: '',
     diagnosis: {},
     recommendations: {},
-    image_1: null,
-    image_2: null,
+    component_images: {},
 });
 
 const equipmentData = reactive({
@@ -587,6 +619,7 @@ const loadEquipmentData = async () => {
         components.value = [];
         form.diagnosis = {};
         form.recommendations = {};
+        form.component_images = {};
         return;
     }
 
@@ -601,13 +634,16 @@ const loadEquipmentData = async () => {
         // Cargar componentes del equipo
         if (equipment.components) {
             components.value = equipment.components;
-            // Inicializar arrays de diagnósticos y recomendaciones
+            // Inicializar arrays de diagnósticos, recomendaciones e imágenes
             components.value.forEach(component => {
                 if (!form.diagnosis[component.id]) {
                     form.diagnosis[component.id] = '';
                 }
                 if (!form.recommendations[component.id]) {
                     form.recommendations[component.id] = [];
+                }
+                if (!form.component_images[component.id]) {
+                    form.component_images[component.id] = [];
                 }
             });
         } else {
@@ -618,12 +654,34 @@ const loadEquipmentData = async () => {
     }
 };
 
-const handleImage1Change = (event) => {
-    form.image_1 = event.target.files[0];
+const addComponentImage = (componentId) => {
+    if (!form.component_images[componentId]) {
+        form.component_images[componentId] = [];
+    }
+    form.component_images[componentId].push({ file: null, preview: null });
 };
 
-const handleImage2Change = (event) => {
-    form.image_2 = event.target.files[0];
+const handleComponentImageChange = (componentId, imgIndex, event) => {
+    const file = event.target.files[0];
+    if (file) {
+        if (!form.component_images[componentId]) {
+            form.component_images[componentId] = [];
+        }
+        form.component_images[componentId][imgIndex] = {
+            file: file,
+            preview: URL.createObjectURL(file)
+        };
+    }
+};
+
+const removeComponentImage = (componentId, imgIndex) => {
+    if (form.component_images[componentId] && form.component_images[componentId][imgIndex]) {
+        // Revocar la URL del objeto para liberar memoria
+        if (form.component_images[componentId][imgIndex].preview) {
+            URL.revokeObjectURL(form.component_images[componentId][imgIndex].preview);
+        }
+        form.component_images[componentId].splice(imgIndex, 1);
+    }
 };
 
 const addRecommendation = (componentId) => {
@@ -648,16 +706,32 @@ const saveReport = async () => {
         
         // Agregar campos básicos
         Object.keys(form).forEach(key => {
-            if (key === 'image_1' || key === 'image_2') {
-                if (form[key]) {
-                    formData.append(key, form[key]);
-                }
+            if (key === 'component_images') {
+                // Enviar imágenes de componentes con formato simple
+                Object.keys(form.component_images).forEach(componentId => {
+                    form.component_images[componentId].forEach((imageObj, imgIndex) => {
+                        if (imageObj && imageObj.file) {
+                            formData.append(`component_images_${componentId}_${imgIndex}`, imageObj.file);
+                        }
+                    });
+                });
             } else if (key === 'diagnosis' || key === 'recommendations') {
                 formData.append(key, JSON.stringify(form[key]));
             } else if (form[key] !== null && form[key] !== '') {
                 formData.append(key, form[key]);
             }
         });
+        
+        // Enviar también un JSON con la estructura de imágenes para referencia
+        const componentImagesStructure = {};
+        Object.keys(form.component_images).forEach(componentId => {
+            componentImagesStructure[componentId] = form.component_images[componentId]
+                .map((img, idx) => img.file ? `component_images_${componentId}_${idx}` : null)
+                .filter(Boolean);
+        });
+        if (Object.keys(componentImagesStructure).length > 0) {
+            formData.append('component_images_structure', JSON.stringify(componentImagesStructure));
+        }
 
         await api.post('/reports', formData, {
             headers: {

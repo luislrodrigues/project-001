@@ -85,15 +85,20 @@
 
         .image-container {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             margin-top: 20px;
+            gap: 10px;
         }
 
         .image-container img {
             width: 48%;
+            max-width: 48%;
             height: 200px;
+            object-fit: cover;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
         }
 
         h3 {
@@ -151,18 +156,7 @@
             <li><strong>Ubicación:</strong> {{ $reportData->equipment->ubication->name }}</li>
         </ul>
     </div>
-    <div class="infoImg">
-        <div class="image-container">
-            @if ($reportData->image_1)
-                <img src="{{ asset('storage/' . $reportData->image_1) }}" alt="Imagen 1">
-            @endif
-
-            @if ($reportData->image_2)
-                <img src="{{ asset('storage/' . $reportData->image_2) }}" alt="Imagen 2">
-            @endif
-
-        </div>
-    </div>
+    {{-- Imágenes globales removidas - ahora se muestran por componente --}}
 
     @foreach($components as $component)
         <div class="info">
@@ -175,16 +169,25 @@
                 @endforeach
             </ul>
 
-            @if(isset($reportData->diagnosis[$component->id]) && !empty($reportData->diagnosis[$component->id]))
-                <p style="text-align: justify; margin: 0; padding: 0;"><strong>Diagnóstico:</strong><br> {{ $reportData->diagnosis[$component->id] }}</p>
+            @if(isset($diagnosis[$component->id]) && !empty($diagnosis[$component->id]))
+                <p style="text-align: justify; margin: 0; padding: 0;"><strong>Diagnóstico:</strong><br> {{ $diagnosis[$component->id] }}</p>
             @else
                 <p><strong>Diagnóstico:</strong></p>
             @endif
 
+            {{-- Imágenes del componente --}}
+            @if(isset($componentImages[$component->id]) && !empty($componentImages[$component->id]))
+                <div class="image-container" style="margin-top: 15px;">
+                    @foreach($componentImages[$component->id] as $imageUrl)
+                        <img src="{{ $imageUrl }}" alt="Imagen del componente" style="width: 48%; height: 200px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-bottom: 10px;">
+                    @endforeach
+                </div>
+            @endif
+
             <p><strong>Recomendaciones:</strong></p>
             <ul>
-                @if(isset($reportData->recommendations[$component->id]) && is_array($reportData->recommendations[$component->id]) && !empty($reportData->recommendations[$component->id]))
-                    @foreach ($reportData->recommendations[$component->id] as $recommendation)
+                @if(isset($recommendations[$component->id]) && is_array($recommendations[$component->id]) && !empty($recommendations[$component->id]))
+                    @foreach ($recommendations[$component->id] as $recommendation)
                         <li>{{ $recommendation }}</li>
                     @endforeach
                 @else

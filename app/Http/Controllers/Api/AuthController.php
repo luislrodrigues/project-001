@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdateProfileRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -65,6 +66,69 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Sesión cerrada correctamente'
+        ]);
+    }
+
+    /**
+     * Obtener información del usuario autenticado
+     */
+    public function user(Request $request)
+    {
+        $user = $request->user()->load('company');
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'workstation' => $user->workstation,
+            'area' => $user->area,
+            'company' => $user->company ? [
+                'id' => $user->company->id,
+                'name' => $user->company->name,
+            ] : null,
+            'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+            'roles' => $user->getRoleNames()->toArray(),
+            'profile_photo_url' => $user->profile_photo_url,
+        ]);
+    }
+
+    /**
+     * Actualizar perfil del usuario autenticado
+     */
+    public function updateProfile(UpdateProfileRequest $request)
+    {
+        $user = $request->user();
+        
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+        ];
+
+        if ($request->has('workstation')) {
+            $data['workstation'] = $request->workstation;
+        }
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        $user->load('company');
+
+        return response()->json([
+            'message' => 'Perfil actualizado correctamente',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'workstation' => $user->workstation,
+                'area' => $user->area,
+                'company' => $user->company ? [
+                    'id' => $user->company->id,
+                    'name' => $user->company->name,
+                ] : null,
+                'profile_photo_url' => $user->profile_photo_url,
+            ],
         ]);
     }
 }

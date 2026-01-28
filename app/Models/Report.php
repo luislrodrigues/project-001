@@ -19,8 +19,6 @@ class Report extends Model
         'id',
         'equipment_id',
         'measurement_date',
-        'image_1',
-        'image_2',
         'diagnosis',
         'condition_id',
         'mechanism_fail_id',

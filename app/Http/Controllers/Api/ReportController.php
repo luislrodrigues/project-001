@@ -12,6 +12,7 @@ use App\Models\Equipment;
 use App\Models\MechanismFail;
 use App\Models\Report;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -84,17 +85,6 @@ class ReportController extends Controller
     public function store(StoreReportRequest $request): JsonResponse
     {
         try {
-            $imagePath1 = null;
-            $imagePath2 = null;
-
-            if ($request->hasFile('image_1')) {
-                $imagePath1 = $request->file('image_1')->store('images', 'public');
-            }
-
-            if ($request->hasFile('image_2')) {
-                $imagePath2 = $request->file('image_2')->store('images', 'public');
-            }
-
             $data = [
                 'equipment_id' => $request->equipment_id,
                 'measurement_date' => $request->measurement_date,
@@ -117,12 +107,44 @@ class ReportController extends Controller
                 $data['recommendations'] = json_encode($request->recommendations);
             }
 
-            if ($imagePath1) {
-                $data['image_1'] = $imagePath1;
+            // Procesar imágenes por componente
+            $componentImages = [];
+            if ($request->has('component_images_structure')) {
+                $structure = json_decode($request->input('component_images_structure'), true);
+                if (is_array($structure)) {
+                    foreach ($structure as $componentId => $imageKeys) {
+                        $componentImages[$componentId] = [];
+                        foreach ($imageKeys as $imageKey) {
+                            if ($request->hasFile($imageKey)) {
+                                $file = $request->file($imageKey);
+                                if ($file && $file->isValid()) {
+                                    $path = $file->store('images', 'public');
+                                    $componentImages[$componentId][] = $path;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            if ($imagePath2) {
-                $data['image_2'] = $imagePath2;
+
+            // Guardar imágenes de componentes en el campo diagnosis como parte de un objeto extendido
+            // O mejor, almacenarlas en un campo separado si existe
+            if (!empty($componentImages)) {
+                // Almacenar en diagnosis junto con el texto del diagnóstico
+                $diagnosisData = $request->has('diagnosis') ? $request->diagnosis : [];
+                foreach ($componentImages as $componentId => $imagePaths) {
+                    if (!isset($diagnosisData[$componentId])) {
+                        $diagnosisData[$componentId] = [];
+                    }
+                    if (!is_array($diagnosisData[$componentId])) {
+                        $diagnosisData[$componentId] = ['text' => $diagnosisData[$componentId], 'images' => []];
+                    } else if (!isset($diagnosisData[$componentId]['images'])) {
+                        $diagnosisData[$componentId] = ['text' => $diagnosisData[$componentId]['text'] ?? '', 'images' => []];
+                    }
+                    $diagnosisData[$componentId]['images'] = $imagePaths;
+                }
+                $data['diagnosis'] = json_encode($diagnosisData);
             }
 
             $report = Report::create($data);
@@ -139,36 +161,41 @@ class ReportController extends Controller
         }
     }
 
-    public function show(Report $report): JsonResponse
+    public function show($id): JsonResponse
     {
+        if (!auth()->user()->can('consult report')) {
+            abort(403, 'No tienes los permisos requeridos.');
+        }
+
+        $report = Report::with([
+            'equipment.components.componentType',
+            'equipment.components.brand',
+            'equipment.company',
+            'equipment.equipmentType',
+            'equipment.ubication',
+            'equipment.process',
+            'condition',
+            'mechanismFail',
+            'componentFail',
+            'analist'
+        ])
+        ->whereNull('deleted_at')
+        ->findOrFail($id);
+
         return response()->json([
-            'data' => new ReportResource($report->load(['equipment.components.componentType', 'equipment.components.brand', 'condition', 'mechanismFail', 'componentFail', 'analist']))
+            'data' => new ReportResource($report)
         ]);
     }
 
-    public function update(UpdateReportRequest $request, Report $report): JsonResponse
+    public function update(UpdateReportRequest $request, $id): JsonResponse
     {
+        if (!auth()->user()->can('edit report')) {
+            abort(403, 'No tienes los permisos requeridos.');
+        }
+
+        $report = Report::whereNull('deleted_at')->findOrFail($id);
+
         try {
-            $imagePath1 = null;
-            $imagePath2 = null;
-
-            // Manejar imágenes si vienen en el request
-            if ($request->hasFile('image_1')) {
-                // Eliminar imagen anterior si existe
-                if ($report->image_1) {
-                    Storage::disk('public')->delete($report->image_1);
-                }
-                $imagePath1 = $request->file('image_1')->store('images', 'public');
-            }
-
-            if ($request->hasFile('image_2')) {
-                // Eliminar imagen anterior si existe
-                if ($report->image_2) {
-                    Storage::disk('public')->delete($report->image_2);
-                }
-                $imagePath2 = $request->file('image_2')->store('images', 'public');
-            }
-
             $data = [
                 'equipment_id' => $request->equipment_id,
                 'measurement_date' => $request->measurement_date,
@@ -191,13 +218,86 @@ class ReportController extends Controller
                 $data['recommendations'] = is_array($request->recommendations) ? json_encode($request->recommendations) : $request->recommendations;
             }
 
-            if ($imagePath1) {
-                $data['image_1'] = $imagePath1;
+            // Procesar imágenes por componente
+            $componentImages = [];
+            if ($request->has('component_images_structure')) {
+                $structure = json_decode($request->input('component_images_structure'), true);
+                if (is_array($structure)) {
+                    foreach ($structure as $componentId => $imageKeys) {
+                        $componentImages[$componentId] = [];
+                        foreach ($imageKeys as $imageKey) {
+                            if ($request->hasFile($imageKey)) {
+                                $file = $request->file($imageKey);
+                                if ($file && $file->isValid()) {
+                                    $path = $file->store('images', 'public');
+                                    $componentImages[$componentId][] = $path;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            if ($imagePath2) {
-                $data['image_2'] = $imagePath2;
+            // Manejar eliminación de imágenes
+            $imagesToDelete = [];
+            if ($request->has('images_to_delete')) {
+                $imagesToDelete = json_decode($request->input('images_to_delete'), true);
+                if (is_array($imagesToDelete)) {
+                    foreach ($imagesToDelete as $componentId => $imageUrls) {
+                        foreach ($imageUrls as $imageUrl) {
+                            // Extraer la ruta del storage desde la URL completa
+                            $path = str_replace(asset('storage/'), '', $imageUrl);
+                            if ($path && Storage::disk('public')->exists($path)) {
+                                Storage::disk('public')->delete($path);
+                            }
+                        }
+                    }
+                }
             }
+
+            // Obtener diagnosis actual y actualizar con nuevas imágenes
+            $currentDiagnosis = $report->diagnosis ? (is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis) : [];
+            $diagnosisData = $request->has('diagnosis') ? $request->diagnosis : $currentDiagnosis;
+
+            // Actualizar diagnosis con nuevas imágenes y eliminar las marcadas
+            foreach ($componentImages as $componentId => $newImagePaths) {
+                $componentIdStr = (string)$componentId;
+                if (!isset($diagnosisData[$componentIdStr])) {
+                    $diagnosisData[$componentIdStr] = '';
+                }
+                
+                // Obtener imágenes existentes
+                $existingImages = [];
+                if (isset($currentDiagnosis[$componentIdStr]) && is_array($currentDiagnosis[$componentIdStr]) && isset($currentDiagnosis[$componentIdStr]['images'])) {
+                    $existingImages = $currentDiagnosis[$componentIdStr]['images'];
+                } else if (isset($currentDiagnosis[$componentIdStr]) && is_array($currentDiagnosis[$componentIdStr])) {
+                    $existingImages = $currentDiagnosis[$componentIdStr]['images'] ?? [];
+                }
+
+                // Eliminar imágenes marcadas para eliminar
+                if (isset($imagesToDelete[$componentIdStr]) && is_array($imagesToDelete[$componentIdStr])) {
+                    foreach ($imagesToDelete[$componentIdStr] as $imageUrlToDelete) {
+                        $pathToDelete = str_replace(asset('storage/'), '', $imageUrlToDelete);
+                        $existingImages = array_filter($existingImages, function($img) use ($pathToDelete) {
+                            return $img !== $pathToDelete;
+                        });
+                    }
+                }
+
+                // Combinar imágenes existentes con nuevas
+                $allImages = array_merge($existingImages, $newImagePaths);
+
+                // Convertir a estructura con texto e imágenes
+                $text = is_string($diagnosisData[$componentIdStr]) ? $diagnosisData[$componentIdStr] : ($diagnosisData[$componentIdStr]['text'] ?? '');
+                $diagnosisData[$componentIdStr] = [
+                    'text' => $text,
+                    'images' => array_values($allImages)
+                ];
+            }
+
+            // Actualizar diagnosis con estructura completa
+            $data['diagnosis'] = json_encode($diagnosisData);
+
 
             $report->update($data);
 
@@ -213,13 +313,14 @@ class ReportController extends Controller
         }
     }
 
-    public function destroy(Report $report): JsonResponse
+    public function destroy($id): JsonResponse
     {
         if (!auth()->user()->can('delete report')) {
             abort(403, 'No tienes los permisos requeridos.');
         }
 
         try {
+            $report = Report::whereNull('deleted_at')->findOrFail($id);
             $report->status = 'inactive';
             $report->save();
             $report->delete();
@@ -235,10 +336,133 @@ class ReportController extends Controller
         }
     }
 
-    public function downloadPdf($id): JsonResponse
+    public function downloadPdf($id)
     {
-        // Placeholder - implementar cuando se migre la generación de PDF
-        return response()->json(['message' => 'En desarrollo']);
+        if (!auth()->user()->can('consult report')) {
+            abort(403, 'No tienes los permisos requeridos.');
+        }
+
+        try {
+            $report = Report::with([
+                'equipment.components.componentType',
+                'equipment.components.brand',
+                'equipment.components.fields.value',
+                'equipment.company',
+                'equipment.equipmentType',
+                'equipment.ubication',
+                'equipment.process',
+                'condition',
+                'mechanismFail',
+                'componentFail',
+                'analist'
+            ])
+            ->whereNull('deleted_at')
+            ->findOrFail($id);
+
+            // Procesar diagnóstico para el PDF
+            $diagnosis = [];
+            if ($report->diagnosis) {
+                $decoded = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis;
+                if (is_array($decoded)) {
+                    // Si es un array indexado numéricamente, mapearlo a IDs de componentes
+                    $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
+                    if ($isNumericArray && $report->equipment && $report->equipment->components) {
+                        foreach ($decoded as $index => $data) {
+                            if (isset($report->equipment->components[$index])) {
+                                $componentId = $report->equipment->components[$index]->id;
+                                if (is_array($data) && isset($data['text'])) {
+                                    $diagnosis[$componentId] = $data['text'];
+                                } else if (is_string($data)) {
+                                    $diagnosis[$componentId] = $data;
+                                }
+                            }
+                        }
+                    } else {
+                        // Es un objeto asociativo
+                        foreach ($decoded as $componentId => $data) {
+                            if (is_array($data) && isset($data['text'])) {
+                                $diagnosis[$componentId] = $data['text'];
+                            } else if (is_string($data)) {
+                                $diagnosis[$componentId] = $data;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Procesar recomendaciones para el PDF
+            $recommendations = [];
+            if ($report->recommendations) {
+                $decoded = is_string($report->recommendations) ? json_decode($report->recommendations, true) : $report->recommendations;
+                if (is_array($decoded)) {
+                    $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
+                    if ($isNumericArray && $report->equipment && $report->equipment->components) {
+                        foreach ($decoded as $index => $data) {
+                            if (isset($report->equipment->components[$index])) {
+                                $componentId = $report->equipment->components[$index]->id;
+                                $recommendations[$componentId] = is_array($data) ? $data : [];
+                            }
+                        }
+                    } else {
+                        $recommendations = $decoded;
+                    }
+                }
+            }
+
+            // Procesar imágenes por componente para el PDF
+            $componentImages = [];
+            if ($report->diagnosis) {
+                $decoded = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis;
+                if (is_array($decoded)) {
+                    $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
+                    if ($isNumericArray && $report->equipment && $report->equipment->components) {
+                        foreach ($decoded as $index => $data) {
+                            if (isset($report->equipment->components[$index])) {
+                                $componentId = $report->equipment->components[$index]->id;
+                                if (is_array($data) && isset($data['images'])) {
+                                    $componentImages[$componentId] = array_map(function ($path) {
+                                        return asset('storage/' . $path);
+                                    }, $data['images']);
+                                }
+                            }
+                        }
+                    } else {
+                        foreach ($decoded as $componentId => $data) {
+                            if (is_array($data) && isset($data['images'])) {
+                                $componentImages[$componentId] = array_map(function ($path) {
+                                    // Si ya es una URL completa, no agregar asset
+                                    if (filter_var($path, FILTER_VALIDATE_URL)) {
+                                        return $path;
+                                    }
+                                    return asset('storage/' . $path);
+                                }, $data['images']);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $components = $report->equipment->components ?? [];
+
+            $pdf = Pdf::loadView('livewire.report.report-pdf', [
+                'reportData' => $report,
+                'components' => $components,
+                'diagnosis' => $diagnosis,
+                'recommendations' => $recommendations,
+                'componentImages' => $componentImages
+            ]);
+
+            return response()->streamDownload(function() use ($pdf) {
+                echo $pdf->output();
+            }, 'reporte-' . $report->id . '.pdf', [
+                'Content-Type' => 'application/pdf',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al generar el PDF',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function export(): JsonResponse

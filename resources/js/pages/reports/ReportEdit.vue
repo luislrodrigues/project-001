@@ -306,40 +306,6 @@
                                 ></textarea>
                             </div>
 
-                            <!-- Imágenes -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-image mr-2 text-blue-600"></i>
-                                    Subir Imagen 1
-                                </label>
-                                <input
-                                    @change="handleImage1Change"
-                                    type="file"
-                                    accept="image/*"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                                <p v-if="currentImages.image_1" class="mt-2 text-sm text-gray-600">
-                                    Imagen actual: <a :href="currentImages.image_1" target="_blank" class="text-blue-600 hover:underline">Ver</a>
-                                </p>
-                                <p v-if="errors.image_1" class="mt-1 text-sm text-red-600">{{ errors.image_1 }}</p>
-                            </div>
-
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-image mr-2 text-blue-600"></i>
-                                    Subir Imagen 2
-                                </label>
-                                <input
-                                    @change="handleImage2Change"
-                                    type="file"
-                                    accept="image/*"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                                <p v-if="currentImages.image_2" class="mt-2 text-sm text-gray-600">
-                                    Imagen actual: <a :href="currentImages.image_2" target="_blank" class="text-blue-600 hover:underline">Ver</a>
-                                </p>
-                                <p v-if="errors.image_2" class="mt-1 text-sm text-red-600">{{ errors.image_2 }}</p>
-                            </div>
                         </div>
                     </div>
 
@@ -371,10 +337,96 @@
                                         Diagnóstico
                                     </label>
                                     <textarea
-                                        v-model="form.diagnosis[component.id]"
+                                        :value="getDiagnosisText(component.id)"
+                                        @input="updateDiagnosisText(component.id, $event.target.value)"
                                         class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
                                         placeholder="Ingresar diagnóstico"
                                     ></textarea>
+                                </div>
+
+                                <!-- Imágenes del Componente -->
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <label class="flex items-center text-sm font-medium text-gray-700">
+                                            <i class="fas fa-image mr-2 text-purple-600"></i>
+                                            Imágenes
+                                            <span v-if="getComponentImages(component.id)?.length" class="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                                                {{ getComponentImages(component.id).length }}
+                                            </span>
+                                        </label>
+                                        <button
+                                            @click="addComponentImage(component.id)"
+                                            type="button"
+                                            class="flex items-center px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-xs font-medium"
+                                        >
+                                            <i class="fas fa-plus mr-1"></i>
+                                            Agregar Imagen
+                                        </button>
+                                    </div>
+
+                                    <!-- Imágenes existentes -->
+                                    <div v-if="getComponentImages(component.id)?.length" class="mb-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                        <div
+                                            v-for="(imageUrl, imgIndex) in getComponentImages(component.id)"
+                                            :key="imgIndex"
+                                            class="relative group"
+                                        >
+                                            <img
+                                                :src="imageUrl"
+                                                :alt="`Imagen ${imgIndex + 1}`"
+                                                class="w-full h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-purple-500 transition-all"
+                                            />
+                                            <button
+                                                @click="removeExistingImage(component.id, imgIndex)"
+                                                type="button"
+                                                class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Eliminar imagen"
+                                            >
+                                                <i class="fas fa-times text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Nuevas imágenes a subir -->
+                                    <div v-if="getComponentImagesForm(component.id)?.length" class="space-y-3">
+                                        <div
+                                            v-for="(imageObj, imgIndex) in getComponentImagesForm(component.id)"
+                                            :key="imgIndex"
+                                            class="bg-white rounded-lg p-3 border border-gray-200"
+                                        >
+                                            <div class="flex items-center space-x-3">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center mb-2">
+                                                        <span class="flex-shrink-0 bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mr-2">
+                                                            {{ imgIndex + 1 }}
+                                                        </span>
+                                                        <span class="text-xs text-gray-500">Nueva Imagen {{ imgIndex + 1 }}</span>
+                                                    </div>
+                                                    <input
+                                                        @change="handleComponentImageChange(component.id, imgIndex, $event)"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                                                    />
+                                                    <div v-if="imageObj.preview" class="mt-2">
+                                                        <img :src="imageObj.preview" alt="Preview" class="max-w-full h-32 object-cover rounded-lg border border-gray-200" />
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    @click="removeComponentImage(component.id, imgIndex)"
+                                                    type="button"
+                                                    class="px-3 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                                                    title="Eliminar imagen"
+                                                >
+                                                    <i class="fas fa-trash text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="!getComponentImages(component.id)?.length && !getComponentImagesForm(component.id)?.length" class="text-center py-4 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                                        <p class="text-sm text-gray-500">No hay imágenes aún</p>
+                                        <p class="text-xs text-gray-400 mt-1">Haz clic en "Agregar Imagen" para subir una imagen</p>
+                                    </div>
                                 </div>
 
                                 <!-- Recomendaciones -->
@@ -383,8 +435,8 @@
                                         <label class="flex items-center text-sm font-medium text-gray-700">
                                             <i class="fas fa-lightbulb mr-2 text-yellow-600"></i>
                                             Recomendaciones
-                                            <span v-if="form.recommendations[component.id]?.length" class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                                                {{ form.recommendations[component.id]?.length }}
+                                            <span v-if="getRecommendations(component.id)?.length" class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                                                {{ getRecommendations(component.id)?.length }}
                                             </span>
                                         </label>
                                         <button
@@ -397,9 +449,9 @@
                                         </button>
                                     </div>
 
-                                    <div v-if="form.recommendations[component.id]?.length" class="space-y-2">
+                                    <div v-if="getRecommendations(component.id)?.length" class="space-y-2">
                                         <div
-                                            v-for="(rec, recIndex) in form.recommendations[component.id]"
+                                            v-for="(rec, recIndex) in getRecommendations(component.id)"
                                             :key="recIndex"
                                             class="flex items-center space-x-2"
                                         >
@@ -411,7 +463,8 @@
                                                     <span class="text-xs text-gray-500">Recomendación {{ recIndex + 1 }}</span>
                                                 </div>
                                                 <input
-                                                    v-model="form.recommendations[component.id][recIndex]"
+                                                    :value="getRecommendations(component.id)[recIndex]"
+                                                    @input="updateRecommendation(component.id, recIndex, $event.target.value)"
                                                     type="text"
                                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                                                     :placeholder="`Recomendación ${recIndex + 1}`"
@@ -512,8 +565,7 @@ const form = reactive({
     verification_recommendation: '',
     diagnosis: {},
     recommendations: {},
-    image_1: null,
-    image_2: null,
+    component_images: {},
 });
 
 const equipmentData = reactive({
@@ -522,10 +574,6 @@ const equipmentData = reactive({
     process: '',
 });
 
-const currentImages = reactive({
-    image_1: null,
-    image_2: null,
-});
 
 const equipments = ref([]);
 const conditions = ref([]);
@@ -539,6 +587,7 @@ const errors = ref({});
 const showConditionModal = ref(false);
 const showMechanismFailModal = ref(false);
 const showComponentFailModal = ref(false);
+const report = ref(null);
 
 onMounted(async () => {
     await Promise.all([loadCatalogs(), loadReport()]);
@@ -606,26 +655,131 @@ const loadReport = async () => {
     loading.value = true;
     try {
         const response = await api.get(`/reports/${route.params.id}`);
-        const report = response.data.data;
+        report.value = response.data.data;
+        const reportData = response.data.data;
 
-        form.equipment_id = report.equipment_id;
-        form.measurement_date = report.measurement_date;
-        form.condition_id = report.condition?.id || '';
-        form.mechanism_fail_id = report.mechanism_fail?.id || '';
-        form.component_fail_id = report.component_fail?.id || '';
-        form.priority = report.priority;
-        form.analist_id = report.analist?.id || '';
-        form.ot_created = report.ot_created || '';
-        form.status_ot = report.status_ot || '';
-        form.execution_date = report.execution_date || '';
-        form.verification_recommendation = report.verification_recommendation || '';
-        form.diagnosis = report.diagnosis || {};
-        form.recommendations = report.recommendations || {};
+        form.equipment_id = reportData.equipment_id;
+        form.measurement_date = reportData.measurement_date;
+        form.condition_id = reportData.condition?.id || '';
+        form.mechanism_fail_id = reportData.mechanism_fail?.id || '';
+        form.component_fail_id = reportData.component_fail?.id || '';
+        form.priority = reportData.priority;
+        form.analist_id = reportData.analist?.id || '';
+        form.ot_created = reportData.ot_created || '';
+        form.status_ot = reportData.status_ot || '';
+        form.execution_date = reportData.execution_date || '';
+        form.verification_recommendation = reportData.verification_recommendation || '';
+        // Procesar diagnosis para separar texto e imágenes
+        // Primero cargar componentes si están disponibles
+        let componentsList = [];
+        if (reportData.components && reportData.components.length > 0) {
+            componentsList = reportData.components;
+        }
+        
+        const processedDiagnosis = {};
+        if (reportData.diagnosis) {
+            // Verificar si es un array indexado numéricamente
+            const isNumericArray = Array.isArray(reportData.diagnosis) && 
+                reportData.diagnosis.length > 0 && 
+                Object.keys(reportData.diagnosis).every((key, index) => key == index);
+            
+            if (isNumericArray && componentsList.length > 0) {
+                // Mapear array indexado a IDs de componentes
+                reportData.diagnosis.forEach((diag, index) => {
+                    if (componentsList[index]) {
+                        const componentId = String(componentsList[index].id);
+                        if (typeof diag === 'object' && diag.text !== undefined) {
+                            processedDiagnosis[componentId] = diag.text;
+                        } else if (typeof diag === 'string') {
+                            processedDiagnosis[componentId] = diag;
+                        } else {
+                            processedDiagnosis[componentId] = '';
+                        }
+                    }
+                });
+            } else {
+                // Es un objeto con claves de componente
+                Object.keys(reportData.diagnosis).forEach(componentId => {
+                    const diag = reportData.diagnosis[componentId];
+                    // Normalizar componentId a string para consistencia
+                    const normalizedId = String(componentId);
+                    if (typeof diag === 'object' && diag.text !== undefined) {
+                        processedDiagnosis[normalizedId] = diag.text;
+                    } else if (typeof diag === 'string') {
+                        processedDiagnosis[normalizedId] = diag;
+                    } else {
+                        processedDiagnosis[normalizedId] = '';
+                    }
+                });
+            }
+        }
+        form.diagnosis = processedDiagnosis;
+        
+        // Normalizar recomendaciones con IDs como strings
+        const processedRecommendations = {};
+        if (reportData.recommendations && typeof reportData.recommendations === 'object') {
+            // Verificar si es un array indexado numéricamente
+            const isNumericArray = Array.isArray(reportData.recommendations) && 
+                reportData.recommendations.length > 0 && 
+                Object.keys(reportData.recommendations).every((key, index) => key == index);
+            
+            if (isNumericArray && componentsList.length > 0) {
+                // Mapear array indexado a IDs de componentes
+                reportData.recommendations.forEach((rec, index) => {
+                    if (componentsList[index]) {
+                        const componentId = String(componentsList[index].id);
+                        processedRecommendations[componentId] = Array.isArray(rec) ? rec : [];
+                    }
+                });
+            } else {
+                // Es un objeto con claves de componente
+                Object.keys(reportData.recommendations).forEach(componentId => {
+                    const normalizedId = String(componentId);
+                    processedRecommendations[normalizedId] = Array.isArray(reportData.recommendations[componentId]) 
+                        ? reportData.recommendations[componentId] 
+                        : [];
+                });
+            }
+        }
+        form.recommendations = processedRecommendations;
+        
+        form.component_images = {}; // Inicializar para nuevas imágenes
+        form.imagesToDelete = {}; // Para marcar imágenes a eliminar
 
-        currentImages.image_1 = report.image_1;
-        currentImages.image_2 = report.image_2;
+        // Si el reporte ya tiene componentes, usarlos; si no, cargar del equipo
+        if (reportData.components && reportData.components.length > 0) {
+            components.value = reportData.components;
+            // Asegurar que todos los componentes tengan diagnóstico y recomendaciones inicializados
+            components.value.forEach(component => {
+                const componentId = String(component.id);
+                if (form.diagnosis[componentId] === undefined) {
+                    form.diagnosis[componentId] = '';
+                }
+                if (form.recommendations[componentId] === undefined) {
+                    form.recommendations[componentId] = [];
+                }
+                if (form.component_images[componentId] === undefined) {
+                    form.component_images[componentId] = [];
+                }
+            });
+        } else if (componentsList.length > 0) {
+            // Si no hay componentes en reportData pero los tenemos de la lista, usarlos
+            components.value = componentsList;
+            components.value.forEach(component => {
+                const componentId = String(component.id);
+                if (form.diagnosis[componentId] === undefined) {
+                    form.diagnosis[componentId] = '';
+                }
+                if (form.recommendations[componentId] === undefined) {
+                    form.recommendations[componentId] = [];
+                }
+                if (form.component_images[componentId] === undefined) {
+                    form.component_images[componentId] = [];
+                }
+            });
+        }
 
-        // Cargar datos del equipo
+        // Cargar datos del equipo (para información adicional)
         await loadEquipmentData();
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el reporte', 'error');
@@ -646,14 +800,35 @@ const loadEquipmentData = async () => {
         equipmentData.location = equipment.ubication?.name || '';
         equipmentData.process = equipment.process?.name || '';
         
-        if (equipment.components) {
+        // Solo cargar componentes si no se cargaron ya del reporte
+        if (equipment.components && (!components.value || components.value.length === 0)) {
             components.value = equipment.components;
             components.value.forEach(component => {
-                if (!form.diagnosis[component.id]) {
-                    form.diagnosis[component.id] = '';
+                // Normalizar component.id a string para consistencia
+                const componentId = String(component.id);
+                // Solo inicializar si no existe (no sobrescribir datos existentes)
+                if (form.diagnosis[componentId] === undefined) {
+                    form.diagnosis[componentId] = '';
                 }
-                if (!form.recommendations[component.id]) {
-                    form.recommendations[component.id] = [];
+                if (form.recommendations[componentId] === undefined) {
+                    form.recommendations[componentId] = [];
+                }
+                if (form.component_images[componentId] === undefined) {
+                    form.component_images[componentId] = [];
+                }
+            });
+        } else if (equipment.components) {
+            // Si ya hay componentes, solo asegurar que todos tengan datos inicializados
+            components.value.forEach(component => {
+                const componentId = String(component.id);
+                if (form.diagnosis[componentId] === undefined) {
+                    form.diagnosis[componentId] = '';
+                }
+                if (form.recommendations[componentId] === undefined) {
+                    form.recommendations[componentId] = [];
+                }
+                if (form.component_images[componentId] === undefined) {
+                    form.component_images[componentId] = [];
                 }
             });
         }
@@ -662,24 +837,132 @@ const loadEquipmentData = async () => {
     }
 };
 
-const handleImage1Change = (event) => {
-    form.image_1 = event.target.files[0];
+const getDiagnosisText = (componentId) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    return form.diagnosis[normalizedId] || '';
 };
 
-const handleImage2Change = (event) => {
-    form.image_2 = event.target.files[0];
+const updateDiagnosisText = (componentId, value) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    form.diagnosis[normalizedId] = value;
+};
+
+const getComponentImages = (componentId) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    // Obtener imágenes existentes del reporte original
+    let reportDiagnosis = report.value?.diagnosis?.[normalizedId];
+    
+    // Si no se encuentra por ID, intentar buscar por índice si diagnosis es un array
+    if (!reportDiagnosis && Array.isArray(report.value?.diagnosis) && components.value) {
+        const componentIndex = components.value.findIndex(c => String(c.id) === normalizedId);
+        if (componentIndex >= 0 && report.value.diagnosis[componentIndex]) {
+            reportDiagnosis = report.value.diagnosis[componentIndex];
+        }
+    }
+    
+    let images = [];
+    if (reportDiagnosis && typeof reportDiagnosis === 'object' && reportDiagnosis.images) {
+        images = reportDiagnosis.images;
+    }
+    
+    // Filtrar imágenes marcadas para eliminación
+    if (form.imagesToDelete && form.imagesToDelete[normalizedId]) {
+        const imagesToDelete = form.imagesToDelete[normalizedId];
+        images = images.filter(img => !imagesToDelete.includes(img));
+    }
+    
+    return images;
+};
+
+const addComponentImage = (componentId) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    if (!form.component_images[normalizedId]) {
+        form.component_images[normalizedId] = [];
+    }
+    form.component_images[normalizedId].push({ file: null, preview: null });
+};
+
+const handleComponentImageChange = (componentId, imgIndex, event) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    const file = event.target.files[0];
+    if (file) {
+        if (!form.component_images[normalizedId]) {
+            form.component_images[normalizedId] = [];
+        }
+        form.component_images[normalizedId][imgIndex] = {
+            file: file,
+            preview: URL.createObjectURL(file)
+        };
+    }
+};
+
+const removeComponentImage = (componentId, imgIndex) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    if (form.component_images[normalizedId] && form.component_images[normalizedId][imgIndex]) {
+        if (form.component_images[normalizedId][imgIndex].preview) {
+            URL.revokeObjectURL(form.component_images[normalizedId][imgIndex].preview);
+        }
+        form.component_images[normalizedId].splice(imgIndex, 1);
+    }
+};
+
+const removeExistingImage = (componentId, imgIndex) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    // Marcar imagen para eliminación
+    if (!form.imagesToDelete) {
+        form.imagesToDelete = {};
+    }
+    if (!form.imagesToDelete[normalizedId]) {
+        form.imagesToDelete[normalizedId] = [];
+    }
+    const images = getComponentImages(componentId);
+    if (images[imgIndex]) {
+        form.imagesToDelete[normalizedId].push(images[imgIndex]);
+    }
+};
+
+// Helper para obtener recomendaciones normalizando el ID
+const getRecommendations = (componentId) => {
+    const normalizedId = String(componentId);
+    return form.recommendations[normalizedId] || [];
+};
+
+// Helper para obtener imágenes de componente normalizando el ID
+const getComponentImagesForm = (componentId) => {
+    const normalizedId = String(componentId);
+    return form.component_images[normalizedId] || [];
 };
 
 const addRecommendation = (componentId) => {
-    if (!form.recommendations[componentId]) {
-        form.recommendations[componentId] = [];
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    if (!form.recommendations[normalizedId]) {
+        form.recommendations[normalizedId] = [];
     }
-    form.recommendations[componentId].push('');
+    form.recommendations[normalizedId].push('');
+};
+
+const updateRecommendation = (componentId, index, value) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    if (!form.recommendations[normalizedId]) {
+        form.recommendations[normalizedId] = [];
+    }
+    form.recommendations[normalizedId][index] = value;
 };
 
 const deleteRecommendation = (componentId, index) => {
-    if (form.recommendations[componentId]) {
-        form.recommendations[componentId].splice(index, 1);
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    if (form.recommendations[normalizedId]) {
+        form.recommendations[normalizedId].splice(index, 1);
     }
 };
 
@@ -691,9 +974,19 @@ const updateReport = async () => {
         const formData = new FormData();
         
         Object.keys(form).forEach(key => {
-            if (key === 'image_1' || key === 'image_2') {
-                if (form[key]) {
-                    formData.append(key, form[key]);
+            if (key === 'component_images') {
+                // Enviar imágenes de componentes con formato simple
+                Object.keys(form.component_images).forEach(componentId => {
+                    form.component_images[componentId].forEach((imageObj, imgIndex) => {
+                        if (imageObj && imageObj.file) {
+                            formData.append(`component_images_${componentId}_${imgIndex}`, imageObj.file);
+                        }
+                    });
+                });
+            } else if (key === 'imagesToDelete') {
+                // Enviar lista de imágenes a eliminar
+                if (Object.keys(form.imagesToDelete).length > 0) {
+                    formData.append('images_to_delete', JSON.stringify(form.imagesToDelete));
                 }
             } else if (key === 'diagnosis' || key === 'recommendations') {
                 formData.append(key, JSON.stringify(form[key]));
@@ -701,8 +994,19 @@ const updateReport = async () => {
                 formData.append(key, form[key]);
             }
         });
+        
+        // Enviar también un JSON con la estructura de imágenes para referencia
+        const componentImagesStructure = {};
+        Object.keys(form.component_images).forEach(componentId => {
+            componentImagesStructure[componentId] = form.component_images[componentId]
+                .map((img, idx) => img.file ? `component_images_${componentId}_${idx}` : null)
+                .filter(Boolean);
+        });
+        if (Object.keys(componentImagesStructure).length > 0) {
+            formData.append('component_images_structure', JSON.stringify(componentImagesStructure));
+        }
 
-        await api.post(`/reports/${route.params.id}`, formData, {
+        await api.put(`/reports/${route.params.id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },

@@ -33,8 +33,8 @@
 
                 <!-- Search Section -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <div>
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-cog mr-2 text-gray-400"></i>
                                 Equipo
@@ -50,7 +50,7 @@
                                 </option>
                             </select>
                         </div>
-                        <div>
+                        <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-snowplow mr-2 text-gray-400"></i>
                                 Tipo Componente
@@ -66,7 +66,7 @@
                                 </option>
                             </select>
                         </div>
-                        <div>
+                        <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-building mr-2 text-gray-400"></i>
                                 Empresa
@@ -82,7 +82,7 @@
                                 </option>
                             </select>
                         </div>
-                        <div>
+                        <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-tag mr-2 text-gray-400"></i>
                                 Marca
@@ -98,15 +98,15 @@
                                 </option>
                             </select>
                         </div>
-                    </div>
-                    <div class="mt-3 flex justify-end">
-                        <button
-                            @click="fetchComponents"
-                            class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
-                        >
-                            <i class="fas fa-redo mr-2"></i>
-                            Actualizar
-                        </button>
+                        <div class="flex-shrink-0">
+                            <button
+                                @click="fetchComponents"
+                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium whitespace-nowrap"
+                            >
+                                <i class="fas fa-redo mr-2"></i>
+                                Actualizar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

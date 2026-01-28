@@ -1,5 +1,6 @@
 <template>
     <div class="container mx-auto px-4 sm:px-8">
+        <!-- Loading overlay para carga inicial -->
         <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -7,6 +8,17 @@
                     <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
                 </svg>
                 <p class="text-gray-700 font-medium">Cargando...</p>
+            </div>
+        </div>
+
+        <!-- Loading overlay para generación de PDF -->
+        <div v-if="downloadingPdf" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
+            <div class="flex flex-col items-center justify-center h-full">
+                <svg class="animate-spin h-16 w-16 text-green-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
+                    <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
+                </svg>
+                <p class="text-gray-700 font-medium">Generando PDF...</p>
             </div>
         </div>
 
@@ -31,11 +43,17 @@
                             Editar
                         </router-link>
                         <button
-                            @click="downloadPdf"
-                            class="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                            type="button"
+                            @click.prevent="downloadPdf"
+                            :disabled="downloadingPdf"
+                            class="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <i class="fas fa-download mr-2"></i>
-                            PDF
+                            <i v-if="!downloadingPdf" class="fas fa-download mr-2"></i>
+                            <svg v-else class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
+                                <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
+                            </svg>
+                            {{ downloadingPdf ? 'Generando...' : 'PDF' }}
                         </button>
                         <router-link
                             :to="{ name: 'reports' }"
@@ -265,12 +283,34 @@
                                     <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
                                     Diagnóstico
                                 </label>
-                                <textarea
-                                    :value="report.diagnosis?.[component.id] || ''"
-                                    disabled
-                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full px-4 py-3 min-h-[100px]"
-                                    placeholder="Sin diagnóstico"
-                                ></textarea>
+                                <div class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full px-4 py-3 min-h-[100px]">
+                                    {{ getDiagnosisText(component.id) || 'Sin diagnóstico' }}
+                                </div>
+                            </div>
+
+                            <!-- Imágenes del Componente -->
+                            <div v-if="getComponentImages(component.id)?.length" class="mb-4">
+                                <label class="flex items-center mb-3 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-image mr-2 text-purple-600"></i>
+                                    Imágenes ({{ getComponentImages(component.id).length }})
+                                </label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    <div
+                                        v-for="(imageUrl, imgIndex) in getComponentImages(component.id)"
+                                        :key="imgIndex"
+                                        class="relative group"
+                                    >
+                                        <img
+                                            :src="imageUrl"
+                                            :alt="`Imagen ${imgIndex + 1}`"
+                                            class="w-full h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-purple-500 transition-all cursor-pointer"
+                                            @click="openImageModal(imageUrl)"
+                                        />
+                                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div v-if="report.recommendations?.[component.id]?.length">
@@ -319,6 +359,7 @@ const authStore = useAuthStore();
 
 const report = ref(null);
 const loading = ref(true);
+const downloadingPdf = ref(false);
 
 onMounted(async () => {
     await loadReport();
@@ -351,11 +392,72 @@ const getConditionClass = (conditionName) => {
     return classes[conditionName] || 'bg-blue-100 text-blue-800 border border-blue-300';
 };
 
-const downloadPdf = async () => {
-    try {
-        window.open(`/api/reports/${route.params.id}/pdf`, '_blank');
-    } catch (error) {
-        Swal.fire('Error', 'Error al descargar el PDF', 'error');
+const downloadPdf = async (event) => {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
     }
+    
+    downloadingPdf.value = true;
+    
+    try {
+        const response = await api.get(`/reports/${route.params.id}/pdf`, {
+            responseType: 'blob'
+        });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `reporte-${route.params.id}.pdf`);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error al descargar PDF:', error);
+        Swal.fire('Error', 'Error al descargar el PDF', 'error');
+    } finally {
+        downloadingPdf.value = false;
+    }
+};
+
+const getDiagnosisText = (componentId) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    const diagnosis = report.value?.diagnosis?.[normalizedId];
+    if (!diagnosis) return '';
+    if (typeof diagnosis === 'string') return diagnosis;
+    if (typeof diagnosis === 'object' && diagnosis.text) return diagnosis.text;
+    return '';
+};
+
+const getComponentImages = (componentId) => {
+    // Normalizar componentId a string para consistencia
+    const normalizedId = String(componentId);
+    let diagnosis = report.value?.diagnosis?.[normalizedId];
+    
+    // Si no se encuentra por ID, intentar buscar por índice si diagnosis es un array
+    if (!diagnosis && Array.isArray(report.value?.diagnosis) && report.value?.components) {
+        const componentIndex = report.value.components.findIndex(c => String(c.id) === normalizedId);
+        if (componentIndex >= 0 && report.value.diagnosis[componentIndex]) {
+            diagnosis = report.value.diagnosis[componentIndex];
+        }
+    }
+    
+    if (!diagnosis || typeof diagnosis !== 'object') return [];
+    return diagnosis.images || [];
+};
+
+const openImageModal = (imageUrl) => {
+    Swal.fire({
+        imageUrl: imageUrl,
+        imageAlt: 'Imagen del componente',
+        showCloseButton: true,
+        showConfirmButton: false,
+        width: '90%',
+        padding: '0',
+        background: 'transparent',
+        backdrop: 'rgba(0,0,0,0.8)'
+    });
 };
 </script>

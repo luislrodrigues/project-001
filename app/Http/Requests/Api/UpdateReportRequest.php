@@ -32,8 +32,6 @@ class UpdateReportRequest extends FormRequest
         return [
             'equipment_id' => 'required|integer|exists:equipment,id',
             'measurement_date' => 'required|date',
-            'image_1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'condition_id' => 'required|integer|exists:conditions,id',
             'mechanism_fail_id' => 'required|integer|exists:mechanism_fails,id',
             'component_fail_id' => 'required|integer|exists:component_fails,id',

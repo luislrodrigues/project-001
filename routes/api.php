@@ -29,17 +29,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 // Rutas protegidas
 Route::middleware('auth:sanctum')->group(function () {
     // Usuario autenticado
-    Route::get('/user', function (Request $request) {
-        $user = $request->user()->load('company');
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'company' => $user->company,
-            'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
-            'roles' => $user->getRoleNames()->toArray(),
-        ]);
-    });
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);

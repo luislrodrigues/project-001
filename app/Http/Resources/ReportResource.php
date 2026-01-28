@@ -26,8 +26,6 @@ class ReportResource extends JsonResource
                 ] : null,
             ] : null,
             'measurement_date' => $this->measurement_date?->format('Y-m-d'),
-            'image_1' => $this->image_1 ? asset('storage/' . $this->image_1) : null,
-            'image_2' => $this->image_2 ? asset('storage/' . $this->image_2) : null,
             'condition' => $this->condition ? [
                 'id' => $this->condition->id ?? null,
                 'name' => $this->condition->name ?? null,
@@ -49,11 +47,121 @@ class ReportResource extends JsonResource
             'status_ot' => $this->status_ot,
             'execution_date' => $this->execution_date?->format('Y-m-d'),
             'verification_recommendation' => $this->verification_recommendation,
-            'diagnosis' => is_string($this->diagnosis) ? json_decode($this->diagnosis, true) : ($this->diagnosis ?? []),
-            'recommendations' => is_array($this->recommendations) ? $this->recommendations : (is_string($this->recommendations) ? json_decode($this->recommendations, true) : []),
+            'diagnosis' => $this->formatDiagnosis($this->diagnosis),
+            'recommendations' => $this->formatRecommendations($this->recommendations),
             'components' => $this->equipment ? ($this->equipment->components ?? []) : [],
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
+    }
+
+    private function formatDiagnosis($diagnosis)
+    {
+        if (is_string($diagnosis)) {
+            $decoded = json_decode($diagnosis, true);
+        } else {
+            $decoded = $diagnosis;
+        }
+
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        // Si es un array indexado numéricamente (array de arrays), necesitamos mapearlo a los IDs de componentes
+        // Primero verificar si es un array indexado numéricamente
+        $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
+        
+        // Formatear diagnosis para incluir URLs completas de imágenes
+        $formatted = [];
+        
+        if ($isNumericArray && $this->equipment && $this->equipment->components) {
+            // Si viene como array indexado, mapearlo a los IDs de componentes
+            $components = $this->equipment->components;
+            foreach ($decoded as $index => $data) {
+                if (isset($components[$index])) {
+                    $componentId = (string)$components[$index]->id;
+                    if (is_array($data) && isset($data['images'])) {
+                        // Estructura nueva con imágenes
+                        $formatted[$componentId] = [
+                            'text' => $data['text'] ?? '',
+                            'images' => array_map(function ($path) {
+                                // Si ya es una URL completa, no agregar asset
+                                if (filter_var($path, FILTER_VALIDATE_URL)) {
+                                    return $path;
+                                }
+                                return asset('storage/' . $path);
+                            }, $data['images'] ?? [])
+                        ];
+                    } else if (is_string($data)) {
+                        // Estructura antigua solo texto
+                        $formatted[$componentId] = $data;
+                    } else {
+                        $formatted[$componentId] = $data;
+                    }
+                }
+            }
+        } else {
+            // Es un objeto asociativo con claves de componente
+            foreach ($decoded as $componentId => $data) {
+                $componentIdStr = (string)$componentId;
+                if (is_array($data) && isset($data['images'])) {
+                    // Estructura nueva con imágenes
+                    $formatted[$componentIdStr] = [
+                        'text' => $data['text'] ?? '',
+                        'images' => array_map(function ($path) {
+                            // Si ya es una URL completa, no agregar asset
+                            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                                return $path;
+                            }
+                            return asset('storage/' . $path);
+                        }, $data['images'] ?? [])
+                    ];
+                } else if (is_string($data)) {
+                    // Estructura antigua solo texto
+                    $formatted[$componentIdStr] = $data;
+                } else {
+                    $formatted[$componentIdStr] = $data;
+                }
+            }
+        }
+
+        return $formatted;
+    }
+
+    private function formatRecommendations($recommendations)
+    {
+        if (is_string($recommendations)) {
+            $decoded = json_decode($recommendations, true);
+        } else {
+            $decoded = $recommendations;
+        }
+
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        // Si es un array indexado numéricamente (array de arrays), necesitamos mapearlo a los IDs de componentes
+        $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
+        
+        $formatted = [];
+        
+        if ($isNumericArray && $this->equipment && $this->equipment->components) {
+            // Si viene como array indexado, mapearlo a los IDs de componentes
+            $components = $this->equipment->components;
+            foreach ($decoded as $index => $data) {
+                if (isset($components[$index])) {
+                    $componentId = (string)$components[$index]->id;
+                    $formatted[$componentId] = is_array($data) ? $data : [];
+                }
+            }
+        } else {
+            // Es un objeto asociativo con claves de componente
+            foreach ($decoded as $componentId => $data) {
+                $componentIdStr = (string)$componentId;
+                $formatted[$componentIdStr] = is_array($data) ? $data : [];
+            }
+        }
+
+        return $formatted;
     }
 }
