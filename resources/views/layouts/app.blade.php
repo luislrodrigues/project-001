@@ -18,8 +18,6 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Styles -->
-    @livewireStyles
     <style>
         :root {
             --sidebar-width: 260px;
@@ -58,7 +56,7 @@
 
         <!-- User Profile Section -->
         <div id="user-profile-section" class="px-4 py-4 border-b border-blue-400/30">
-            <a href="{{ route('profile') }}" wire:navigate class="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/15 transition-colors cursor-pointer">
+            <a href="{{ url('/profile') }}" class="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/15 transition-colors cursor-pointer">
                 <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg">
                     {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
                 </div>
@@ -72,50 +70,44 @@
 
         <!-- Navigation -->
         <nav class="px-4 py-4 space-y-2 overflow-y-auto" style="max-height: calc(100vh - 200px);">
-            <a href="{{ route('home') }}" wire:navigate
-               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('home') || request()->routeIs('dashboard')) nav-item-active @else nav-item-hover @endif"
+            <a href="{{ url('/') }}" class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 nav-item-hover"
                title="Inicio">
                 <i class="fas fa-home text-lg w-5"></i>
                 <span id="nav-text-home" class="font-medium transition-opacity duration-300">Inicio</span>
             </a>
 
-            <a href="{{ route('report') }}" wire:navigate
-               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('report')) nav-item-active @else nav-item-hover @endif"
+            <a href="{{ url('/reports') }}" class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 nav-item-hover"
                title="Informes">
                 <i class="fas fa-file-alt text-lg w-5"></i>
                 <span id="nav-text-report" class="font-medium transition-opacity duration-300">Informes</span>
             </a>
 
-            <a href="{{ route('component') }}" wire:navigate
-               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('component')) nav-item-active @else nav-item-hover @endif"
+            <a href="{{ url('/components') }}" class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 nav-item-hover"
                title="Componentes">
                 <i class="fas fa-cubes text-lg w-5"></i>
                 <span id="nav-text-component" class="font-medium transition-opacity duration-300">Componentes</span>
             </a>
 
-            <a href="{{ route('componentType') }}" wire:navigate
-               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('componentType')) nav-item-active @else nav-item-hover @endif"
+            <a href="{{ url('/component-types') }}" class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 nav-item-hover"
                title="Tipos de Componentes">
                 <i class="fas fa-tags text-lg w-5"></i>
                 <span id="nav-text-componentType" class="font-medium transition-opacity duration-300">Tipos de Componentes</span>
             </a>
 
-            <a href="{{ route('equipment') }}" wire:navigate
-               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('equipment')) nav-item-active @else nav-item-hover @endif"
+            <a href="{{ url('/equipment') }}" class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 nav-item-hover"
                title="Equipos">
                 <i class="fas fa-toolbox text-lg w-5"></i>
                 <span id="nav-text-equipment" class="font-medium transition-opacity duration-300">Equipos</span>
             </a>
 
-            <a href="{{ route('company') }}" wire:navigate
-               class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('company')) nav-item-active @else nav-item-hover @endif"
+            <a href="{{ url('/companies') }}" class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 nav-item-hover"
                title="Empresas">
                 <i class="fas fa-building text-lg w-5"></i>
                 <span id="nav-text-company" class="font-medium transition-opacity duration-300">Empresas</span>
             </a>
 
             @can('consult user')
-            <a href="{{ route('user') }}" wire:navigate
+            <a href="{{ url('/users') }}"
                class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200 @if(request()->routeIs('user')) nav-item-active @else nav-item-hover @endif"
                title="Usuarios">
                 <i class="fas fa-users text-lg w-5"></i>
@@ -126,14 +118,14 @@
 
         <!-- Logout Button -->
         <div class="absolute bottom-0 left-0 right-0 px-4 py-4 border-t border-blue-400/30">
-            <a href="{{ route('logoutUser') }}"
+            <a href="{{ route('logout') }}"
                onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl bg-red-500/20 hover:bg-red-500/30 transition-all duration-200"
                title="Cerrar Sesión">
                 <i class="fas fa-sign-out-alt text-lg w-5"></i>
                 <span id="nav-text-logout" class="font-medium transition-opacity duration-300">Cerrar Sesión</span>
             </a>
-            <form id="logout-form" action="{{ route('logoutUser') }}" method="POST" class="hidden">
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
                 @csrf
             </form>
         </div>
@@ -180,7 +172,7 @@
                         <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
                     <!-- Profile Quick Access -->
-                    <a href="{{ route('profile') }}" wire:navigate class="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg">
+                    <a href="{{ url('/profile') }}" class="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg">
                         <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-xs font-semibold">
                             {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
                         </div>
@@ -213,11 +205,15 @@
     @endauth
 
     @guest
-        <livewire:user-login.user-login />
+        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+            <div class="text-center">
+                <p class="text-gray-600 mb-4">Debes iniciar sesión para continuar.</p>
+                <a href="{{ url('/login') }}" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Ir a iniciar sesión</a>
+            </div>
+        </div>
     @endguest
 
     <script>
-        // Usar window para evitar redeclaración cuando Livewire navega
         if (typeof window.sidebarCollapsed === 'undefined') {
             window.sidebarCollapsed = false;
         }
@@ -287,20 +283,10 @@
             });
         }
 
-        // Ejecutar al cargar y cuando Livewire navegue
         document.addEventListener('DOMContentLoaded', highlightActiveNavItem);
-
-        // Escuchar eventos de navegación de Livewire
-        document.addEventListener('livewire:navigated', highlightActiveNavItem);
         window.addEventListener('popstate', highlightActiveNavItem);
 
-        // Función para reinicializar listeners de Livewire después de la navegación
-        function reinitializeLivewireModalListeners() {
-            // Asegurar que los listeners globales estén inicializados
-            initializeLivewireEventListeners();
-        }
-
-        // Reinicializar botones y listeners de modales después de la navegación
+        // Reinicializar botones de modales (sin Livewire)
         function reinitializeModals() {
             // Reinicializar botones de abrir modal
             const openModalButtons = document.querySelectorAll('[id^="openModalButton"]');
@@ -528,7 +514,7 @@
         }
 
         // Escuchar cuando Livewire completa la navegación
-        document.addEventListener('livewire:navigated', function() {
+        window.addEventListener('popstate', function() {
             // Delay para asegurar que el DOM está actualizado
             setTimeout(() => {
                 highlightActiveNavItem();
@@ -664,7 +650,6 @@
         }
     </script>
 
-    @livewireScripts
     @stack('scripts')
 </body>
 </html>

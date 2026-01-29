@@ -9,29 +9,32 @@ class EquipmentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $image = $this->getAttribute('image');
         return [
             'id' => $this->id,
             'name' => $this->name,
             'code' => $this->code,
             'tag' => $this->tag,
             'description' => $this->description,
+            'image' => $image,
+            'image_url' => !empty($image) ? asset('storage/' . ltrim($image, '/')) : null,
             'status' => $this->status,
-            'company' => [
-                'id' => $this->company->id ?? null,
-                'name' => $this->company->name ?? null,
-            ],
-            'equipment_type' => [
-                'id' => $this->equipmentType->id ?? null,
-                'name' => $this->equipmentType->name ?? null,
-            ],
-            'process' => [
-                'id' => $this->process->id ?? null,
-                'name' => $this->process->name ?? null,
-            ],
-            'ubication' => [
-                'id' => $this->ubication->id ?? null,
-                'name' => $this->ubication->name ?? null,
-            ],
+            'company' => $this->relationLoaded('company') && $this->company ? [
+                'id' => $this->company->id,
+                'name' => $this->company->name,
+            ] : null,
+            'equipment_type' => $this->relationLoaded('equipmentType') && $this->equipmentType ? [
+                'id' => $this->equipmentType->id,
+                'name' => $this->equipmentType->name,
+            ] : null,
+            'process' => $this->relationLoaded('process') && $this->process ? [
+                'id' => $this->process->id,
+                'name' => $this->process->name,
+            ] : null,
+            'ubication' => $this->relationLoaded('ubication') && $this->ubication ? [
+                'id' => $this->ubication->id,
+                'name' => $this->ubication->name,
+            ] : null,
             'components' => $this->whenLoaded('components', function () {
                 return $this->components->map(function ($component) {
                     return [

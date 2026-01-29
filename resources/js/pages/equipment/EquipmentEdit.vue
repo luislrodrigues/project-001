@@ -200,6 +200,27 @@
                                     placeholder="Ingresar descripción"
                                 ></textarea>
                             </div>
+
+                            <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-image mr-2 text-blue-600"></i>
+                                    Imagen del equipo
+                                </label>
+                                <img
+                                    v-if="imageUrl"
+                                    :src="imageUrl"
+                                    alt="Equipo"
+                                    class="mb-3 max-h-40 rounded-lg object-contain border border-gray-200"
+                                />
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/jpg,image/png"
+                                    @change="onImageChange"
+                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                <p class="mt-1 text-xs text-gray-500">JPG o PNG. Máx. 2 MB. Se mostrará en el reporte PDF.</p>
+                                <p v-if="errors.image" class="mt-1 text-sm text-red-600">{{ errors.image }}</p>
+                            </div>
                         </div>
                     </div>
 
@@ -285,6 +306,8 @@ const errors = ref({});
 const showEquipmentTypeModal = ref(false);
 const showProcessModal = ref(false);
 const showUbicationModal = ref(false);
+const imageUrl = ref(null);
+const imageFile = ref(null);
 
 onMounted(async () => {
     await Promise.all([loadCatalogs(), loadEquipment()]);
@@ -313,7 +336,7 @@ const loadEquipment = async () => {
     try {
         const response = await api.get(`/equipment/${route.params.id}`);
         const equipment = response.data.data;
-        
+
         form.name = equipment.name;
         form.equipment_type_id = equipment.equipment_type?.id || '';
         form.process_id = equipment.process?.id || '';
@@ -322,6 +345,7 @@ const loadEquipment = async () => {
         form.tag = equipment.tag || '';
         form.description = equipment.description || '';
         form.company_id = equipment.company?.id || '';
+        imageUrl.value = equipment.image_url || null;
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el equipo', 'error');
         router.push({ name: 'equipment' });
@@ -367,12 +391,34 @@ const handleItemSaved = (data) => {
     }
 };
 
+const onImageChange = (event) => {
+    const file = event.target.files?.[0];
+    imageFile.value = file || null;
+    if (file) {
+        imageUrl.value = URL.createObjectURL(file);
+    }
+};
+
 const updateEquipment = async () => {
     saving.value = true;
     errors.value = {};
 
     try {
-        await api.put(`/equipment/${route.params.id}`, form);
+        const formData = new FormData();
+        formData.append('name', form.name);
+        formData.append('code', form.code);
+        formData.append('tag', form.tag);
+        formData.append('description', form.description);
+        formData.append('company_id', form.company_id);
+        formData.append('process_id', form.process_id);
+        formData.append('ubication_id', form.ubication_id);
+        formData.append('equipment_type_id', form.equipment_type_id);
+        if (imageFile.value) {
+            formData.append('image', imageFile.value);
+        }
+        await api.put(`/equipment/${route.params.id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         Swal.fire('Éxito', 'Equipo actualizado correctamente', 'success');
         router.push({ name: 'equipment' });
     } catch (error) {

@@ -17,7 +17,6 @@
         "vite": "^5.0.0"
     },
     "dependencies": {
-        "livewire": "^0.6.1",
         "pinia": "^2.1.7",
         "sweetalert2": "^11.11.1",
         "vue": "^3.4.21",

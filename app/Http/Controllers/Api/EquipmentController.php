@@ -13,6 +13,7 @@ use App\Models\Ubication;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Storage;
 
 class EquipmentController extends Controller
 {
@@ -40,7 +41,7 @@ class EquipmentController extends Controller
     public function store(StoreEquipmentRequest $request): JsonResponse
     {
         try {
-            $equipment = Equipment::create([
+            $data = [
                 'name' => $request->name,
                 'code' => $request->code,
                 'tag' => $request->tag,
@@ -50,7 +51,11 @@ class EquipmentController extends Controller
                 'ubication_id' => $request->ubication_id,
                 'equipment_type_id' => $request->equipment_type_id,
                 'status' => 'active',
-            ]);
+            ];
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $data['image'] = $request->file('image')->store('images', 'public');
+            }
+            $equipment = Equipment::create($data);
 
             return response()->json([
                 'message' => 'Se guardó el equipo correctamente',
@@ -74,7 +79,7 @@ class EquipmentController extends Controller
     public function update(UpdateEquipmentRequest $request, Equipment $equipment): JsonResponse
     {
         try {
-            $equipment->update([
+            $data = [
                 'name' => $request->name,
                 'code' => $request->code,
                 'tag' => $request->tag,
@@ -83,7 +88,14 @@ class EquipmentController extends Controller
                 'process_id' => $request->process_id,
                 'ubication_id' => $request->ubication_id,
                 'equipment_type_id' => $request->equipment_type_id,
-            ]);
+            ];
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                if ($equipment->image) {
+                    Storage::disk('public')->delete($equipment->image);
+                }
+                $data['image'] = $request->file('image')->store('images', 'public');
+            }
+            $equipment->update($data);
 
             return response()->json([
                 'message' => 'Equipo actualizado correctamente',

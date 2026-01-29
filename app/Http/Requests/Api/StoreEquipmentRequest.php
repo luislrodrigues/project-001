@@ -22,6 +22,7 @@ class StoreEquipmentRequest extends FormRequest
             'process_id' => 'required|integer|exists:processes,id',
             'ubication_id' => 'required|integer|exists:ubications,id',
             'equipment_type_id' => 'required|integer|exists:equipment_types,id',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
         ];
     }
 }

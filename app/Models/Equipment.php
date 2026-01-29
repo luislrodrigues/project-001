@@ -25,6 +25,7 @@ class Equipment extends Model
         'code',
         'tag',
         'description',
+        'image',
         'status',
     ];
 

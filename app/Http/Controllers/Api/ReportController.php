@@ -12,7 +12,7 @@ use App\Models\Equipment;
 use App\Models\MechanismFail;
 use App\Models\Report;
 use App\Models\User;
-use Barryvdh\DomPDF\Facade\Pdf;
+use PDF;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -421,7 +421,7 @@ class ReportController extends Controller
                                 $componentId = $report->equipment->components[$index]->id;
                                 if (is_array($data) && isset($data['images'])) {
                                     $componentImages[$componentId] = array_map(function ($path) {
-                                        return asset('storage/' . $path);
+                                        return self::imageToBase64ForPdf($path);
                                     }, $data['images']);
                                 }
                             }
@@ -430,11 +430,7 @@ class ReportController extends Controller
                         foreach ($decoded as $componentId => $data) {
                             if (is_array($data) && isset($data['images'])) {
                                 $componentImages[$componentId] = array_map(function ($path) {
-                                    // Si ya es una URL completa, no agregar asset
-                                    if (filter_var($path, FILTER_VALIDATE_URL)) {
-                                        return $path;
-                                    }
-                                    return asset('storage/' . $path);
+                                    return self::imageToBase64ForPdf($path);
                                 }, $data['images']);
                             }
                         }
@@ -444,12 +440,24 @@ class ReportController extends Controller
 
             $components = $report->equipment->components ?? [];
 
-            $pdf = Pdf::loadView('livewire.report.report-pdf', [
+            $equipmentImage = null;
+            if ($report->equipment && !empty($report->equipment->image)) {
+                $equipmentImage = self::imageToBase64ForPdf($report->equipment->image);
+            }
+
+            $pdf = PDF::loadView('reports.report-pdf', [
                 'reportData' => $report,
                 'components' => $components,
                 'diagnosis' => $diagnosis,
                 'recommendations' => $recommendations,
-                'componentImages' => $componentImages
+                'componentImages' => $componentImages,
+                'equipmentImage' => $equipmentImage,
+            ], [], [
+                'margin_left'   => 0,
+                'margin_right'  => 0,
+                'margin_top'    => 28,
+                'margin_header' => 0,
+                'margin_footer' => 10,
             ]);
 
             return response()->streamDownload(function() use ($pdf) {
@@ -475,5 +483,21 @@ class ReportController extends Controller
     {
         // Placeholder - implementar cuando se migre el envío de emails
         return response()->json(['message' => 'En desarrollo']);
+    }
+
+    /**
+     * Convierte una imagen (ruta relativa en storage) a data URI base64 para que mPDF la muestre siempre en el PDF.
+     */
+    private static function imageToBase64ForPdf(string $path): string
+    {
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+        $fullPath = storage_path('app/public/' . ltrim($path, '/'));
+        if (!is_file($fullPath)) {
+            return '';
+        }
+        $mime = mime_content_type($fullPath) ?: 'image/jpeg';
+        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
     }
 }
