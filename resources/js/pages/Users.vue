@@ -274,7 +274,6 @@ const fetchUsers = async (page = 1) => {
             ...filters.value
         };
         
-        // Remover filtros vacíos
         Object.keys(params).forEach(key => {
             if (params[key] === '') {
                 delete params[key];

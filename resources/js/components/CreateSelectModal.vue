@@ -219,7 +219,6 @@ const saving = ref(false);
 const loading = ref(false);
 const errors = ref({});
 
-// Mapeo de endpoints
 const endpointMap = {
     'brand': '/catalogs/brands',
     'equipment_type': '/catalogs/equipment-types',
@@ -295,10 +294,8 @@ const saveField = async () => {
     }
 
     try {
-        // Obtener el nombre del catálogo desde el mapa o desde apiEndpoint
         let catalogName = createEndpointMap[props.field];
         if (!catalogName && props.apiEndpoint) {
-            // Extraer el nombre del catálogo del apiEndpoint (ej: "/catalogs/brands" -> "brands")
             catalogName = props.apiEndpoint.replace('/catalogs/', '').replace(/^\//, '');
         }
         
@@ -309,13 +306,11 @@ const saveField = async () => {
         const endpoint = `/catalogs/${catalogName}`;
         
         if (editingId.value) {
-            // Editar
             await api.put(`${endpoint}/${editingId.value}`, {
                 name: valueNew.value.trim()
             });
             Swal.fire('Éxito', 'Registro actualizado correctamente', 'success');
         } else {
-            // Crear
             const response = await api.post(endpoint, {
                 name: valueNew.value.trim()
             });
@@ -327,7 +322,6 @@ const saveField = async () => {
                 id: response.data.data?.id || response.data.id
             });
             
-            // Cerrar el modal después de crear
             closeModal();
         }
 
@@ -362,7 +356,6 @@ const deleteItem = async (id) => {
             // Obtener el nombre del catálogo desde el mapa o desde apiEndpoint
             let catalogName = createEndpointMap[props.field];
             if (!catalogName && props.apiEndpoint) {
-                // Extraer el nombre del catálogo del apiEndpoint (ej: "/catalogs/brands" -> "brands")
                 catalogName = props.apiEndpoint.replace('/catalogs/', '').replace(/^\//, '');
             }
             

@@ -351,7 +351,6 @@ const loadUbications = async () => {
 };
 
 const handleItemSaved = (data) => {
-    // Seleccionar automáticamente el nuevo registro creado
     if (data.field === 'equipment_type' && data.id) {
         form.equipment_type_id = data.id;
     } else if (data.field === 'process' && data.id) {

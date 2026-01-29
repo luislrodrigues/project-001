@@ -20,9 +20,6 @@ class StoreComponentRequest extends FormRequest
             'field_values' => 'nullable|array',
         ];
 
-        // Las validaciones de campos dinámicos se harán en el controlador
-        // después de cargar los campos del component_type
-
         return $rules;
     }
 }

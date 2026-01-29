@@ -22,7 +22,6 @@ class UserController extends Controller
 
         $query = User::with(['company', 'roles']);
 
-        // Filtros
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
@@ -93,7 +92,6 @@ class UserController extends Controller
                 'company_id' => $request->company_id,
             ];
 
-            // Actualizar contraseña solo si se proporciona
             if ($request->has('password') && $request->password) {
                 $data['password'] = bcrypt($request->password);
                 $data['raw_password'] = $request->password;
@@ -101,7 +99,6 @@ class UserController extends Controller
 
             $user->update($data);
 
-            // Sincronizar rol si se proporciona
             if ($request->has('role_id')) {
                 if ($request->role_id) {
                     $role = Role::find($request->role_id);

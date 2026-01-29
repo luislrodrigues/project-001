@@ -245,7 +245,6 @@ const updateUser = async () => {
 
     try {
         const data = { ...form };
-        // Solo enviar password si se proporciona
         if (!data.password) {
             delete data.password;
         }

@@ -33,7 +33,7 @@ class Report extends Model
     ];
 
     protected $casts = [
-        'recommendations' => 'array', // Indica que la columna recommendations es un array
+        'recommendations' => 'array',
         'measurement_date' => 'date',
         'execution_date' => 'date',
     ];

@@ -20,7 +20,6 @@ class CompanyController extends Controller
     {
         $query = Company::query();
 
-        // Búsqueda por nombre
         if ($request->has('search') && !empty($request->search)) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
@@ -88,11 +87,9 @@ class CompanyController extends Controller
         }
 
         try {
-            // Actualizar equipos relacionados
             $company->equipments()->update(['status' => 'inactive']);
             $company->equipments()->delete();
 
-            // Eliminar empresa
             $company->status = 'inactive';
             $company->save();
             $company->delete();

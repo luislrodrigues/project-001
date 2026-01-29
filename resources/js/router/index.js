@@ -167,13 +167,11 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
     
-    // Si la ruta requiere autenticación y no hay token
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
         next({ name: 'login' });
         return;
     }
     
-    // Si la ruta es para invitados y ya está autenticado
     if (to.meta.requiresGuest && authStore.isAuthenticated) {
         next({ name: 'dashboard' });
         return;

@@ -38,7 +38,6 @@ class ApiResponse
                 $payload['data'] = $decoded['data'] ?? $decoded;
                 if (!empty($decoded['meta'])) {
                     $payload['meta'] = $decoded['meta'];
-                    // Compatibilidad: paginación en nivel superior para el frontend
                     foreach ($decoded['meta'] as $key => $value) {
                         $payload[$key] = $value;
                     }

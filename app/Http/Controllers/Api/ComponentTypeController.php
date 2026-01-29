@@ -49,7 +49,6 @@ class ComponentTypeController extends Controller
                     'is_required' => $fieldData['is_required'] ?? false,
                 ]);
 
-                // Crear opciones si es select/multiselect
                 if (in_array($fieldData['type'], ['select', 'multiselect']) && !empty($fieldData['options'])) {
                     foreach ($fieldData['options'] as $order => $optionData) {
                         $field->options()->create([
@@ -89,7 +88,6 @@ class ComponentTypeController extends Controller
                 'name' => $request->name,
             ]);
 
-            // Obtener IDs de campos existentes
             $existingFieldIds = $componentType->componentTypeFields()->pluck('id')->toArray();
             $requestedFieldIds = [];
 
@@ -108,9 +106,7 @@ class ComponentTypeController extends Controller
                             'is_required' => $fieldData['is_required'] ?? false,
                         ]);
 
-                        // Manejar opciones para select/multiselect
                         if (in_array($fieldData['type'], ['select', 'multiselect'])) {
-                            // Obtener IDs de opciones existentes
                             $existingOptionIds = $field->allOptions()->pluck('id')->toArray();
                             $requestedOptionIds = [];
 
@@ -129,7 +125,6 @@ class ComponentTypeController extends Controller
                                             ]);
                                         }
                                     } else {
-                                        // Crear nueva opción
                                         $newOption = $field->options()->create([
                                             'label' => $optionData['label'],
                                             'value' => $optionData['value'],
@@ -142,7 +137,6 @@ class ComponentTypeController extends Controller
                                 }
                             }
 
-                            // Eliminar opciones que ya no están (solo si no están en uso)
                             $optionsToDelete = array_diff($existingOptionIds, $requestedOptionIds);
                             if (!empty($optionsToDelete)) {
                                 $field->allOptions()
@@ -156,7 +150,6 @@ class ComponentTypeController extends Controller
                         }
                     }
                 } else {
-                    // Crear nuevo campo
                     $field = $componentType->componentTypeFields()->create([
                         'name' => $fieldData['name'],
                         'type' => $fieldData['type'],
@@ -208,7 +201,6 @@ class ComponentTypeController extends Controller
         }
 
         try {
-            // Soft delete
             $componentType->status = 'inactive';
             $componentType->save();
             $componentType->delete();

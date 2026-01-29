@@ -107,7 +107,6 @@ class ReportController extends Controller
                 $data['recommendations'] = json_encode($request->recommendations);
             }
 
-            // Procesar imágenes por componente
             $componentImages = [];
             if ($request->has('component_images_structure')) {
                 $structure = json_decode($request->input('component_images_structure'), true);
@@ -128,10 +127,7 @@ class ReportController extends Controller
             }
 
 
-            // Guardar imágenes de componentes en el campo diagnosis como parte de un objeto extendido
-            // O mejor, almacenarlas en un campo separado si existe
             if (!empty($componentImages)) {
-                // Almacenar en diagnosis junto con el texto del diagnóstico
                 $diagnosisData = $request->has('diagnosis') ? $request->diagnosis : [];
                 foreach ($componentImages as $componentId => $imagePaths) {
                     if (!isset($diagnosisData[$componentId])) {
@@ -214,7 +210,6 @@ class ReportController extends Controller
                 $data['recommendations'] = is_array($request->recommendations) ? json_encode($request->recommendations) : $request->recommendations;
             }
 
-            // Procesar imágenes por componente
             $componentImages = [];
             if ($request->has('component_images_structure')) {
                 $structure = json_decode($request->input('component_images_structure'), true);
@@ -234,14 +229,12 @@ class ReportController extends Controller
                 }
             }
 
-            // Manejar eliminación de imágenes
             $imagesToDelete = [];
             if ($request->has('images_to_delete')) {
                 $imagesToDelete = json_decode($request->input('images_to_delete'), true);
                 if (is_array($imagesToDelete)) {
                     foreach ($imagesToDelete as $componentId => $imageUrls) {
                         foreach ($imageUrls as $imageUrl) {
-                            // Extraer la ruta del storage desde la URL completa
                             $path = str_replace(asset('storage/'), '', $imageUrl);
                             if ($path && Storage::disk('public')->exists($path)) {
                                 Storage::disk('public')->delete($path);
@@ -255,7 +248,6 @@ class ReportController extends Controller
             $currentDiagnosis = $report->diagnosis ? (is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis) : [];
             $diagnosisData = $request->has('diagnosis') ? $request->diagnosis : $currentDiagnosis;
 
-            // Actualizar diagnosis con nuevas imágenes y eliminar las marcadas
             foreach ($componentImages as $componentId => $newImagePaths) {
                 $componentIdStr = (string)$componentId;
                 if (!isset($diagnosisData[$componentIdStr])) {
@@ -270,7 +262,6 @@ class ReportController extends Controller
                     $existingImages = $currentDiagnosis[$componentIdStr]['images'] ?? [];
                 }
 
-                // Eliminar imágenes marcadas para eliminar
                 if (isset($imagesToDelete[$componentIdStr]) && is_array($imagesToDelete[$componentIdStr])) {
                     foreach ($imagesToDelete[$componentIdStr] as $imageUrlToDelete) {
                         $pathToDelete = str_replace(asset('storage/'), '', $imageUrlToDelete);
@@ -283,7 +274,6 @@ class ReportController extends Controller
                 // Combinar imágenes existentes con nuevas
                 $allImages = array_merge($existingImages, $newImagePaths);
 
-                // Convertir a estructura con texto e imágenes
                 $text = is_string($diagnosisData[$componentIdStr]) ? $diagnosisData[$componentIdStr] : ($diagnosisData[$componentIdStr]['text'] ?? '');
                 $diagnosisData[$componentIdStr] = [
                     'text' => $text,
@@ -291,7 +281,6 @@ class ReportController extends Controller
                 ];
             }
 
-            // Actualizar diagnosis con estructura completa
             $data['diagnosis'] = json_encode($diagnosisData);
 
 
@@ -347,12 +336,10 @@ class ReportController extends Controller
             ->whereNull('deleted_at')
             ->findOrFail($id);
 
-            // Procesar diagnóstico para el PDF
             $diagnosis = [];
             if ($report->diagnosis) {
                 $decoded = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis;
                 if (is_array($decoded)) {
-                    // Si es un array indexado numéricamente, mapearlo a IDs de componentes
                     $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
                     if ($isNumericArray && $report->equipment && $report->equipment->components) {
                         foreach ($decoded as $index => $data) {
@@ -366,7 +353,6 @@ class ReportController extends Controller
                             }
                         }
                     } else {
-                        // Es un objeto asociativo
                         foreach ($decoded as $componentId => $data) {
                             if (is_array($data) && isset($data['text'])) {
                                 $diagnosis[$componentId] = $data['text'];
@@ -397,7 +383,6 @@ class ReportController extends Controller
                 }
             }
 
-            // Procesar imágenes por componente para el PDF
             $componentImages = [];
             if ($report->diagnosis) {
                 $decoded = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis;
@@ -460,18 +445,16 @@ class ReportController extends Controller
 
     public function export(): JsonResponse
     {
-        // Placeholder - implementar cuando se migre la exportación
         return ApiResponse::success(null, 'En desarrollo');
     }
 
     public function sendEmail($id): JsonResponse
     {
-        // Placeholder - implementar cuando se migre el envío de emails
         return ApiResponse::success(null, 'En desarrollo');
     }
 
     /**
-     * Convierte una imagen (ruta relativa en storage) a data URI base64 para que mPDF la muestre siempre en el PDF.
+     * Convierte ruta de imagen en storage a data URI base64 para el PDF.
      */
     private static function imageToBase64ForPdf(string $path): string
     {

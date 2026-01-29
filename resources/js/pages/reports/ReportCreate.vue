@@ -544,7 +544,6 @@ const components = ref([]);
 const saving = ref(false);
 const errors = ref({});
 
-// Variables para controlar los modales
 const showConditionModal = ref(false);
 const showMechanismFailModal = ref(false);
 const showComponentFailModal = ref(false);
@@ -601,7 +600,6 @@ const loadComponentFails = async () => {
 };
 
 const handleItemSaved = (data) => {
-    // Seleccionar automáticamente el nuevo registro creado
     if (data.field === 'condition' && data.id) {
         form.condition_id = data.id;
     } else if (data.field === 'failure_mechanism' && data.id) {
@@ -631,10 +629,8 @@ const loadEquipmentData = async () => {
         equipmentData.location = equipment.ubication?.name || '';
         equipmentData.process = equipment.process?.name || '';
         
-        // Cargar componentes del equipo
         if (equipment.components) {
             components.value = equipment.components;
-            // Inicializar arrays de diagnósticos, recomendaciones e imágenes
             components.value.forEach(component => {
                 if (!form.diagnosis[component.id]) {
                     form.diagnosis[component.id] = '';
@@ -703,11 +699,9 @@ const saveReport = async () => {
 
     try {
         const formData = new FormData();
-        
-        // Agregar campos básicos
+
         Object.keys(form).forEach(key => {
             if (key === 'component_images') {
-                // Enviar imágenes de componentes con formato simple
                 Object.keys(form.component_images).forEach(componentId => {
                     form.component_images[componentId].forEach((imageObj, imgIndex) => {
                         if (imageObj && imageObj.file) {
@@ -721,8 +715,7 @@ const saveReport = async () => {
                 formData.append(key, form[key]);
             }
         });
-        
-        // Enviar también un JSON con la estructura de imágenes para referencia
+
         const componentImagesStructure = {};
         Object.keys(form.component_images).forEach(componentId => {
             componentImagesStructure[componentId] = form.component_images[componentId]

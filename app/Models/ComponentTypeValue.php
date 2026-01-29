@@ -13,11 +13,11 @@ class ComponentTypeValue extends Model
     protected $table = 'component_type_values';
 
     protected $fillable = [
-        'component_id', // Corregido: era id_component
+        'component_id',
         'component_type_field_id',
-        'option_id', // Nueva: referencia a la opción si aplica
-        'value', // Valor almacenado
-        'raw_value', // Valor original (útil para migración)
+        'option_id',
+        'value',
+        'raw_value',
         'status'
     ];
 

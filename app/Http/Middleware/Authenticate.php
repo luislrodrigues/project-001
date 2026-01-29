@@ -12,12 +12,10 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        // Para API, no redirigir (devolver null para JSON)
         if ($request->expectsJson() || $request->is('api/*')) {
             return null;
         }
         
-        // Para web, redirigir a la raíz donde Vue maneja el login
         return '/';
     }
 }

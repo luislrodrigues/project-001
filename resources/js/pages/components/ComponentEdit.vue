@@ -289,10 +289,8 @@ const loadComponent = async () => {
         form.component_type_id = component.component_type_id;
         form.brand_id = component.brand_id;
 
-        // Cargar campos del tipo de componente
         await loadComponentTypeFields();
 
-        // Cargar valores existentes
         if (component.field_values) {
             Object.keys(component.field_values).forEach(fieldId => {
                 form.field_values[fieldId] = component.field_values[fieldId].value || '';
@@ -337,7 +335,6 @@ const loadBrands = async () => {
 };
 
 const handleItemSaved = (data) => {
-    // Seleccionar automáticamente el nuevo registro creado
     if (data.field === 'brand' && data.id) {
         form.brand_id = data.id;
     }

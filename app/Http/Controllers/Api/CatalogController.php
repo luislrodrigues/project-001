@@ -33,7 +33,6 @@ class CatalogController extends Controller
             return ApiResponse::notFound('Catálogo no encontrado');
         }
 
-        // Construir regla unique según si el modelo usa SoftDeletes
         $uniqueRule = 'required|string|max:255|unique:' . $this->getTableName($catalog) . ',name';
         if ($catalog !== 'ubications') {
             $uniqueRule .= ',NULL,id,deleted_at,NULL';
@@ -69,7 +68,6 @@ class CatalogController extends Controller
             return ApiResponse::notFound('Catálogo no encontrado');
         }
 
-        // Construir regla unique según si el modelo usa SoftDeletes
         $uniqueRule = 'required|string|max:255|unique:' . $this->getTableName($catalog) . ',name,' . $id;
         if ($catalog !== 'ubications') {
             $uniqueRule .= ',id,deleted_at,NULL';
@@ -106,7 +104,6 @@ class CatalogController extends Controller
             $modelClass = $this->modelMap[$catalog];
             $item = $modelClass::findOrFail($id);
             
-            // Verificar si el modelo usa SoftDeletes
             $traits = class_uses_recursive($modelClass);
             $usesSoftDeletes = in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, $traits);
             

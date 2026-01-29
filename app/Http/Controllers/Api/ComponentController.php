@@ -52,7 +52,6 @@ class ComponentController extends Controller
                 'brand_id' => $request->brand_id,
             ]);
 
-            // Guardar valores de campos dinámicos (solo si fieldId es válido y el campo existe)
             if ($request->has('field_values') && is_array($request->field_values)) {
                 foreach ($request->field_values as $fieldId => $value) {
                     $fieldId = (int) $fieldId;
@@ -112,10 +111,8 @@ class ComponentController extends Controller
                 'brand_id' => $request->brand_id,
             ]);
 
-            // Eliminar valores antiguos
             ComponentTypeValue::where('component_id', $component->id)->delete();
 
-            // Guardar nuevos valores (solo si fieldId es válido y el campo existe)
             if ($request->has('field_values') && is_array($request->field_values)) {
                 foreach ($request->field_values as $fieldId => $value) {
                     $fieldId = (int) $fieldId;
@@ -193,7 +190,6 @@ class ComponentController extends Controller
             ->ordered()
             ->get();
 
-        // Preparar campos con opciones
         $fieldsData = $fields->map(function ($field) {
             $fieldData = [
                 'id' => $field->id,

@@ -37,10 +37,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Revocar tokens anteriores
         $user->tokens()->delete();
-
-        // Crear nuevo token
         $token = $user->createToken('api-token')->plainTextToken;
 
         $userData = $user->load('company');

@@ -284,7 +284,6 @@ const loadBrands = async () => {
 };
 
 const handleItemSaved = (data) => {
-    // Seleccionar automáticamente el nuevo registro creado
     if (data.field === 'brand' && data.id) {
         form.brand_id = data.id;
     }
@@ -301,7 +300,6 @@ const loadComponentTypeFields = async () => {
     try {
         const response = await api.get(`/components/type/${form.component_type_id}/fields`);
         additionalFields.value = response.data.data;
-        // Inicializar field_values vacíos
         form.field_values = {};
         additionalFields.value.forEach(field => {
             form.field_values[field.id] = '';

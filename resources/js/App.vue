@@ -14,11 +14,9 @@ const authStore = useAuthStore();
 const router = useRouter();
 
 onMounted(async () => {
-    // Verificar si hay token guardado
     const token = localStorage.getItem('token');
     if (token) {
         authStore.setToken(token);
-        // Intentar obtener el usuario actual para verificar que el token es válido
         try {
             const response = await api.get('/user');
             const payload = response.data.data ?? response.data;
@@ -40,5 +38,4 @@ onMounted(async () => {
 </script>
 
 <style>
-/* Estilos globales si es necesario */
 </style>

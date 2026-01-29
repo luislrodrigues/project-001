@@ -242,7 +242,6 @@ const updateProfile = async () => {
 
         const response = await api.post('/profile', data);
         
-        // Actualizar el store con los nuevos datos
         const payload = response.data.data ?? response.data.user ?? response.data;
         authStore.setUser({
             ...authStore.user,
@@ -251,10 +250,7 @@ const updateProfile = async () => {
 
         Swal.fire('Éxito', 'Perfil actualizado correctamente', 'success');
         
-        // Recargar el perfil para obtener datos actualizados
         await loadProfile();
-        
-        // Limpiar el campo de contraseña
         form.password = '';
     } catch (error) {
         if (error.response?.status === 422 && error.response?.data?.errors) {

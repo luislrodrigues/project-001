@@ -67,25 +67,18 @@ class ReportResource extends JsonResource
             return [];
         }
 
-        // Si es un array indexado numéricamente (array de arrays), necesitamos mapearlo a los IDs de componentes
-        // Primero verificar si es un array indexado numéricamente
         $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
-        
-        // Formatear diagnosis para incluir URLs completas de imágenes
         $formatted = [];
-        
+
         if ($isNumericArray && $this->equipment && $this->equipment->components) {
-            // Si viene como array indexado, mapearlo a los IDs de componentes
             $components = $this->equipment->components;
             foreach ($decoded as $index => $data) {
                 if (isset($components[$index])) {
                     $componentId = (string)$components[$index]->id;
                     if (is_array($data) && isset($data['images'])) {
-                        // Estructura nueva con imágenes
                         $formatted[$componentId] = [
                             'text' => $data['text'] ?? '',
                             'images' => array_map(function ($path) {
-                                // Si ya es una URL completa, no agregar asset
                                 if (filter_var($path, FILTER_VALIDATE_URL)) {
                                     return $path;
                                 }
@@ -93,7 +86,6 @@ class ReportResource extends JsonResource
                             }, $data['images'] ?? [])
                         ];
                     } else if (is_string($data)) {
-                        // Estructura antigua solo texto
                         $formatted[$componentId] = $data;
                     } else {
                         $formatted[$componentId] = $data;
@@ -101,15 +93,12 @@ class ReportResource extends JsonResource
                 }
             }
         } else {
-            // Es un objeto asociativo con claves de componente
             foreach ($decoded as $componentId => $data) {
                 $componentIdStr = (string)$componentId;
                 if (is_array($data) && isset($data['images'])) {
-                    // Estructura nueva con imágenes
                     $formatted[$componentIdStr] = [
                         'text' => $data['text'] ?? '',
                         'images' => array_map(function ($path) {
-                            // Si ya es una URL completa, no agregar asset
                             if (filter_var($path, FILTER_VALIDATE_URL)) {
                                 return $path;
                             }
@@ -117,7 +106,6 @@ class ReportResource extends JsonResource
                         }, $data['images'] ?? [])
                     ];
                 } else if (is_string($data)) {
-                    // Estructura antigua solo texto
                     $formatted[$componentIdStr] = $data;
                 } else {
                     $formatted[$componentIdStr] = $data;
@@ -155,7 +143,6 @@ class ReportResource extends JsonResource
                 }
             }
         } else {
-            // Es un objeto asociativo con claves de componente
             foreach ($decoded as $componentId => $data) {
                 $componentIdStr = (string)$componentId;
                 $formatted[$componentIdStr] = is_array($data) ? $data : [];

@@ -31,7 +31,7 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Respuesta JSON unificada para errores de validación (API).
+     * Respuesta JSON para errores de validación.
      */
     protected function invalidJson($request, ValidationException $exception): \Illuminate\Http\JsonResponse
     {

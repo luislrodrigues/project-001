@@ -13,7 +13,6 @@ class UpdateReportRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Convertir strings JSON a arrays si vienen como strings
         if ($this->has('diagnosis') && is_string($this->diagnosis)) {
             $this->merge([
                 'diagnosis' => json_decode($this->diagnosis, true) ?? []

@@ -9,7 +9,7 @@ class UpdateProfileRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // El usuario siempre puede actualizar su propio perfil
+        return true;
     }
 
     public function rules(): array
