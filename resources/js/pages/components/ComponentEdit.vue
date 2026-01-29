@@ -359,12 +359,15 @@ const updateComponent = async () => {
     errors.value = {};
 
     try {
-        await api.put(`/components/${route.params.id}`, form);
+        await api.post(`/components/${route.params.id}`, form);
         Swal.fire('Éxito', 'Componente actualizado correctamente', 'success');
         router.push({ name: 'components' });
     } catch (error) {
-        if (error.response?.data?.errors) {
-            errors.value = error.response.data.errors;
+        if (error.response?.status === 422 && error.response?.data?.errors) {
+            const e = error.response.data.errors;
+            errors.value = Object.fromEntries(
+                Object.entries(e).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+            );
         }
         const message = error.response?.data?.message || 'Error al actualizar el componente';
         Swal.fire('Error', message, 'error');

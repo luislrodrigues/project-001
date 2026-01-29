@@ -30,15 +30,15 @@ export const useAuthStore = defineStore('auth', () => {
     async function login(credentials) {
         try {
             const response = await api.post('/login', credentials);
-            setToken(response.data.token);
-            // Combinar user con permissions y roles
+            const payload = response.data.data ?? response.data;
+            setToken(payload.token);
             const userData = {
-                ...response.data.user,
-                permissions: response.data.permissions || [],
-                roles: response.data.roles || []
+                ...payload.user,
+                permissions: payload.permissions || [],
+                roles: payload.roles || []
             };
             setUser(userData);
-            return { success: true, data: response.data };
+            return { success: true, data: payload };
         } catch (error) {
             const errorMessage = error.response?.data?.message 
                 || error.response?.data?.error 

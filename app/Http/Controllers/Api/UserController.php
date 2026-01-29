@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\StoreUserRequest;
 use App\Http\Requests\Api\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         if (!auth()->user()->can('consult user')) {
             abort(403, 'No tienes los permisos requeridos.');
@@ -40,7 +40,7 @@ class UserController extends Controller
 
         $users = $query->paginate($request->get('per_page', 10));
 
-        return UserResource::collection($users);
+        return ApiResponse::success(UserResource::collection($users));
     }
 
     public function store(StoreUserRequest $request): JsonResponse
@@ -64,15 +64,13 @@ class UserController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Usuario creado correctamente',
-                'data' => new UserResource($user->load(['company', 'roles']))
-            ], 201);
+            return ApiResponse::success(
+                new UserResource($user->load(['company', 'roles'])),
+                'Usuario creado correctamente',
+                201
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al crear el usuario',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al crear el usuario', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -82,9 +80,7 @@ class UserController extends Controller
             abort(403, 'No tienes los permisos requeridos.');
         }
 
-        return response()->json([
-            'data' => new UserResource($user->load(['company', 'roles']))
-        ]);
+        return ApiResponse::success(new UserResource($user->load(['company', 'roles'])));
     }
 
     public function update(UpdateUserRequest $request, User $user): JsonResponse
@@ -117,15 +113,12 @@ class UserController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Usuario actualizado correctamente',
-                'data' => new UserResource($user->load(['company', 'roles']))
-            ]);
+            return ApiResponse::success(
+                new UserResource($user->load(['company', 'roles'])),
+                'Usuario actualizado correctamente'
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el usuario',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al actualizar el usuario', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -138,14 +131,9 @@ class UserController extends Controller
         try {
             $user->delete();
 
-            return response()->json([
-                'message' => 'Usuario eliminado correctamente'
-            ]);
+            return ApiResponse::success(null, 'Usuario eliminado correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al eliminar el usuario',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al eliminar el usuario', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -159,15 +147,12 @@ class UserController extends Controller
             $user->status = ($user->status === 'active') ? 'inactive' : 'active';
             $user->save();
 
-            return response()->json([
-                'message' => 'Estado del usuario actualizado correctamente',
-                'data' => new UserResource($user->load(['company', 'roles']))
-            ]);
+            return ApiResponse::success(
+                new UserResource($user->load(['company', 'roles'])),
+                'Estado del usuario actualizado correctamente'
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el estado del usuario',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al actualizar el estado del usuario', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -178,7 +163,7 @@ class UserController extends Controller
             ->select('id', 'name', 'email')
             ->get();
 
-        return response()->json(['data' => $users]);
+        return ApiResponse::success($users);
     }
 
     public function getRoles(): JsonResponse
@@ -187,6 +172,6 @@ class UserController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json(['data' => $roles]);
+        return ApiResponse::success($roles);
     }
 }

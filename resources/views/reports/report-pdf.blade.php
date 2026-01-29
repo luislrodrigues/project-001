@@ -105,12 +105,15 @@
 
         .equipment-image-block {
             margin-bottom: 28px;
+            text-align: center;
         }
 
         .equipment-image {
             max-width: 100%;
             height: auto;
             display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .condition-alarma {

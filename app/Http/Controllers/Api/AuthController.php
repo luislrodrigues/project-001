@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\UpdateProfileRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class AuthController extends Controller
 
         $userData = $user->load('company');
         
-        return response()->json([
+        return ApiResponse::success([
             'user' => [
                 'id' => $userData->id,
                 'name' => $userData->name,
@@ -64,9 +65,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Sesión cerrada correctamente'
-        ]);
+        return ApiResponse::success(null, 'Sesión cerrada correctamente');
     }
 
     /**
@@ -75,7 +74,7 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         $user = $request->user()->load('company');
-        return response()->json([
+        return ApiResponse::success([
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
@@ -115,9 +114,8 @@ class AuthController extends Controller
 
         $user->load('company');
 
-        return response()->json([
-            'message' => 'Perfil actualizado correctamente',
-            'user' => [
+        return ApiResponse::success(
+            [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -129,6 +127,7 @@ class AuthController extends Controller
                 ] : null,
                 'profile_photo_url' => $user->profile_photo_url,
             ],
-        ]);
+            'Perfil actualizado correctamente'
+        );
     }
 }

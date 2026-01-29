@@ -213,7 +213,7 @@ const loadProfile = async () => {
     loading.value = true;
     try {
         const response = await api.get('/user');
-        userProfile.value = response.data;
+        userProfile.value = response.data.data ?? response.data;
         
         form.name = userProfile.value.name || '';
         form.email = userProfile.value.email || '';
@@ -240,12 +240,13 @@ const updateProfile = async () => {
             data.password = form.password;
         }
 
-        const response = await api.put('/profile', data);
+        const response = await api.post('/profile', data);
         
         // Actualizar el store con los nuevos datos
+        const payload = response.data.data ?? response.data.user ?? response.data;
         authStore.setUser({
             ...authStore.user,
-            ...response.data.user,
+            ...payload,
         });
 
         Swal.fire('Éxito', 'Perfil actualizado correctamente', 'success');
@@ -256,8 +257,11 @@ const updateProfile = async () => {
         // Limpiar el campo de contraseña
         form.password = '';
     } catch (error) {
-        if (error.response?.data?.errors) {
-            errors.value = error.response.data.errors;
+        if (error.response?.status === 422 && error.response?.data?.errors) {
+            const e = error.response.data.errors;
+            errors.value = Object.fromEntries(
+                Object.entries(e).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+            );
         }
         const message = error.response?.data?.message || 'Error al actualizar el perfil';
         Swal.fire('Error', message, 'error');

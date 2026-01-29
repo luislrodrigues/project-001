@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Models\Company;
 use App\Models\Equipment;
 use App\Models\Report;
@@ -25,8 +26,6 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
-        return response()->json([
-            'data' => $stats
-        ]);
+        return ApiResponse::success($stats);
     }
 }

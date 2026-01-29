@@ -3,20 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\StoreCompanyRequest;
 use App\Http\Requests\Api\UpdateCompanyRequest;
 use App\Http\Resources\CompanyResource;
 use App\Models\Company;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CompanyController extends Controller
 {
     /**
      * Listar empresas con paginación
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $query = Company::query();
 
@@ -32,7 +32,7 @@ class CompanyController extends Controller
 
         $companies = $query->paginate($request->get('per_page', 10));
 
-        return CompanyResource::collection($companies);
+        return ApiResponse::success(CompanyResource::collection($companies));
     }
 
     /**
@@ -47,15 +47,9 @@ class CompanyController extends Controller
                 'status' => 'active',
             ]);
 
-            return response()->json([
-                'message' => 'Se guardó la empresa correctamente',
-                'data' => new CompanyResource($company)
-            ], 201);
+            return ApiResponse::success(new CompanyResource($company), 'Se guardó la empresa correctamente', 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al guardar la empresa',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al guardar la empresa', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -64,9 +58,7 @@ class CompanyController extends Controller
      */
     public function show(Company $company): JsonResponse
     {
-        return response()->json([
-            'data' => new CompanyResource($company)
-        ]);
+        return ApiResponse::success(new CompanyResource($company));
     }
 
     /**
@@ -80,15 +72,9 @@ class CompanyController extends Controller
                 'emails' => json_encode($request->emails),
             ]);
 
-            return response()->json([
-                'message' => 'Se actualizó la empresa correctamente',
-                'data' => new CompanyResource($company)
-            ]);
+            return ApiResponse::success(new CompanyResource($company), 'Se actualizó la empresa correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar la empresa',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al actualizar la empresa', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -111,14 +97,9 @@ class CompanyController extends Controller
             $company->save();
             $company->delete();
 
-            return response()->json([
-                'message' => 'La empresa se eliminó correctamente'
-            ]);
+            return ApiResponse::success(null, 'La empresa se eliminó correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al eliminar la empresa',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al eliminar la empresa', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -132,8 +113,6 @@ class CompanyController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json([
-            'data' => $companies
-        ]);
+        return ApiResponse::success($companies);
     }
 }

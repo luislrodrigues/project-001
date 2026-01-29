@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\StoreEquipmentRequest;
 use App\Http\Requests\Api\UpdateEquipmentRequest;
 use App\Http\Resources\EquipmentResource;
@@ -12,12 +13,11 @@ use App\Models\Process;
 use App\Models\Ubication;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
 
 class EquipmentController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $query = Equipment::with(['company', 'equipmentType', 'process', 'ubication']);
 
@@ -35,7 +35,7 @@ class EquipmentController extends Controller
 
         $equipments = $query->paginate($request->get('per_page', 10));
 
-        return EquipmentResource::collection($equipments);
+        return ApiResponse::success(EquipmentResource::collection($equipments));
     }
 
     public function store(StoreEquipmentRequest $request): JsonResponse
@@ -57,23 +57,21 @@ class EquipmentController extends Controller
             }
             $equipment = Equipment::create($data);
 
-            return response()->json([
-                'message' => 'Se guardó el equipo correctamente',
-                'data' => new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication']))
-            ], 201);
+            return ApiResponse::success(
+                new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication'])),
+                'Se guardó el equipo correctamente',
+                201
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al guardar el equipo',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al guardar el equipo', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
     public function show(Equipment $equipment): JsonResponse
     {
-        return response()->json([
-            'data' => new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication', 'components']))
-        ]);
+        return ApiResponse::success(
+            new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication', 'components']))
+        );
     }
 
     public function update(UpdateEquipmentRequest $request, Equipment $equipment): JsonResponse
@@ -97,15 +95,12 @@ class EquipmentController extends Controller
             }
             $equipment->update($data);
 
-            return response()->json([
-                'message' => 'Equipo actualizado correctamente',
-                'data' => new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication']))
-            ]);
+            return ApiResponse::success(
+                new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication'])),
+                'Equipo actualizado correctamente'
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el equipo',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al actualizar el equipo', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -120,14 +115,9 @@ class EquipmentController extends Controller
             $equipment->save();
             $equipment->delete();
 
-            return response()->json([
-                'message' => 'El equipo se eliminó correctamente'
-            ]);
+            return ApiResponse::success(null, 'El equipo se eliminó correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al eliminar el equipo',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al eliminar el equipo', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -138,7 +128,7 @@ class EquipmentController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json(['data' => $types]);
+        return ApiResponse::success($types);
     }
 
     public function getProcesses(): JsonResponse
@@ -148,7 +138,7 @@ class EquipmentController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json(['data' => $processes]);
+        return ApiResponse::success($processes);
     }
 
     public function getUbications(): JsonResponse
@@ -157,6 +147,6 @@ class EquipmentController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json(['data' => $ubications]);
+        return ApiResponse::success($ubications);
     }
 }

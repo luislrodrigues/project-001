@@ -31,21 +31,25 @@ Route::middleware('auth:sanctum')->group(function () {
     // Usuario autenticado
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/profile', [AuthController::class, 'updateProfile']);
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // Empresas
+    // Empresas (POST para update evita problemas de parsing PUT)
+    Route::post('companies/{company}', [CompanyController::class, 'update'])->middleware('permission:consult company');
     Route::apiResource('companies', CompanyController::class)->middleware('permission:consult company');
 
-    // Equipos
+    // Equipos (POST para update permite FormData con imagen; PUT no parsea multipart en PHP)
+    Route::post('equipment/{equipment}', [EquipmentController::class, 'update'])->middleware('permission:consult equipment');
     Route::apiResource('equipment', EquipmentController::class)->middleware('permission:consult equipment');
 
-    // Reportes
+    // Reportes (POST para update permite FormData con imágenes; PUT no parsea multipart en PHP)
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->middleware('permission:consult report');
         Route::post('/', [ReportController::class, 'store'])->middleware('permission:save report');
         Route::get('/{id}', [ReportController::class, 'show'])->middleware('permission:consult report');
+        Route::post('/{id}', [ReportController::class, 'update'])->middleware('permission:edit report');
         Route::put('/{id}', [ReportController::class, 'update'])->middleware('permission:edit report');
         Route::delete('/{id}', [ReportController::class, 'destroy'])->middleware('permission:delete report');
         Route::get('/{id}/pdf', [ReportController::class, 'downloadPdf'])->middleware('permission:consult report');
@@ -53,14 +57,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/send-email', [ReportController::class, 'sendEmail'])->middleware('permission:consult report');
     });
 
-    // Componentes
+    // Componentes (POST para update evita problemas de parsing PUT)
+    Route::post('components/{component}', [ComponentController::class, 'update'])->middleware('permission:consult equipment');
     Route::apiResource('components', ComponentController::class)->middleware('permission:consult equipment');
     Route::get('/components/type/{componentTypeId}/fields', [ComponentController::class, 'getComponentTypeFields']);
 
-    // Tipos de Componentes
+    // Tipos de Componentes (POST para update evita problemas de parsing PUT)
+    Route::post('component-types/{component_type}', [ComponentTypeController::class, 'update'])->middleware('permission:consult equipment');
     Route::apiResource('component-types', ComponentTypeController::class)->middleware('permission:consult equipment');
 
-    // Usuarios
+    // Usuarios (POST para update evita problemas de parsing PUT)
+    Route::post('users/{user}', [UserController::class, 'update'])->middleware('permission:consult user');
     Route::apiResource('users', UserController::class)->middleware('permission:consult user');
     Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->middleware('permission:inactive user');
     Route::get('/catalogs/roles', [UserController::class, 'getRoles']);

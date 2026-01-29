@@ -389,8 +389,11 @@ const saveEquipment = async () => {
         Swal.fire('Éxito', 'Equipo creado correctamente', 'success');
         router.push({ name: 'equipment' });
     } catch (error) {
-        if (error.response?.data?.errors) {
-            errors.value = error.response.data.errors;
+        if (error.response?.status === 422 && error.response?.data?.errors) {
+            const e = error.response.data.errors;
+            errors.value = Object.fromEntries(
+                Object.entries(e).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+            );
         }
         const message = error.response?.data?.message || 'Error al guardar el equipo';
         Swal.fire('Error', message, 'error');

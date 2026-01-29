@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\StoreComponentRequest;
 use App\Http\Requests\Api\UpdateComponentRequest;
 use App\Http\Resources\ComponentResource;
@@ -12,11 +13,10 @@ use App\Models\ComponentTypeField;
 use App\Models\ComponentTypeValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ComponentController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $query = Component::with(['equipment', 'componentType', 'brand', 'fieldValues']);
 
@@ -40,7 +40,7 @@ class ComponentController extends Controller
 
         $components = $query->paginate($request->get('per_page', 10));
 
-        return ComponentResource::collection($components);
+        return ApiResponse::success(ComponentResource::collection($components));
     }
 
     public function store(StoreComponentRequest $request): JsonResponse
@@ -52,16 +52,23 @@ class ComponentController extends Controller
                 'brand_id' => $request->brand_id,
             ]);
 
-            // Guardar valores de campos dinámicos
+            // Guardar valores de campos dinámicos (solo si fieldId es válido y el campo existe)
             if ($request->has('field_values') && is_array($request->field_values)) {
                 foreach ($request->field_values as $fieldId => $value) {
-                    if (empty($value)) continue;
+                    $fieldId = (int) $fieldId;
+                    if ($fieldId <= 0 || $value === '' || $value === null) {
+                        continue;
+                    }
 
                     $field = ComponentTypeField::find($fieldId);
+                    if (!$field) {
+                        continue;
+                    }
+
                     $optionId = null;
                     $storedValue = $value;
 
-                    if ($field && $field->hasOptions()) {
+                    if ($field->hasOptions()) {
                         $option = $field->options()->where('value', $value)->first();
                         if ($option) {
                             $optionId = $option->id;
@@ -79,23 +86,21 @@ class ComponentController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Se guardó el componente correctamente',
-                'data' => new ComponentResource($component->load(['equipment', 'componentType', 'brand', 'fieldValues']))
-            ], 201);
+            return ApiResponse::success(
+                new ComponentResource($component->load(['equipment', 'componentType', 'brand', 'fieldValues'])),
+                'Se guardó el componente correctamente',
+                201
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al guardar el componente',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al guardar el componente', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
     public function show(Component $component): JsonResponse
     {
-        return response()->json([
-            'data' => new ComponentResource($component->load(['equipment', 'componentType', 'brand', 'fieldValues']))
-        ]);
+        return ApiResponse::success(
+            new ComponentResource($component->load(['equipment', 'componentType', 'brand', 'fieldValues']))
+        );
     }
 
     public function update(UpdateComponentRequest $request, Component $component): JsonResponse
@@ -110,16 +115,24 @@ class ComponentController extends Controller
             // Eliminar valores antiguos
             ComponentTypeValue::where('component_id', $component->id)->delete();
 
-            // Guardar nuevos valores
+            // Guardar nuevos valores (solo si fieldId es válido y el campo existe)
             if ($request->has('field_values') && is_array($request->field_values)) {
                 foreach ($request->field_values as $fieldId => $value) {
-                    if (empty($value)) continue;
+                    $fieldId = (int) $fieldId;
+                    $value = is_string($value) ? trim($value) : $value;
+                    if ($fieldId <= 0 || $value === '' || $value === null) {
+                        continue;
+                    }
 
                     $field = ComponentTypeField::find($fieldId);
+                    if (!$field) {
+                        continue;
+                    }
+
                     $optionId = null;
                     $storedValue = $value;
 
-                    if ($field && $field->hasOptions()) {
+                    if ($field->hasOptions()) {
                         $option = $field->options()->where('value', $value)->first();
                         if ($option) {
                             $optionId = $option->id;
@@ -137,15 +150,12 @@ class ComponentController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Se actualizó el componente correctamente',
-                'data' => new ComponentResource($component->load(['equipment', 'componentType', 'brand', 'fieldValues']))
-            ]);
+            return ApiResponse::success(
+                new ComponentResource($component->load(['equipment', 'componentType', 'brand', 'fieldValues'])),
+                'Se actualizó el componente correctamente'
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el componente',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al actualizar el componente', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -160,14 +170,9 @@ class ComponentController extends Controller
             $component->save();
             $component->delete();
 
-            return response()->json([
-                'message' => 'El componente se eliminó correctamente'
-            ]);
+            return ApiResponse::success(null, 'El componente se eliminó correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al eliminar el componente',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al eliminar el componente', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -178,7 +183,7 @@ class ComponentController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json(['data' => $brands]);
+        return ApiResponse::success($brands);
     }
 
     public function getComponentTypeFields($componentTypeId): JsonResponse
@@ -213,6 +218,6 @@ class ComponentController extends Controller
             return $fieldData;
         });
 
-        return response()->json(['data' => $fieldsData]);
+        return ApiResponse::success($fieldsData);
     }
 }

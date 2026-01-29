@@ -972,7 +972,8 @@ const updateReport = async () => {
 
     try {
         const formData = new FormData();
-        
+        formData.append('_method', 'PUT');
+
         Object.keys(form).forEach(key => {
             if (key === 'component_images') {
                 // Enviar imágenes de componentes con formato simple
@@ -1006,7 +1007,7 @@ const updateReport = async () => {
             formData.append('component_images_structure', JSON.stringify(componentImagesStructure));
         }
 
-        await api.put(`/reports/${route.params.id}`, formData, {
+        await api.post(`/reports/${route.params.id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -1015,8 +1016,11 @@ const updateReport = async () => {
         Swal.fire('Éxito', 'Reporte actualizado correctamente', 'success');
         router.push({ name: 'reports' });
     } catch (error) {
-        if (error.response?.data?.errors) {
-            errors.value = error.response.data.errors;
+        if (error.response?.status === 422 && error.response?.data?.errors) {
+            const e = error.response.data.errors;
+            errors.value = Object.fromEntries(
+                Object.entries(e).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+            );
         }
         const message = error.response?.data?.message || 'Error al actualizar el reporte';
         Swal.fire('Error', message, 'error');

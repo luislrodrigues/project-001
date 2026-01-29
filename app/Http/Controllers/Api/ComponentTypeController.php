@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\StoreComponentTypeRequest;
 use App\Http\Requests\Api\UpdateComponentTypeRequest;
 use App\Http\Resources\ComponentTypeResource;
@@ -11,11 +12,10 @@ use App\Models\ComponentTypeField;
 use App\Models\ComponentTypeFieldOption;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ComponentTypeController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         if (!auth()->user()->can('consult equipment')) {
             abort(403, 'No tienes los permisos requeridos.');
@@ -29,7 +29,7 @@ class ComponentTypeController extends Controller
 
         $types = $query->paginate($request->get('per_page', 10));
 
-        return ComponentTypeResource::collection($types);
+        return ApiResponse::success(ComponentTypeResource::collection($types));
     }
 
     public function store(StoreComponentTypeRequest $request): JsonResponse
@@ -63,15 +63,13 @@ class ComponentTypeController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Tipo de componente creado correctamente',
-                'data' => new ComponentTypeResource($componentType->load('componentTypeFields.allOptions'))
-            ], 201);
+            return ApiResponse::success(
+                new ComponentTypeResource($componentType->load('componentTypeFields.allOptions')),
+                'Tipo de componente creado correctamente',
+                201
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al crear el tipo de componente',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al crear el tipo de componente', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -81,9 +79,7 @@ class ComponentTypeController extends Controller
             abort(403, 'No tienes los permisos requeridos.');
         }
 
-        return response()->json([
-            'data' => new ComponentTypeResource($componentType->load('componentTypeFields.allOptions'))
-        ]);
+        return ApiResponse::success(new ComponentTypeResource($componentType->load('componentTypeFields.allOptions')));
     }
 
     public function update(UpdateComponentTypeRequest $request, ComponentType $componentType): JsonResponse
@@ -196,15 +192,12 @@ class ComponentTypeController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Tipo de componente actualizado correctamente',
-                'data' => new ComponentTypeResource($componentType->fresh()->load('componentTypeFields.allOptions'))
-            ]);
+            return ApiResponse::success(
+                new ComponentTypeResource($componentType->fresh()->load('componentTypeFields.allOptions')),
+                'Tipo de componente actualizado correctamente'
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el tipo de componente',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al actualizar el tipo de componente', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -220,14 +213,9 @@ class ComponentTypeController extends Controller
             $componentType->save();
             $componentType->delete();
 
-            return response()->json([
-                'message' => 'Tipo de componente eliminado correctamente'
-            ]);
+            return ApiResponse::success(null, 'Tipo de componente eliminado correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al eliminar el tipo de componente',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al eliminar el tipo de componente', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 }

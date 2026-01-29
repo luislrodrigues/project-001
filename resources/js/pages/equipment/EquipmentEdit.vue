@@ -405,10 +405,11 @@ const updateEquipment = async () => {
 
     try {
         const formData = new FormData();
+        formData.append('_method', 'PUT');
         formData.append('name', form.name);
-        formData.append('code', form.code);
-        formData.append('tag', form.tag);
-        formData.append('description', form.description);
+        formData.append('code', form.code ?? '');
+        formData.append('tag', form.tag ?? '');
+        formData.append('description', form.description ?? '');
         formData.append('company_id', form.company_id);
         formData.append('process_id', form.process_id);
         formData.append('ubication_id', form.ubication_id);
@@ -416,14 +417,17 @@ const updateEquipment = async () => {
         if (imageFile.value) {
             formData.append('image', imageFile.value);
         }
-        await api.put(`/equipment/${route.params.id}`, formData, {
+        await api.post(`/equipment/${route.params.id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
         Swal.fire('Éxito', 'Equipo actualizado correctamente', 'success');
         router.push({ name: 'equipment' });
     } catch (error) {
-        if (error.response?.data?.errors) {
-            errors.value = error.response.data.errors;
+        if (error.response?.status === 422 && error.response?.data?.errors) {
+            const e = error.response.data.errors;
+            errors.value = Object.fromEntries(
+                Object.entries(e).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+            );
         }
         const message = error.response?.data?.message || 'Error al actualizar el equipo';
         Swal.fire('Error', message, 'error');

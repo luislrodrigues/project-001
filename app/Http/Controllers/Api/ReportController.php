@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\StoreReportRequest;
 use App\Http\Requests\Api\UpdateReportRequest;
 use App\Http\Resources\ReportResource;
@@ -15,7 +16,6 @@ use App\Models\User;
 use PDF;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
@@ -27,7 +27,7 @@ class ReportController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json(['data' => $conditions]);
+        return ApiResponse::success($conditions);
     }
 
     public function getMechanismFails(): JsonResponse
@@ -37,7 +37,7 @@ class ReportController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json(['data' => $fails]);
+        return ApiResponse::success($fails);
     }
 
     public function getComponentFails(): JsonResponse
@@ -47,10 +47,10 @@ class ReportController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return response()->json(['data' => $fails]);
+        return ApiResponse::success($fails);
     }
 
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         if (!auth()->user()->can('consult report')) {
             abort(403, 'No tienes los permisos requeridos.');
@@ -79,7 +79,7 @@ class ReportController extends Controller
 
         $reports = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 10));
 
-        return ReportResource::collection($reports);
+        return ApiResponse::success(ReportResource::collection($reports));
     }
 
     public function store(StoreReportRequest $request): JsonResponse
@@ -149,15 +149,13 @@ class ReportController extends Controller
 
             $report = Report::create($data);
 
-            return response()->json([
-                'message' => 'Se guardó el reporte correctamente',
-                'data' => new ReportResource($report->load(['equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist']))
-            ], 201);
+            return ApiResponse::success(
+                new ReportResource($report->load(['equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist'])),
+                'Se guardó el reporte correctamente',
+                201
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al guardar el reporte',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al guardar el reporte', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -182,9 +180,7 @@ class ReportController extends Controller
         ->whereNull('deleted_at')
         ->findOrFail($id);
 
-        return response()->json([
-            'data' => new ReportResource($report)
-        ]);
+        return ApiResponse::success(new ReportResource($report));
     }
 
     public function update(UpdateReportRequest $request, $id): JsonResponse
@@ -301,15 +297,12 @@ class ReportController extends Controller
 
             $report->update($data);
 
-            return response()->json([
-                'message' => 'Se actualizó el reporte correctamente',
-                'data' => new ReportResource($report->load(['equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist']))
-            ]);
+            return ApiResponse::success(
+                new ReportResource($report->load(['equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist'])),
+                'Se actualizó el reporte correctamente'
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el reporte',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al actualizar el reporte', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -325,14 +318,9 @@ class ReportController extends Controller
             $report->save();
             $report->delete();
 
-            return response()->json([
-                'message' => 'El reporte se eliminó correctamente'
-            ]);
+            return ApiResponse::success(null, 'El reporte se eliminó correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al eliminar el reporte',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al eliminar el reporte', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
@@ -466,23 +454,20 @@ class ReportController extends Controller
                 'Content-Type' => 'application/pdf',
             ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al generar el PDF',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al generar el PDF', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
     public function export(): JsonResponse
     {
         // Placeholder - implementar cuando se migre la exportación
-        return response()->json(['message' => 'En desarrollo']);
+        return ApiResponse::success(null, 'En desarrollo');
     }
 
     public function sendEmail($id): JsonResponse
     {
         // Placeholder - implementar cuando se migre el envío de emails
-        return response()->json(['message' => 'En desarrollo']);
+        return ApiResponse::success(null, 'En desarrollo');
     }
 
     /**

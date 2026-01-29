@@ -21,10 +21,11 @@ onMounted(async () => {
         // Intentar obtener el usuario actual para verificar que el token es válido
         try {
             const response = await api.get('/user');
+            const payload = response.data.data ?? response.data;
             const userData = {
-                ...response.data,
-                permissions: response.data.permissions || [],
-                roles: response.data.roles || []
+                ...payload,
+                permissions: payload.permissions || [],
+                roles: payload.roles || []
             };
             authStore.setUser(userData);
         } catch (error) {

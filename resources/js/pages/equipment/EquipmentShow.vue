@@ -43,6 +43,19 @@
 
             <!-- Content -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <!-- Imagen del equipo -->
+                <div v-if="equipment.image_url" class="mb-6">
+                    <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                        <i class="fas fa-image mr-2 text-blue-600"></i>
+                        Imagen del equipo
+                    </label>
+                    <img
+                        :src="equipment.image_url"
+                        alt="Equipo"
+                        class="max-h-64 rounded-lg object-contain border border-gray-200 bg-gray-50"
+                    />
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-gray-50 rounded-lg p-4">
                         <label class="flex items-center mb-2 text-sm font-medium text-gray-700">

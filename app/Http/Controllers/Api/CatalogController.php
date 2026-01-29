@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\ApiResponse;
 use App\Models\Brand;
 use App\Models\ComponentFail;
 use App\Models\Condition;
@@ -29,7 +30,7 @@ class CatalogController extends Controller
     public function store(Request $request, string $catalog): JsonResponse
     {
         if (!isset($this->modelMap[$catalog])) {
-            return response()->json(['message' => 'Catálogo no encontrado'], 404);
+            return ApiResponse::notFound('Catálogo no encontrado');
         }
 
         // Construir regla unique según si el modelo usa SoftDeletes
@@ -43,36 +44,29 @@ class CatalogController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return ApiResponse::validationError($validator->errors());
         }
 
         try {
             $modelClass = $this->modelMap[$catalog];
             $data = ['name' => ucfirst(trim($request->name))];
             
-            // Solo agregar status si el modelo lo tiene
             if (in_array('status', (new $modelClass)->getFillable())) {
                 $data['status'] = 'active';
             }
             
             $item = $modelClass::create($data);
 
-            return response()->json([
-                'message' => 'Registro creado correctamente',
-                'data' => $item
-            ], 201);
+            return ApiResponse::success($item, 'Registro creado correctamente', 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al crear el registro',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al crear el registro', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
     public function update(Request $request, string $catalog, int $id): JsonResponse
     {
         if (!isset($this->modelMap[$catalog])) {
-            return response()->json(['message' => 'Catálogo no encontrado'], 404);
+            return ApiResponse::notFound('Catálogo no encontrado');
         }
 
         // Construir regla unique según si el modelo usa SoftDeletes
@@ -86,7 +80,7 @@ class CatalogController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return ApiResponse::validationError($validator->errors());
         }
 
         try {
@@ -96,22 +90,16 @@ class CatalogController extends Controller
                 'name' => ucfirst(trim($request->name)),
             ]);
 
-            return response()->json([
-                'message' => 'Registro actualizado correctamente',
-                'data' => $item
-            ]);
+            return ApiResponse::success($item, 'Registro actualizado correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el registro',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al actualizar el registro', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
     public function destroy(string $catalog, int $id): JsonResponse
     {
         if (!isset($this->modelMap[$catalog])) {
-            return response()->json(['message' => 'Catálogo no encontrado'], 404);
+            return ApiResponse::notFound('Catálogo no encontrado');
         }
 
         try {
@@ -130,21 +118,13 @@ class CatalogController extends Controller
                 if (in_array('status', $fillable)) {
                     $item->update(['status' => 'inactive']);
                 } else {
-                    // Si no tiene status, no permitir eliminación
-                    return response()->json([
-                        'message' => 'No se puede eliminar este registro'
-                    ], 400);
+                    return ApiResponse::error('No se puede eliminar este registro', 400);
                 }
             }
 
-            return response()->json([
-                'message' => 'Registro eliminado correctamente'
-            ]);
+            return ApiResponse::success(null, 'Registro eliminado correctamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al eliminar el registro',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error('Error al eliminar el registro', 500, ['detail' => [$e->getMessage()]]);
         }
     }
 
