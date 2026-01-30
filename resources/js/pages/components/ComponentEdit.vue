@@ -283,7 +283,14 @@ const loadComponent = async () => {
     loading.value = true;
     try {
         const response = await api.get(`/components/${route.params.id}`);
-        const component = response.data.data;
+        const payload = response.data;
+        const component = payload?.data ?? payload;
+
+        if (!component || !component.id) {
+            Swal.fire('Error', 'No se pudo cargar el componente', 'error');
+            router.push({ name: 'components' });
+            return;
+        }
 
         form.equipment_id = component.equipment_id;
         form.component_type_id = component.component_type_id;
@@ -291,9 +298,14 @@ const loadComponent = async () => {
 
         await loadComponentTypeFields();
 
-        if (component.field_values) {
-            Object.keys(component.field_values).forEach(fieldId => {
-                form.field_values[fieldId] = component.field_values[fieldId].value || '';
+        if (component.field_values && typeof component.field_values === 'object') {
+            Object.keys(component.field_values).forEach((fieldId) => {
+                const item = component.field_values[fieldId];
+                const val = item && typeof item === 'object' && 'value' in item
+                    ? (item.value ?? '')
+                    : (typeof item === 'string' ? item : '');
+                const key = String(fieldId);
+                form.field_values[key] = val;
             });
         }
     } catch (error) {
@@ -315,9 +327,10 @@ const loadComponentTypeFields = async () => {
         const response = await api.get(`/components/type/${form.component_type_id}/fields`);
         additionalFields.value = response.data.data;
         // Inicializar field_values si no existen
-        additionalFields.value.forEach(field => {
-            if (!form.field_values[field.id]) {
-                form.field_values[field.id] = '';
+        additionalFields.value.forEach((field) => {
+            const key = String(field.id);
+            if (form.field_values[key] === undefined || form.field_values[key] === null) {
+                form.field_values[key] = '';
             }
         });
     } catch (error) {

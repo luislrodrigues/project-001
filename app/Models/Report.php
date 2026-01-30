@@ -33,6 +33,7 @@ class Report extends Model
     ];
 
     protected $casts = [
+        'diagnosis' => 'array',
         'recommendations' => 'array',
         'measurement_date' => 'date',
         'execution_date' => 'date',

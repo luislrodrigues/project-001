@@ -99,9 +99,7 @@ class AuthController extends Controller
             'email' => $request->email,
         ];
 
-        if ($request->has('workstation')) {
-            $data['workstation'] = $request->workstation;
-        }
+        $data['workstation'] = $request->input('workstation', '') ?? '';
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);

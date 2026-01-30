@@ -11,6 +11,15 @@ class UpdateComponentRequest extends FormRequest
         return $this->user()->can('edit equipment');
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('field_values') && is_string($this->field_values)) {
+            $this->merge([
+                'field_values' => json_decode($this->field_values, true) ?? [],
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $rules = [

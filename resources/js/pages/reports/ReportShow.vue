@@ -87,6 +87,16 @@
 
                         <div class="bg-gray-50 rounded-lg p-4">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-tag mr-2 text-blue-600"></i>
+                                Tipo Equipo
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.equipment?.equipment_type || 'N/A' }}
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-calendar mr-2 text-blue-600"></i>
                                 Fecha Medición
                             </label>
@@ -217,46 +227,6 @@
                     </div>
                 </div>
 
-                <!-- Imágenes -->
-                <div v-if="report.image_1 || report.image_2" class="mb-8">
-                    <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
-                        <i class="fas fa-images text-blue-600 mr-2"></i>
-                        <h4 class="text-lg font-semibold text-gray-800">Imágenes Adjuntas</h4>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div v-if="report.image_1" class="bg-gray-50 rounded-lg p-4">
-                            <label class="block mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-image mr-2 text-blue-600"></i>
-                                Imagen 1
-                            </label>
-                            <a
-                                :href="report.image_1"
-                                download
-                                target="_blank"
-                                class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-                            >
-                                <i class="fas fa-download mr-2"></i>
-                                Descargar
-                            </a>
-                        </div>
-                        <div v-if="report.image_2" class="bg-gray-50 rounded-lg p-4">
-                            <label class="block mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-image mr-2 text-blue-600"></i>
-                                Imagen 2
-                            </label>
-                            <a
-                                :href="report.image_2"
-                                download
-                                target="_blank"
-                                class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-                            >
-                                <i class="fas fa-download mr-2"></i>
-                                Descargar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Diagnósticos y Recomendaciones -->
                 <div v-if="report.components && report.components.length > 0" class="mb-8">
                     <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
@@ -313,14 +283,14 @@
                                 </div>
                             </div>
 
-                            <div v-if="report.recommendations?.[component.id]?.length">
+                            <div v-if="getRecommendations(component.id).length">
                                 <label class="flex items-center mb-3 text-sm font-medium text-gray-700">
                                     <i class="fas fa-lightbulb mr-2 text-yellow-600"></i>
-                                    Recomendaciones ({{ report.recommendations[component.id].length }})
+                                    Recomendaciones ({{ getRecommendations(component.id).length }})
                                 </label>
                                 <div class="space-y-2">
                                     <div
-                                        v-for="(rec, recIndex) in report.recommendations[component.id]"
+                                        v-for="(rec, recIndex) in getRecommendations(component.id)"
                                         :key="recIndex"
                                         class="bg-white rounded-lg p-3 border border-gray-200"
                                     >
@@ -328,12 +298,7 @@
                                             <span class="flex-shrink-0 bg-yellow-100 text-yellow-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mr-3 mt-0.5">
                                                 {{ recIndex + 1 }}
                                             </span>
-                                            <input
-                                                :value="rec"
-                                                type="text"
-                                                disabled
-                                                class="bg-transparent border-none text-gray-900 text-sm w-full focus:outline-none"
-                                            />
+                                            <span class="text-gray-900 text-sm">{{ rec }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -360,16 +325,83 @@ const authStore = useAuthStore();
 const report = ref(null);
 const loading = ref(true);
 const downloadingPdf = ref(false);
+const diagnosisByComponent = ref({});
+const recommendationsByComponent = ref({});
 
 onMounted(async () => {
     await loadReport();
 });
 
+function normalizeReportData(reportData) {
+    const diagnosis = {};
+    const recommendations = {};
+    const componentsList = reportData.components && reportData.components.length > 0 ? reportData.components : [];
+
+    if (reportData.diagnosis && typeof reportData.diagnosis === 'object') {
+        const isNumericArray = Array.isArray(reportData.diagnosis) &&
+            reportData.diagnosis.length > 0 &&
+            Object.keys(reportData.diagnosis).every((key, index) => Number(key) === index);
+
+        if (isNumericArray && componentsList.length > 0) {
+            reportData.diagnosis.forEach((diag, index) => {
+                if (componentsList[index]) {
+                    const id = String(componentsList[index].id);
+                    if (typeof diag === 'object' && (diag.text !== undefined || diag.images !== undefined)) {
+                        diagnosis[id] = { text: diag.text ?? '', images: diag.images ?? [] };
+                    } else if (typeof diag === 'string') {
+                        diagnosis[id] = { text: diag, images: [] };
+                    } else {
+                        diagnosis[id] = { text: '', images: [] };
+                    }
+                }
+            });
+        } else {
+            Object.keys(reportData.diagnosis).forEach((key) => {
+                const id = String(key);
+                const diag = reportData.diagnosis[key];
+                if (typeof diag === 'object' && (diag.text !== undefined || diag.images !== undefined)) {
+                    diagnosis[id] = { text: diag.text ?? '', images: Array.isArray(diag.images) ? diag.images : [] };
+                } else if (typeof diag === 'string') {
+                    diagnosis[id] = { text: diag, images: [] };
+                } else {
+                    diagnosis[id] = { text: '', images: [] };
+                }
+            });
+        }
+    }
+
+    if (reportData.recommendations && typeof reportData.recommendations === 'object') {
+        const isNumericArray = Array.isArray(reportData.recommendations) &&
+            reportData.recommendations.length > 0 &&
+            Object.keys(reportData.recommendations).every((key, index) => Number(key) === index);
+
+        if (isNumericArray && componentsList.length > 0) {
+            reportData.recommendations.forEach((rec, index) => {
+                if (componentsList[index]) {
+                    recommendations[String(componentsList[index].id)] = Array.isArray(rec) ? rec : [];
+                }
+            });
+        } else {
+            Object.keys(reportData.recommendations).forEach((key) => {
+                recommendations[String(key)] = Array.isArray(reportData.recommendations[key])
+                    ? reportData.recommendations[key]
+                    : [];
+            });
+        }
+    }
+
+    return { diagnosis, recommendations };
+}
+
 const loadReport = async () => {
     loading.value = true;
     try {
         const response = await api.get(`/reports/${route.params.id}`);
-        report.value = response.data.data;
+        const reportData = response.data.data;
+        report.value = reportData;
+        const { diagnosis, recommendations } = normalizeReportData(reportData);
+        diagnosisByComponent.value = diagnosis;
+        recommendationsByComponent.value = recommendations;
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el reporte', 'error');
         router.push({ name: 'reports' });
@@ -422,30 +454,23 @@ const downloadPdf = async (event) => {
 };
 
 const getDiagnosisText = (componentId) => {
-    // Normalizar componentId a string para consistencia
-    const normalizedId = String(componentId);
-    const diagnosis = report.value?.diagnosis?.[normalizedId];
-    if (!diagnosis) return '';
-    if (typeof diagnosis === 'string') return diagnosis;
-    if (typeof diagnosis === 'object' && diagnosis.text) return diagnosis.text;
-    return '';
+    const id = String(componentId);
+    const d = diagnosisByComponent.value[id];
+    if (!d) return '';
+    return typeof d === 'string' ? d : (d.text || '');
 };
 
 const getComponentImages = (componentId) => {
-    // Normalizar componentId a string para consistencia
-    const normalizedId = String(componentId);
-    let diagnosis = report.value?.diagnosis?.[normalizedId];
-    
-    // Si no se encuentra por ID, intentar buscar por índice si diagnosis es un array
-    if (!diagnosis && Array.isArray(report.value?.diagnosis) && report.value?.components) {
-        const componentIndex = report.value.components.findIndex(c => String(c.id) === normalizedId);
-        if (componentIndex >= 0 && report.value.diagnosis[componentIndex]) {
-            diagnosis = report.value.diagnosis[componentIndex];
-        }
-    }
-    
-    if (!diagnosis || typeof diagnosis !== 'object') return [];
-    return diagnosis.images || [];
+    const id = String(componentId);
+    const d = diagnosisByComponent.value[id];
+    if (!d || typeof d !== 'object' || !Array.isArray(d.images)) return [];
+    return d.images;
+};
+
+const getRecommendations = (componentId) => {
+    const id = String(componentId);
+    const recs = recommendationsByComponent.value[id];
+    return Array.isArray(recs) ? recs : [];
 };
 
 const openImageModal = (imageUrl) => {

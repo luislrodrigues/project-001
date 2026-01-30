@@ -111,15 +111,22 @@ class ComponentController extends Controller
                 'brand_id' => $request->brand_id,
             ]);
 
-            ComponentTypeValue::where('component_id', $component->id)->delete();
+            ComponentTypeValue::where('component_id', $component->id)->forceDelete();
 
-            if ($request->has('field_values') && is_array($request->field_values)) {
-                foreach ($request->field_values as $fieldId => $value) {
+            $fieldValues = $request->input('field_values');
+            if (is_string($fieldValues)) {
+                $fieldValues = json_decode($fieldValues, true);
+            }
+            if (is_array($fieldValues)) {
+                foreach ($fieldValues as $fieldId => $value) {
                     $fieldId = (int) $fieldId;
-                    $value = is_string($value) ? trim($value) : $value;
-                    if ($fieldId <= 0 || $value === '' || $value === null) {
+                    if ($fieldId < 0) {
                         continue;
                     }
+                    if ($value === '' || $value === null) {
+                        continue;
+                    }
+                    $value = is_string($value) ? trim($value) : (string) $value;
 
                     $field = ComponentTypeField::find($fieldId);
                     if (!$field) {
@@ -130,7 +137,7 @@ class ComponentController extends Controller
                     $storedValue = $value;
 
                     if ($field->hasOptions()) {
-                        $option = $field->options()->where('value', $value)->first();
+                        $option = $field->options()->where('value', (string) $value)->first();
                         if ($option) {
                             $optionId = $option->id;
                             $storedValue = $option->value;
@@ -141,7 +148,7 @@ class ComponentController extends Controller
                         'component_id' => $component->id,
                         'component_type_field_id' => $fieldId,
                         'option_id' => $optionId,
-                        'value' => $storedValue,
+                        'value' => (string) $storedValue,
                         'raw_value' => $value,
                     ]);
                 }
@@ -201,8 +208,9 @@ class ComponentController extends Controller
                 'help_text' => $field->help_text,
             ];
 
-            if (in_array($field->type, ['select', 'multiselect']) && $field->options->count() > 0) {
-                $fieldData['options'] = $field->options->map(function ($option) {
+            $optionsRelation = $field->relationLoaded('options') ? $field->getRelation('options') : $field->options()->get();
+            if (in_array($field->type, ['select', 'multiselect']) && $optionsRelation->count() > 0) {
+                $fieldData['options'] = $optionsRelation->map(function ($option) {
                     return [
                         'id' => $option->id,
                         'value' => $option->value,

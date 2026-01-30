@@ -10,11 +10,12 @@ class ComponentResource extends JsonResource
     public function toArray(Request $request): array
     {
         $fieldValues = [];
-        foreach ($this->fieldValues as $value) {
-            $fieldValues[$value->component_type_field_id] = [
+        $values = $this->relationLoaded('fieldValues') ? $this->fieldValues : collect();
+        foreach ($values as $value) {
+            $fieldValues[(string) $value->component_type_field_id] = [
                 'id' => $value->id,
                 'field_id' => $value->component_type_field_id,
-                'value' => $value->value,
+                'value' => $value->value ?? '',
                 'option_id' => $value->option_id,
             ];
         }

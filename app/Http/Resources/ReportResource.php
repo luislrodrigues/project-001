@@ -130,9 +130,9 @@ class ReportResource extends JsonResource
 
         // Si es un array indexado numéricamente (array de arrays), necesitamos mapearlo a los IDs de componentes
         $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
-        
+
         $formatted = [];
-        
+
         if ($isNumericArray && $this->equipment && $this->equipment->components) {
             // Si viene como array indexado, mapearlo a los IDs de componentes
             $components = $this->equipment->components;
