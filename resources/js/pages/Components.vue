@@ -170,16 +170,16 @@
                                     {{ component.id }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-700">{{ component.equipment?.company?.name ?? '—' }}</div>
+                                    <div class="text-sm text-gray-700">{{ component.equipment && component.equipment.company && component.equipment.company.name ? component.equipment.company.name : '—' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ component.equipment?.name }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ component.equipment && component.equipment.name ? component.equipment.name : '' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ component.component_type?.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ component.component_type && component.component_type.name ? component.component_type.name : '' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ component.brand?.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ component.brand && component.brand.name ? component.brand.name : '' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
@@ -246,12 +246,15 @@
 
 <script setup>
 import { ref, onMounted, reactive, computed, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 
+const STORAGE_KEY = 'components-list-filters';
+
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const components = ref([]);
@@ -263,14 +266,60 @@ const companies = ref([]);
 const brands = ref([]);
 
 const sortBy = ref('id');
-const sortOrder = ref('desc');
+const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
+const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
 
 const filters = reactive({
-    company_id: '',
-    equipment_id: '',
-    component_type_id: '',
-    brand_id: '',
+    company_id: route.query.company_id ?? '',
+    equipment_id: route.query.equipment_id ?? '',
+    component_type_id: route.query.component_type_id ?? '',
+    brand_id: route.query.brand_id ?? '',
 });
+
+let isRestoringFilters = false;
+
+const syncQueryToUrl = (page = 1) => {
+    const q = {
+        page: String(page),
+        sort_order: sortOrder.value,
+        company_id: filters.company_id,
+        equipment_id: filters.equipment_id,
+        component_type_id: filters.component_type_id,
+        brand_id: filters.brand_id
+    };
+    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    router.replace({ name: 'components', query: q });
+    try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
+    } catch (_) {}
+};
+
+const applyQueryToFilters = () => {
+    isRestoringFilters = true;
+    const hasQuery = Object.keys(route.query).length > 0;
+    if (hasQuery) {
+        filters.company_id = route.query.company_id ?? '';
+        filters.equipment_id = route.query.equipment_id ?? '';
+        filters.component_type_id = route.query.component_type_id ?? '';
+        filters.brand_id = route.query.brand_id ?? '';
+        sortOrder.value = route.query.sort_order ?? 'desc';
+    } else {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const { query } = JSON.parse(saved);
+                if (query) {
+                    filters.company_id = query.company_id ?? '';
+                    filters.equipment_id = query.equipment_id ?? '';
+                    filters.component_type_id = query.component_type_id ?? '';
+                    filters.brand_id = query.brand_id ?? '';
+                    sortOrder.value = query.sort_order ?? 'desc';
+                }
+            }
+        } catch (_) {}
+    }
+    isRestoringFilters = false;
+};
 
 // Equipos filtrados por empresa seleccionada; sin duplicados por nombre (muestra cada nombre una vez)
 const filteredEquipments = computed(() => {
@@ -296,6 +345,7 @@ watch(
     () => {
         if (!filters.company_id) {
             filters.equipment_id = '';
+            if (!isRestoringFilters) fetchComponents(1);
             return;
         }
         const companyId = Number(filters.company_id);
@@ -303,7 +353,7 @@ watch(
         if (currentEq && Number(currentEq.company_id ?? currentEq.company?.id) !== companyId) {
             filters.equipment_id = '';
         }
-        fetchComponents(1);
+        if (!isRestoringFilters) fetchComponents(1);
     }
 );
 
@@ -341,7 +391,7 @@ const loadCatalogs = async () => {
 const fetchComponents = async (page = 1) => {
     loading.value = true;
     try {
-        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: sortOrder.value };
+        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
 
         if (filters.company_id) params.company_id = filters.company_id;
         if (filters.equipment_id) params.equipment_id = filters.equipment_id;
@@ -359,6 +409,7 @@ const fetchComponents = async (page = 1) => {
             prev_page_url: response.data.prev_page_url,
             next_page_url: response.data.next_page_url
         };
+        syncQueryToUrl(response.data.current_page);
     } catch (error) {
         Swal.fire('Error', 'Error al cargar componentes', 'error');
     } finally {

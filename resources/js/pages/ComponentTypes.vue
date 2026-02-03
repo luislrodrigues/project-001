@@ -177,20 +177,52 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 
+const STORAGE_KEY = 'component-types-list-filters';
+
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const componentTypes = ref([]);
 const loading = ref(false);
 const pagination = ref(null);
-const search = ref('');
+const search = ref(route.query.search ?? '');
 const sortBy = ref('id');
-const sortOrder = ref('desc');
+const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
+const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
+
+const syncQueryToUrl = (page = 1) => {
+    const q = { page: String(page), sort_order: normalizeSortOrder(sortOrder.value), search: search.value };
+    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    router.replace({ name: 'component-types', query: q });
+    try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
+    } catch (_) {}
+};
+
+const applyQueryToFilters = () => {
+    const hasQuery = Object.keys(route.query).length > 0;
+    if (hasQuery) {
+        search.value = route.query.search ?? '';
+        sortOrder.value = route.query.sort_order ?? 'desc';
+    } else {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const { query } = JSON.parse(saved);
+                if (query) {
+                    search.value = query.search ?? '';
+                    sortOrder.value = query.sort_order ?? 'desc';
+                }
+            }
+        } catch (_) {}
+    }
+};
 
 const toggleSortId = () => {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
@@ -206,7 +238,7 @@ const fetchComponentTypes = async (page = 1) => {
             page,
             per_page: 10,
             sort_by: sortBy.value,
-            sort_order: sortOrder.value,
+            sort_order: normalizeSortOrder(sortOrder.value),
         };
 
         if (search.value) {
@@ -222,6 +254,7 @@ const fetchComponentTypes = async (page = 1) => {
             to: response.data.to,
             total: response.data.total
         };
+        syncQueryToUrl(response.data.current_page);
     } catch (error) {
         Swal.fire('Error', 'Error al cargar tipos de componentes', 'error');
     } finally {
@@ -266,6 +299,8 @@ const deleteComponentType = async (type) => {
 };
 
 onMounted(() => {
-    fetchComponentTypes();
+    applyQueryToFilters();
+    const page = Number(route.query.page) || 1;
+    fetchComponentTypes(page);
 });
 </script>

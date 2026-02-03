@@ -157,16 +157,16 @@
                                     {{ equipment.id }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-700">{{ equipment.company?.name || 'N/A' }}</div>
+                                    <div class="text-sm text-gray-700">{{ equipment.company && equipment.company.name ? equipment.company.name : 'N/A' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">{{ equipment.name }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ equipment.equipment_type?.name || 'N/A' }}</div>
+                                    <div class="text-sm text-gray-500">{{ equipment.equipment_type && equipment.equipment_type.name ? equipment.equipment_type.name : 'N/A' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ equipment.ubication?.name || 'N/A' }}</div>
+                                    <div class="text-sm text-gray-500">{{ equipment.ubication && equipment.ubication.name ? equipment.ubication.name : 'N/A' }}</div>
                                 </td>
                                 <td v-if="authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
@@ -233,23 +233,68 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 
+const STORAGE_KEY = 'equipment-list-filters';
+
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const equipments = ref([]);
 const companies = ref([]);
 const equipmentTypes = ref([]);
 const loading = ref(false);
-const search = ref('');
-const filters = ref({ company_id: '', equipment_type_id: '' });
+const search = ref(route.query.search ?? '');
+const filters = ref({
+    company_id: route.query.company_id ?? '',
+    equipment_type_id: route.query.equipment_type_id ?? ''
+});
 const pagination = ref(null);
 const sortBy = ref('id');
-const sortOrder = ref('desc');
+const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
+const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
+
+const syncQueryToUrl = (page = 1) => {
+    const q = {
+        page: String(page),
+        sort_order: sortOrder.value,
+        search: search.value,
+        company_id: filters.value.company_id,
+        equipment_type_id: filters.value.equipment_type_id
+    };
+    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    router.replace({ name: 'equipment', query: q });
+    try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
+    } catch (_) {}
+};
+
+const applyQueryToFilters = () => {
+    const hasQuery = Object.keys(route.query).length > 0;
+    if (hasQuery) {
+        search.value = route.query.search ?? '';
+        filters.value.company_id = route.query.company_id ?? '';
+        filters.value.equipment_type_id = route.query.equipment_type_id ?? '';
+        sortOrder.value = route.query.sort_order ?? 'desc';
+    } else {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const { query } = JSON.parse(saved);
+                if (query) {
+                    search.value = query.search ?? '';
+                    filters.value.company_id = query.company_id ?? '';
+                    filters.value.equipment_type_id = query.equipment_type_id ?? '';
+                    sortOrder.value = query.sort_order ?? 'desc';
+                }
+            }
+        } catch (_) {}
+    }
+};
 
 const toggleSortId = () => {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
@@ -257,8 +302,10 @@ const toggleSortId = () => {
 };
 
 onMounted(async () => {
+    applyQueryToFilters();
     await Promise.all([loadCompanies(), loadEquipmentTypes()]);
-    fetchEquipment();
+    const page = Number(route.query.page) || 1;
+    await fetchEquipment(page);
 });
 
 const loadCompanies = async () => {
@@ -282,7 +329,7 @@ const loadEquipmentTypes = async () => {
 const fetchEquipment = async (page = 1) => {
     loading.value = true;
     try {
-        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: sortOrder.value };
+        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
         if (search.value) params.search = search.value;
         if (filters.value.company_id) params.company_id = filters.value.company_id;
         if (filters.value.equipment_type_id) params.equipment_type_id = filters.value.equipment_type_id;
@@ -297,6 +344,7 @@ const fetchEquipment = async (page = 1) => {
             prev_page_url: response.data.prev_page_url,
             next_page_url: response.data.next_page_url
         };
+        syncQueryToUrl(response.data.current_page);
     } catch (error) {
         Swal.fire('Error', 'Error al cargar equipos', 'error');
     } finally {

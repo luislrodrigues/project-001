@@ -86,12 +86,15 @@ class ReportController extends Controller
             });
         }
 
-        $sortBy = $request->get('sort_by', 'id');
-        $sortOrder = in_array(strtolower($request->get('sort_order', 'desc')), ['asc', 'desc']) ? strtolower($request->sort_order) : 'desc';
+        $sortByRaw = $request->get('sort_by', 'id');
         $allowedSort = ['id', 'created_at', 'measurement_date'];
-        if (!in_array($sortBy, $allowedSort)) {
-            $sortBy = 'id';
-        }
+        $sortBy = (is_string($sortByRaw) && $sortByRaw !== '' && in_array($sortByRaw, $allowedSort, true))
+            ? $sortByRaw
+            : 'id';
+        $sortOrderRaw = $request->get('sort_order', 'desc');
+        $sortOrder = (is_string($sortOrderRaw) && in_array(strtolower($sortOrderRaw), ['asc', 'desc'], true))
+            ? strtolower($sortOrderRaw)
+            : 'desc';
         $reports = $query->orderBy($sortBy, $sortOrder)->paginate($request->get('per_page', 10));
 
         return ApiResponse::success(ReportResource::collection($reports));

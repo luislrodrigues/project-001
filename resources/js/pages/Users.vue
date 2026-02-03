@@ -162,7 +162,7 @@
                                     {{ user.id }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ user.company?.name || 'N/A' }}
+                                    {{ user.company && user.company.name ? user.company.name : 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
@@ -259,7 +259,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
@@ -271,14 +271,17 @@ const users = ref([]);
 const companies = ref([]);
 const loading = ref(false);
 const pagination = ref(null);
+const route = useRoute();
+
 const filters = ref({
-    search: '',
-    status: '',
-    company_id: ''
+    search: route.query.search ?? '',
+    status: route.query.status ?? '',
+    company_id: route.query.company_id ?? ''
 });
 
 const sortBy = ref('id');
-const sortOrder = ref('desc');
+const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
+const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
 
 const toggleSortId = () => {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
@@ -287,6 +290,21 @@ const toggleSortId = () => {
 
 let searchTimeout = null;
 
+const STORAGE_KEY = 'users-list-filters';
+
+const syncQueryToUrl = (page = 1) => {
+    const q = {
+        page: String(page),
+        sort_order: normalizeSortOrder(sortOrder.value),
+        ...filters.value
+    };
+    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    router.replace({ name: 'users', query: q });
+    try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q, sortOrder: sortOrder.value }));
+    } catch (_) {}
+};
+
 const fetchUsers = async (page = 1) => {
     loading.value = true;
     try {
@@ -294,7 +312,7 @@ const fetchUsers = async (page = 1) => {
             page,
             per_page: 10,
             sort_by: sortBy.value,
-            sort_order: sortOrder.value,
+            sort_order: normalizeSortOrder(sortOrder.value),
             ...filters.value
         };
 
@@ -313,6 +331,7 @@ const fetchUsers = async (page = 1) => {
             to: response.data.to,
             total: response.data.total
         };
+        syncQueryToUrl(response.data.current_page);
     } catch (error) {
         Swal.fire('Error', 'Error al cargar usuarios', 'error');
     } finally {
@@ -388,7 +407,33 @@ const deleteUser = async (user) => {
     }
 };
 
+const applyQueryToFilters = () => {
+    const hasQuery = Object.keys(route.query).length > 0;
+    if (hasQuery) {
+        filters.value.search = route.query.search ?? '';
+        filters.value.status = route.query.status ?? '';
+        filters.value.company_id = route.query.company_id ?? '';
+        sortOrder.value = normalizeSortOrder(route.query.sort_order ?? 'desc');
+    } else {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const { query } = JSON.parse(saved);
+                if (query) {
+                    filters.value.search = query.search ?? '';
+                    filters.value.status = query.status ?? '';
+                    filters.value.company_id = query.company_id ?? '';
+                    sortOrder.value = normalizeSortOrder(query.sort_order ?? 'desc');
+                }
+            }
+        } catch (_) {}
+    }
+};
+
 onMounted(async () => {
-    await Promise.all([fetchUsers(), fetchCompanies()]);
+    applyQueryToFilters();
+    await fetchCompanies();
+    const page = Number(route.query.page) || 1;
+    await fetchUsers(page);
 });
 </script>

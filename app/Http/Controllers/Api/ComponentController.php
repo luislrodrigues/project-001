@@ -46,8 +46,15 @@ class ComponentController extends Controller
             $query->where('brand_id', $request->brand_id);
         }
 
-        $sortBy = in_array($request->get('sort_by', 'id'), ['id', 'created_at']) ? $request->sort_by : 'id';
-        $sortOrder = in_array(strtolower($request->get('sort_order', 'desc')), ['asc', 'desc']) ? strtolower($request->sort_order) : 'desc';
+        $sortByRaw = $request->get('sort_by', 'id');
+        $allowedSort = ['id', 'created_at'];
+        $sortBy = (is_string($sortByRaw) && $sortByRaw !== '' && in_array($sortByRaw, $allowedSort, true))
+            ? $sortByRaw
+            : 'id';
+        $sortOrderRaw = $request->get('sort_order', 'desc');
+        $sortOrder = (is_string($sortOrderRaw) && in_array(strtolower($sortOrderRaw), ['asc', 'desc'], true))
+            ? strtolower($sortOrderRaw)
+            : 'desc';
         $components = $query->orderBy($sortBy, $sortOrder)->paginate($request->get('per_page', 10));
 
         return ApiResponse::success(ComponentResource::collection($components));

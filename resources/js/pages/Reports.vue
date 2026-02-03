@@ -177,21 +177,21 @@
                                     {{ report.id }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-700">{{ report.equipment?.company?.name ?? '—' }}</div>
+                                    <div class="text-sm text-gray-700">{{ report.equipment && report.equipment.company && report.equipment.company.name ? report.equipment.company.name : '—' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ report.equipment?.name }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ report.equipment && report.equipment.name ? report.equipment.name : '' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ formatDate(report.measurement_date) }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
-                                        :class="!report.condition?.color ? getConditionClass(report.condition?.name) : ''"
-                                        :style="report.condition?.color ? { backgroundColor: report.condition.color, color: '#fff', borderColor: report.condition.color } : {}"
+                                        :class="!report.condition || !report.condition.color ? getConditionClass(report.condition && report.condition.name) : ''"
+                                        :style="report.condition && report.condition.color ? { backgroundColor: report.condition.color, color: '#fff', borderColor: report.condition.color } : {}"
                                         class="px-3 py-1 inline-flex text-xs font-semibold rounded-full border"
                                     >
-                                        {{ report.condition?.name }}
+                                        {{ report.condition && report.condition.name ? report.condition.name : '' }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -267,12 +267,15 @@
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 
+const STORAGE_KEY = 'reports-list-filters';
+
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const reports = ref([]);
@@ -283,14 +286,56 @@ const conditions = ref([]);
 const companies = ref([]);
 
 const filters = reactive({
-    equipment_id: '',
-    condition_id: '',
-    priority: '',
-    company_id: '',
+    equipment_id: route.query.equipment_id ?? '',
+    condition_id: route.query.condition_id ?? '',
+    priority: route.query.priority ?? '',
+    company_id: route.query.company_id ?? '',
 });
 
 const sortBy = ref('id');
-const sortOrder = ref('desc');
+const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
+const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
+
+const syncQueryToUrl = (page = 1) => {
+    const q = {
+        page: String(page),
+        sort_order: sortOrder.value,
+        equipment_id: filters.equipment_id,
+        condition_id: filters.condition_id,
+        priority: filters.priority,
+        company_id: filters.company_id
+    };
+    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    router.replace({ name: 'reports', query: q });
+    try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
+    } catch (_) {}
+};
+
+const applyQueryToFilters = () => {
+    const hasQuery = Object.keys(route.query).length > 0;
+    if (hasQuery) {
+        filters.equipment_id = route.query.equipment_id ?? '';
+        filters.condition_id = route.query.condition_id ?? '';
+        filters.priority = route.query.priority ?? '';
+        filters.company_id = route.query.company_id ?? '';
+        sortOrder.value = normalizeSortOrder(route.query.sort_order ?? 'desc');
+    } else {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const { query } = JSON.parse(saved);
+                if (query) {
+                    filters.equipment_id = query.equipment_id ?? '';
+                    filters.condition_id = query.condition_id ?? '';
+                    filters.priority = query.priority ?? '';
+                    filters.company_id = query.company_id ?? '';
+                    sortOrder.value = normalizeSortOrder(query.sort_order ?? 'desc');
+                }
+            }
+        } catch (_) {}
+    }
+};
 
 const toggleSortId = () => {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
@@ -298,7 +343,10 @@ const toggleSortId = () => {
 };
 
 onMounted(async () => {
-    await Promise.all([loadCatalogs(), fetchReports()]);
+    applyQueryToFilters();
+    await loadCatalogs();
+    const page = Number(route.query.page) || 1;
+    await fetchReports(page);
 });
 
 const loadCatalogs = async () => {
@@ -320,7 +368,7 @@ const loadCatalogs = async () => {
 const fetchReports = async (page = 1) => {
     loading.value = true;
     try {
-        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: sortOrder.value };
+        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
 
         if (filters.equipment_id) params.equipment_id = filters.equipment_id;
         if (filters.condition_id) params.condition_id = filters.condition_id;
@@ -338,6 +386,7 @@ const fetchReports = async (page = 1) => {
             prev_page_url: response.data.prev_page_url,
             next_page_url: response.data.next_page_url
         };
+        syncQueryToUrl(response.data.current_page);
     } catch (error) {
         console.error('Error al cargar reportes:', error);
         const message = error.response?.data?.message || error.message || 'Error al cargar reportes';

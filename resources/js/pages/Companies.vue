@@ -122,7 +122,7 @@
                                     <div class="text-sm font-medium text-gray-900">{{ company.name }}</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="text-sm text-gray-500">{{ company.company_segment?.name ?? '—' }}</div>
+                                    <div class="text-sm text-gray-500">{{ company.company_segment && company.company_segment.name ? company.company_segment.name : '—' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
@@ -198,20 +198,52 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 
+const STORAGE_KEY = 'companies-list-filters';
+
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const companies = ref([]);
 const loading = ref(false);
-const search = ref('');
+const search = ref(route.query.search ?? '');
 const pagination = ref(null);
 const sortBy = ref('id');
-const sortOrder = ref('desc');
+const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
+const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
+
+const syncQueryToUrl = (page = 1) => {
+    const q = { page: String(page), sort_order: sortOrder.value, search: search.value };
+    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    router.replace({ name: 'companies', query: q });
+    try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
+    } catch (_) {}
+};
+
+const applyQueryToFilters = () => {
+    const hasQuery = Object.keys(route.query).length > 0;
+    if (hasQuery) {
+        search.value = route.query.search ?? '';
+        sortOrder.value = route.query.sort_order ?? 'desc';
+    } else {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const { query } = JSON.parse(saved);
+                if (query) {
+                    search.value = query.search ?? '';
+                    sortOrder.value = query.sort_order ?? 'desc';
+                }
+            }
+        } catch (_) {}
+    }
+};
 
 const toggleSortId = () => {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
@@ -219,13 +251,15 @@ const toggleSortId = () => {
 };
 
 onMounted(() => {
-    fetchCompanies();
+    applyQueryToFilters();
+    const page = Number(route.query.page) || 1;
+    fetchCompanies(page);
 });
 
 const fetchCompanies = async (page = 1) => {
     loading.value = true;
     try {
-        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: sortOrder.value };
+        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
         if (search.value) {
             params.search = search.value;
         }
@@ -240,6 +274,7 @@ const fetchCompanies = async (page = 1) => {
             prev_page_url: response.data.prev_page_url,
             next_page_url: response.data.next_page_url
         };
+        syncQueryToUrl(response.data.current_page);
     } catch (error) {
         Swal.fire('Error', 'Error al cargar empresas', 'error');
     } finally {

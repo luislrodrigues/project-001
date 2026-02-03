@@ -6,16 +6,16 @@
             class="fixed left-0 top-0 h-screen sidebar-gradient shadow-2xl z-40 transition-all duration-300 ease-in-out"
             :style="{ width: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)' }"
         >
-            <!-- Logo and Toggle -->
-            <div class="flex items-center justify-between px-6 py-5 border-b border-blue-400/30">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <!-- Logo and Toggle: cuando está pequeño (colapsado) solo el icono hamburguesa centrado -->
+            <div
+                class="flex items-center px-6 py-5 border-b border-blue-400/30"
+                :class="sidebarCollapsed ? 'justify-center' : 'justify-between'"
+            >
+                <div v-show="!sidebarCollapsed" class="flex items-center space-x-3 min-w-0">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
                         <i class="fas fa-cog text-white text-xl"></i>
                     </div>
-                    <span
-                        v-show="!sidebarCollapsed"
-                        class="text-white font-bold text-xl transition-opacity duration-300"
-                    >
+                    <span class="text-white font-bold text-xl transition-opacity duration-300 truncate">
                         3Sanchez
                     </span>
                 </div>
@@ -43,8 +43,8 @@
                         v-show="!sidebarCollapsed"
                         class="flex-1 min-w-0 transition-opacity duration-300"
                     >
-                        <p class="text-white font-semibold text-sm truncate">{{ authStore.user?.name }}</p>
-                        <p class="text-blue-100 text-xs truncate">{{ authStore.user?.email }}</p>
+                        <p class="text-white font-semibold text-sm truncate">{{ authStore.user && authStore.user.name }}</p>
+                        <p class="text-blue-100 text-xs truncate">{{ authStore.user && authStore.user.email }}</p>
                     </div>
                     <i
                         v-show="!sidebarCollapsed"

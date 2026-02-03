@@ -38,8 +38,15 @@ class EquipmentController extends Controller
             $query->where('equipment_type_id', $request->equipment_type_id);
         }
 
-        $sortBy = in_array($request->get('sort_by', 'id'), ['id', 'name', 'created_at']) ? $request->sort_by : 'id';
-        $sortOrder = in_array(strtolower($request->get('sort_order', 'desc')), ['asc', 'desc']) ? strtolower($request->sort_order) : 'desc';
+        $sortByRaw = $request->get('sort_by', 'id');
+        $allowedSort = ['id', 'name', 'created_at'];
+        $sortBy = (is_string($sortByRaw) && $sortByRaw !== '' && in_array($sortByRaw, $allowedSort, true))
+            ? $sortByRaw
+            : 'id';
+        $sortOrderRaw = $request->get('sort_order', 'desc');
+        $sortOrder = (is_string($sortOrderRaw) && in_array(strtolower($sortOrderRaw), ['asc', 'desc'], true))
+            ? strtolower($sortOrderRaw)
+            : 'desc';
         $equipments = $query->orderBy($sortBy, $sortOrder)->paginate($request->get('per_page', 10));
 
         return ApiResponse::success(EquipmentResource::collection($equipments));
