@@ -14,7 +14,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', 'ui-sans-serif', 'system-ui', 'sans-serif', ...defaultTheme.fontFamily.sans],
+                sans: ['ui-sans-serif', 'system-ui', 'Segoe UI', 'sans-serif', ...defaultTheme.fontFamily.sans],
             },
         },
     },
