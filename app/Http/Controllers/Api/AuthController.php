@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -124,30 +125,50 @@ class AuthController extends Controller
      */
     public function resetPassword(Request $request)
     {
-        $request->validate([
-            'token' => 'required|string',
-            'email' => 'required|email',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function (User $user, string $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                    'raw_password' => $password,
-                    'remember_token' => Str::random(60),
-                ])->save();
-
-                event(new PasswordReset($user));
-            }
-        );
-
-        if ($status === Password::PASSWORD_RESET) {
-            return ApiResponse::success(null, 'Contraseña restablecida correctamente.');
+        try {
+            $request->validate([
+                'token' => 'required|string',
+                'email' => 'required|email',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+        } catch (ValidationException $e) {
+            $errors = $e->errors();
+            $first = reset($errors);
+            $message = is_array($first) ? ($first[0] ?? 'Datos inválidos.') : (string) $first;
+            return ApiResponse::validationError($e->errors(), $message);
         }
 
-        return ApiResponse::error('Token inválido o expirado. Solicita un nuevo enlace.', 422);
+        try {
+            $status = Password::reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+                function (User $user, string $password) {
+                    $data = [
+                        'password' => Hash::make($password),
+                        'remember_token' => Str::random(60),
+                    ];
+                    if (Schema::hasColumn($user->getTable(), 'raw_password')) {
+                        $data['raw_password'] = $password;
+                    }
+                    $user->forceFill($data)->save();
+                    event(new PasswordReset($user));
+                }
+            );
+
+            if ($status === Password::PASSWORD_RESET) {
+                return ApiResponse::success(null, 'Contraseña restablecida correctamente.');
+            }
+
+            return ApiResponse::error('Token inválido o expirado. Solicita un nuevo enlace desde "¿Olvidaste tu contraseña?".', 422);
+        } catch (\Throwable $e) {
+            \Log::error('Reset password error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'email' => $request->input('email'),
+            ]);
+            return ApiResponse::error(
+                'No se pudo restablecer la contraseña. Comprueba que el enlace no haya expirado y vuelve a intentarlo.',
+                500
+            );
+        }
     }
 
     /**
