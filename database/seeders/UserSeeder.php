@@ -44,12 +44,11 @@ class UserSeeder extends Seeder
                 $user
             );
         }
-        // Obtener los roles
-        $adminRole = Role::where('name', 'admin')->first();
-        $userRole = Role::where('name', 'user')->first();
+        // Asignar roles: Administrador (alvaro) y Supervisor (luis)
+        $adminRole = Role::where('name', 'Administrador')->first();
 
-        // Asignar roles a los usuarios
-        User::where('email', 'alvaro.sanchezm1@gmail.com')->first()->assignRole($adminRole);
-        User::where('email', 'lrodrguez@email.com')->first()->assignRole($userRole);
+        if ($adminRole) {
+            User::where('email', 'alvaro.sanchezm1@gmail.com')->first()?->assignRole($adminRole);
+        }
     }
 }

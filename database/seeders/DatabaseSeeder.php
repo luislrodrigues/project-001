@@ -9,9 +9,14 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     * Solo roles, empresa (para usuarios) y usuarios.
      */
     public function run(): void
     {
-        $this->call(AppSeeder::class);
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+            CompanySeeder::class,
+            UserSeeder::class,
+        ]);
     }
 }
