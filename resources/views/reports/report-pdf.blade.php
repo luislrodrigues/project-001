@@ -428,8 +428,11 @@
                     @foreach (($component->fields ?? collect())->sortBy('display_order') as $field)
                         @php
                             $fieldVal = $component->fieldValues ? $component->fieldValues->where('component_type_field_id', $field->id)->first() : null;
+                            $val = $fieldVal?->value ?? '';
                         @endphp
-                        <strong>{{ $field->name }}:</strong> {{ $fieldVal?->value ?? '—' }}.
+                        @if (trim((string) $val) !== '')
+                            <strong>{{ $field->name }}:</strong> {{ $val }}.
+                        @endif
                     @endforeach
                 </p>
 

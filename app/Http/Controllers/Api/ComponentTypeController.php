@@ -10,6 +10,7 @@ use App\Http\Resources\ComponentTypeResource;
 use App\Models\ComponentType;
 use App\Models\ComponentTypeField;
 use App\Models\ComponentTypeFieldOption;
+use App\Models\ComponentTypeValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -185,12 +186,13 @@ class ComponentTypeController extends Controller
                 }
             }
 
-            // Eliminar campos que ya no están (solo si no tienen valores asociados)
+            // Eliminar campos que ya no están (eliminar valores asociados en cascada y luego el campo)
             $fieldsToDelete = array_diff($existingFieldIds, $requestedFieldIds);
             if (!empty($fieldsToDelete)) {
                 foreach ($fieldsToDelete as $fieldId) {
                     $field = ComponentTypeField::find($fieldId);
-                    if ($field && $field->values()->count() === 0) {
+                    if ($field) {
+                        ComponentTypeValue::where('component_type_field_id', $fieldId)->forceDelete();
                         $field->allOptions()->delete();
                         $field->delete();
                     }

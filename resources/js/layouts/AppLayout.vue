@@ -54,52 +54,50 @@
             </div>
 
             <!-- Navigation -->
-            <!-- Orden: Empresa, Usuario, Tipo Componente, Componentes, Equipos, Informes -->
+            <!-- Orden: Inicio, Informes, Equipos, Componentes, Tipo Componente, Usuario, Empresa -->
             <nav class="px-4 py-4 space-y-2 overflow-y-auto" style="max-height: calc(100vh - 200px);">
                 <router-link
-                    :to="{ name: 'companies' }"
+                    :to="{ name: 'dashboard' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('companies') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Empresa"
+                    :class="isActive('dashboard') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Inicio"
                 >
-                    <i class="fas fa-building text-lg w-5"></i>
+                    <i class="fas fa-home text-lg w-5"></i>
                     <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Empresa
+                        Inicio
                     </span>
                 </router-link>
 
                 <router-link
-                    v-if="authStore.hasPermission('consult user')"
-                    :to="{ name: 'users' }"
+                    :to="{ name: 'reports' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('users') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Usuario"
+                    :class="isActive('reports') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Informes"
                 >
-                    <i class="fas fa-users text-lg w-5"></i>
+                    <i class="fas fa-file-alt text-lg w-5"></i>
                     <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Usuario
+                        Informes
                     </span>
                 </router-link>
 
                 <router-link
-                    v-if="authStore.hasPermission('consult equipment')"
-                    :to="{ name: 'component-types' }"
+                    :to="{ name: 'equipment' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('component-types') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Tipo Componente"
+                    :class="isActive('equipment') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Equipos"
                 >
-                    <i class="fas fa-snowplow text-lg w-5"></i>
+                    <i class="fas fa-toolbox text-lg w-5"></i>
                     <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Tipo Componente
+                        Equipos
                     </span>
                 </router-link>
 
@@ -120,32 +118,49 @@
                 </router-link>
 
                 <router-link
-                    :to="{ name: 'equipment' }"
+                    v-if="authStore.hasPermission('consult equipment')"
+                    :to="{ name: 'component-types' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('equipment') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Equipos"
+                    :class="isActive('component-types') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Tipo Componente"
                 >
-                    <i class="fas fa-toolbox text-lg w-5"></i>
+                    <i class="fas fa-snowplow text-lg w-5"></i>
                     <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Equipos
+                        Tipo Componente
                     </span>
                 </router-link>
 
                 <router-link
-                    :to="{ name: 'reports' }"
+                    v-if="authStore.hasPermission('consult user')"
+                    :to="{ name: 'users' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('reports') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Informes"
+                    :class="isActive('users') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Usuario"
                 >
-                    <i class="fas fa-file-alt text-lg w-5"></i>
+                    <i class="fas fa-users text-lg w-5"></i>
                     <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Informes
+                        Usuario
+                    </span>
+                </router-link>
+
+                <router-link
+                    :to="{ name: 'companies' }"
+                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
+                    :class="isActive('companies') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Empresa"
+                >
+                    <i class="fas fa-building text-lg w-5"></i>
+                    <span
+                        v-show="!sidebarCollapsed"
+                        class="font-medium transition-opacity duration-300"
+                    >
+                        Empresa
                     </span>
                 </router-link>
             </nav>

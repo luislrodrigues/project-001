@@ -140,57 +140,6 @@
 
                         <div class="bg-gray-50 rounded-lg p-4">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>
-                                Condición
-                            </label>
-                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                                <span
-                                    :class="!report.condition?.color ? getConditionClass(report.condition?.name) : ''"
-                                    :style="report.condition?.color ? { backgroundColor: report.condition.color, color: '#fff', borderColor: report.condition.color } : {}"
-                                    class="px-3 py-1 inline-flex text-xs font-semibold rounded-full border"
-                                >
-                                    {{ report.condition?.name }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-flag mr-2 text-blue-600"></i>
-                                Prioridad
-                            </label>
-                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                                <span
-                                    :class="report.priority === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'"
-                                    class="px-3 py-1 inline-flex text-xs font-semibold rounded-full"
-                                >
-                                    {{ report.priority }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-wrench mr-2 text-blue-600"></i>
-                                Mecanismo Falla
-                            </label>
-                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                                {{ report.mechanism_fail?.name || 'N/A' }}
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-cog mr-2 text-blue-600"></i>
-                                Componente Falla
-                            </label>
-                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                                {{ report.component_fail?.name || 'N/A' }}
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-user mr-2 text-blue-600"></i>
                                 Analista
                             </label>
@@ -201,41 +150,11 @@
 
                         <div class="bg-gray-50 rounded-lg p-4">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-check-circle mr-2 text-blue-600"></i>
-                                OT Creada
-                            </label>
-                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                                {{ report.ot_created || 'No' }}
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-info-circle mr-2 text-blue-600"></i>
-                                Estado de OT
-                            </label>
-                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                                {{ report.status_ot || 'N/A' }}
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-calendar-check mr-2 text-blue-600"></i>
                                 Fecha Ejecución
                             </label>
                             <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
                                 {{ report.execution_date ? formatDate(report.execution_date) : 'N/A' }}
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
-                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                <i class="fas fa-check-double mr-2 text-blue-600"></i>
-                                Verificación Recomendación
-                            </label>
-                            <div class="text-sm text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 min-h-[60px]">
-                                {{ report.verification_recommendation || 'N/A' }}
                             </div>
                         </div>
                     </div>
@@ -316,6 +235,90 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Condición, Mecanismo Falla, Componente Falla, Prioridad, OT Creada, Estado de OT (al final de todo) -->
+                <div class="mb-8">
+                    <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-list mr-2 text-blue-600"></i>
+                        <h4 class="text-lg font-semibold text-gray-800">Otros datos</h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>
+                                Condición
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                <span
+                                    :class="!report.condition?.color ? getConditionClass(report.condition?.name) : ''"
+                                    :style="report.condition?.color ? { backgroundColor: report.condition.color, color: '#fff', borderColor: report.condition.color } : {}"
+                                    class="px-3 py-1 inline-flex text-xs font-semibold rounded-full border"
+                                >
+                                    {{ report.condition?.name }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-wrench mr-2 text-blue-600"></i>
+                                Mecanismo Falla
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.mechanism_fail?.name || 'N/A' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-cog mr-2 text-blue-600"></i>
+                                Componente Falla
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.component_fail?.name || 'N/A' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-flag mr-2 text-blue-600"></i>
+                                Prioridad
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                <span
+                                    :class="report.priority === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'"
+                                    class="px-3 py-1 inline-flex text-xs font-semibold rounded-full"
+                                >
+                                    {{ report.priority }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-check-circle mr-2 text-blue-600"></i>
+                                OT Creada
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.ot_created || 'No' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                                Estado de OT
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.status_ot || 'N/A' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-check-double mr-2 text-blue-600"></i>
+                                Recomendación general
+                            </label>
+                            <div class="text-sm text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 min-h-[60px]">
+                                {{ report.verification_recommendation || 'N/A' }}
                             </div>
                         </div>
                     </div>

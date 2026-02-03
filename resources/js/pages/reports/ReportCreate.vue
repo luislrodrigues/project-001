@@ -119,116 +119,6 @@
                                 />
                             </div>
 
-                            <!-- Condición -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>
-                                    Condición
-                                    <span class="text-red-500 ml-1">*</span>
-                                </label>
-                                <div class="flex space-x-2 items-stretch">
-                                    <select
-                                        v-model="form.condition_id"
-                                        required
-                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    >
-                                        <option value="">Seleccione</option>
-                                        <option v-for="condition in conditions" :key="condition.id" :value="condition.id">
-                                            {{ condition.name }}
-                                        </option>
-                                    </select>
-                                    <button
-                                        type="button"
-                                        @click="showConditionModal = true"
-                                        class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
-                                        title="Gestionar condiciones"
-                                    >
-                                        <i class="fas fa-cog text-sm"></i>
-                                    </button>
-                                </div>
-                                <p v-if="errors.condition_id" class="mt-1 text-sm text-red-600">{{ errors.condition_id }}</p>
-                            </div>
-
-                            <!-- Mecanismo Falla -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-wrench mr-2 text-blue-600"></i>
-                                    Mecanismo Falla
-                                    <span class="text-red-500 ml-1">*</span>
-                                </label>
-                                <div class="flex space-x-2 items-stretch">
-                                    <select
-                                        v-model="form.mechanism_fail_id"
-                                        required
-                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    >
-                                        <option value="">Seleccione</option>
-                                        <option v-for="fail in mechanismFails" :key="fail.id" :value="fail.id">
-                                            {{ fail.name }}
-                                        </option>
-                                    </select>
-                                    <button
-                                        type="button"
-                                        @click="showMechanismFailModal = true"
-                                        class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
-                                        title="Gestionar mecanismos de falla"
-                                    >
-                                        <i class="fas fa-cog text-sm"></i>
-                                    </button>
-                                </div>
-                                <p v-if="errors.mechanism_fail_id" class="mt-1 text-sm text-red-600">{{ errors.mechanism_fail_id }}</p>
-                            </div>
-
-                            <!-- Componente Falla -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-cog mr-2 text-blue-600"></i>
-                                    Componente Falla
-                                    <span class="text-red-500 ml-1">*</span>
-                                </label>
-                                <div class="flex space-x-2 items-stretch">
-                                    <select
-                                        v-model="form.component_fail_id"
-                                        required
-                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    >
-                                        <option value="">Seleccione</option>
-                                        <option v-for="fail in componentFails" :key="fail.id" :value="fail.id">
-                                            {{ fail.name }}
-                                        </option>
-                                    </select>
-                                    <button
-                                        type="button"
-                                        @click="showComponentFailModal = true"
-                                        class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
-                                        title="Gestionar componentes de falla"
-                                    >
-                                        <i class="fas fa-cog text-sm"></i>
-                                    </button>
-                                </div>
-                                <p v-if="errors.component_fail_id" class="mt-1 text-sm text-red-600">{{ errors.component_fail_id }}</p>
-                            </div>
-
-                            <!-- Prioridad -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-flag mr-2 text-blue-600"></i>
-                                    Prioridad
-                                    <span class="text-red-500 ml-1">*</span>
-                                </label>
-                                <select
-                                    v-model="form.priority"
-                                    required
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione</option>
-                                    <option value="Alta">Alta</option>
-                                    <option value="Media">Media</option>
-                                    <option value="Baja">Baja</option>
-                                </select>
-                                <p v-if="errors.priority" class="mt-1 text-sm text-red-600">{{ errors.priority }}</p>
-                            </div>
-
                             <!-- Analista -->
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -249,34 +139,6 @@
                                 <p v-if="errors.analist_id" class="mt-1 text-sm text-red-600">{{ errors.analist_id }}</p>
                             </div>
 
-                            <!-- OT Creada -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-check-circle mr-2 text-blue-600"></i>
-                                    OT Creada
-                                </label>
-                                <input
-                                    v-model="form.ot_created"
-                                    type="text"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    placeholder="Ingresar OT creada"
-                                />
-                            </div>
-
-                            <!-- Estado de OT -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
-                                    Estado de OT
-                                </label>
-                                <input
-                                    v-model="form.status_ot"
-                                    type="text"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    placeholder="Ingresar estado de OT"
-                                />
-                            </div>
-
                             <!-- Fecha de Ejecución -->
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -288,19 +150,6 @@
                                     type="date"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                                 />
-                            </div>
-
-                            <!-- Verificación Recomendación -->
-                            <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-check-double mr-2 text-blue-600"></i>
-                                    Verificación Recomendación
-                                </label>
-                                <textarea
-                                    v-model="form.verification_recommendation"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
-                                    placeholder="Ingresar verificación recomendación"
-                                ></textarea>
                             </div>
 
                         </div>
@@ -456,6 +305,96 @@
                                         <p class="text-xs text-gray-400 mt-1">Haz clic en "Agregar" para crear una recomendación</p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Condición, Mecanismo Falla, Componente Falla, Prioridad, OT Creada, Estado de OT (al final de todo) -->
+                    <div>
+                        <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                            <i class="fas fa-list mr-2 text-blue-600"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Otros datos</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>
+                                    Condición <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="flex space-x-2 items-stretch">
+                                    <select v-model="form.condition_id" required class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
+                                        <option value="">Seleccione</option>
+                                        <option v-for="condition in conditions" :key="condition.id" :value="condition.id">{{ condition.name }}</option>
+                                    </select>
+                                    <button type="button" @click="showConditionModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar condiciones"><i class="fas fa-cog text-sm"></i></button>
+                                </div>
+                                <p v-if="errors.condition_id" class="mt-1 text-sm text-red-600">{{ errors.condition_id }}</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-wrench mr-2 text-blue-600"></i>
+                                    Mecanismo Falla <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="flex space-x-2 items-stretch">
+                                    <select v-model="form.mechanism_fail_id" required class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
+                                        <option value="">Seleccione</option>
+                                        <option v-for="fail in mechanismFails" :key="fail.id" :value="fail.id">{{ fail.name }}</option>
+                                    </select>
+                                    <button type="button" @click="showMechanismFailModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar mecanismos de falla"><i class="fas fa-cog text-sm"></i></button>
+                                </div>
+                                <p v-if="errors.mechanism_fail_id" class="mt-1 text-sm text-red-600">{{ errors.mechanism_fail_id }}</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-cog mr-2 text-blue-600"></i>
+                                    Componente Falla <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="flex space-x-2 items-stretch">
+                                    <select v-model="form.component_fail_id" required class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
+                                        <option value="">Seleccione</option>
+                                        <option v-for="fail in componentFails" :key="fail.id" :value="fail.id">{{ fail.name }}</option>
+                                    </select>
+                                    <button type="button" @click="showComponentFailModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar componentes de falla"><i class="fas fa-cog text-sm"></i></button>
+                                </div>
+                                <p v-if="errors.component_fail_id" class="mt-1 text-sm text-red-600">{{ errors.component_fail_id }}</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-flag mr-2 text-blue-600"></i>
+                                    Prioridad <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <select v-model="form.priority" required class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
+                                    <option value="">Seleccione</option>
+                                    <option value="Alta">Alta</option>
+                                    <option value="Media">Media</option>
+                                    <option value="Baja">Baja</option>
+                                </select>
+                                <p v-if="errors.priority" class="mt-1 text-sm text-red-600">{{ errors.priority }}</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-check-circle mr-2 text-blue-600"></i>
+                                    OT Creada
+                                </label>
+                                <input v-model="form.ot_created" type="text" class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5" placeholder="Ingresar OT creada" />
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                                    Estado de OT
+                                </label>
+                                <input v-model="form.status_ot" type="text" class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5" placeholder="Ingresar estado de OT" />
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-check-double mr-2 text-blue-600"></i>
+                                    Recomendación general
+                                </label>
+                                <textarea
+                                    v-model="form.verification_recommendation"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
+                                    placeholder="Ingresar recomendación general"
+                                ></textarea>
                             </div>
                         </div>
                     </div>
