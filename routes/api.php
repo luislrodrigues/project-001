@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Route;
 // Rutas públicas de autenticación
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Rutas protegidas
 Route::middleware('auth:sanctum')->group(function () {

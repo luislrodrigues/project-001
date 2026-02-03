@@ -9,6 +9,18 @@ const routes = [
         meta: { requiresGuest: true }
     },
     {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: () => import('../pages/ForgotPassword.vue'),
+        meta: { requiresGuest: true }
+    },
+    {
+        path: '/reset-password/:token',
+        name: 'reset-password',
+        component: () => import('../pages/ResetPassword.vue'),
+        meta: { requiresGuest: true }
+    },
+    {
         path: '/',
         component: () => import('../layouts/AppLayout.vue'),
         meta: { requiresAuth: true },
@@ -166,17 +178,17 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
-    
+
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
         next({ name: 'login' });
         return;
     }
-    
+
     if (to.meta.requiresGuest && authStore.isAuthenticated) {
         next({ name: 'dashboard' });
         return;
     }
-    
+
     next();
 });
 

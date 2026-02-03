@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\UpdateProfileRequest;
 use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -41,7 +44,7 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         $userData = $user->load('company');
-        
+
         return ApiResponse::success([
             'user' => [
                 'id' => $userData->id,
@@ -88,12 +91,72 @@ class AuthController extends Controller
     }
 
     /**
+     * Enviar enlace para recuperar contraseña
+     */
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return ApiResponse::error('Este correo no está registrado en el sistema.', 422);
+        }
+
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return ApiResponse::success(
+                null,
+                'Se ha enviado un enlace a tu correo para restablecer tu contraseña. Revisa tu bandeja de entrada y la carpeta de spam.'
+            );
+        }
+
+        return ApiResponse::error('No se pudo enviar el enlace. Intenta de nuevo más tarde.', 422);
+    }
+
+    /**
+     * Restablecer contraseña con el token recibido por correo
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'raw_password' => $password,
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return ApiResponse::success(null, 'Contraseña restablecida correctamente.');
+        }
+
+        return ApiResponse::error('Token inválido o expirado. Solicita un nuevo enlace.', 422);
+    }
+
+    /**
      * Actualizar perfil del usuario autenticado
      */
     public function updateProfile(UpdateProfileRequest $request)
     {
         $user = $request->user();
-        
+
         $data = [
             'name' => $request->name,
             'email' => $request->email,

@@ -1,5 +1,5 @@
 <template>
-    <div 
+    <div
         class="relative min-h-screen w-full flex flex-col justify-center items-center"
         :style="{ backgroundImage: `url('/images/login-1.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }"
     >
@@ -59,6 +59,12 @@
                                 </span>
                                 <span v-else>Iniciar Sesión</span>
                             </button>
+                            <router-link
+                                to="/forgot-password"
+                                class="block w-full text-center mt-3 text-sm text-indigo-600 hover:text-indigo-800 bg-transparent"
+                            >
+                                ¿Olvidaste tu contraseña?
+                            </router-link>
                         </div>
                     </form>
                 </div>
