@@ -14,6 +14,7 @@ class AppSeeder extends Seeder
     {
         $this->call([
             RolesAndPermissionsSeeder::class,
+            CompanySeeder::class,
             UserSeeder::class,
             ComponentTypeSeeder::class,
             BrandSeeder::class,

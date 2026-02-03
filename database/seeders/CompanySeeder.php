@@ -19,24 +19,24 @@ class CompanySeeder extends Seeder
                 "id"     => 1,
                 "name"   => "Company 1",
                 "status" => "active",
-                "emails" => json_encode(["luisleonardor4@gmail.com"],true),
             ),
             array(
                 "id"     => 2,
                 "name"   => "Company 2",
                 "status" => "active",
-                "emails" => json_encode(["luisleonardor4@gmail.com"],true),
             ),
             array(
                 "id"     => 3,
                 "name"   => "Company 3",
                 "status" => "active",
-                "emails" => json_encode(["luisleonardor4@gmail.com"],true),
             ),
         );
-        
+
         foreach ($companies as $company) {
-            Company::create($company);
+            Company::firstOrCreate(
+                ['id' => $company['id']],
+                $company
+            );
         }
 
     }

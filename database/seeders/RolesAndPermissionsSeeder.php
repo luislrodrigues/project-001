@@ -69,5 +69,17 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
         $clienteRole = Role::firstOrCreate(['name' => 'Cliente', 'guard_name' => 'web']);
         $clienteRole->syncPermissions($clientePermissions);
+
+        // Rol admin: todos los permisos (para UserSeeder)
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $adminRole->syncPermissions($allPermissions);
+
+        // Rol user: permisos básicos (para UserSeeder)
+        $userPermissions = [
+            'consult user', 'consult company', 'consult equipment', 'consult report',
+            'save report', 'edit report', 'actions report', 'delete report',
+        ];
+        $userRole = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
+        $userRole->syncPermissions($userPermissions);
     }
 }
