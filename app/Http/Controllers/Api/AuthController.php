@@ -142,10 +142,10 @@ class AuthController extends Controller
             $status = Password::reset(
                 $request->only('email', 'password', 'password_confirmation', 'token'),
                 function (User $user, string $password) {
-                    $data = [
-                        'password' => Hash::make($password),
-                        'remember_token' => Str::random(60),
-                    ];
+                    $data = ['password' => Hash::make($password)];
+                    if (Schema::hasColumn($user->getTable(), 'remember_token')) {
+                        $data['remember_token'] = Str::random(60);
+                    }
                     if (Schema::hasColumn($user->getTable(), 'raw_password')) {
                         $data['raw_password'] = $password;
                     }
