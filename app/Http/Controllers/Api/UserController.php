@@ -168,7 +168,9 @@ class UserController extends Controller
     public function getRoles(): JsonResponse
     {
         $roles = Role::where('guard_name', 'web')
+            ->whereIn('name', ['Administrador', 'Supervisor', 'Cliente'])
             ->select('id', 'name')
+            ->orderByRaw("FIELD(name, 'Administrador', 'Supervisor', 'Cliente')")
             ->get();
 
         return ApiResponse::success($roles);

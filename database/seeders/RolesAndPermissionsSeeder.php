@@ -13,6 +13,9 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Quitar roles obsoletos (solo usamos Administrador, Supervisor, Cliente)
+        Role::whereIn('name', ['admin', 'user'])->delete();
+
         // Definir todos los permisos
         $allPermissions = [
             'save user',
