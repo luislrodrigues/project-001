@@ -232,7 +232,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
@@ -308,33 +308,36 @@ const loadComponent = async () => {
 
         await loadComponentTypeFields();
 
-        // Cargar valores siempre por field_id (no por índice) para evitar cruces
-        if (component.field_values && typeof component.field_values === 'object') {
-            const fv = component.field_values;
+        const fv = component.field_values;
+        const valuesByFieldId = {};
+        if (fv && typeof fv === 'object') {
             if (Array.isArray(fv)) {
-                // Si viene como array [{ field_id, value }, ...] usar field_id como clave (no el índice)
                 fv.forEach((item) => {
-                    if (item && 'field_id' in item) {
-                        const fieldId = String(item.field_id);
-                        const val = item.value != null && item.value !== undefined ? item.value : '';
-                        form.field_values[fieldId] = val;
+                    if (item && ('field_id' in item || 'component_type_field_id' in item)) {
+                        const fieldId = String(item.field_id ?? item.component_type_field_id);
+                        valuesByFieldId[fieldId] = item.value != null ? String(item.value) : '';
                     }
                 });
             } else {
-                // Si viene como objeto { "1": { value: "x" }, "2": { value: "y" } }
                 Object.keys(fv).forEach((key) => {
+                    const id = String(key);
                     const item = fv[key];
-                    const val = item && typeof item === 'object' && 'value' in item
-                        ? (item.value ?? '')
-                        : (typeof item === 'string' ? item : '');
-                    form.field_values[String(key)] = val;
+                    if (item != null && typeof item === 'object' && 'value' in item) {
+                        valuesByFieldId[id] = item.value != null ? String(item.value) : '';
+                    } else if (typeof item === 'string' || typeof item === 'number') {
+                        valuesByFieldId[id] = String(item);
+                    }
                 });
             }
         }
-        // Sincronizar array por índice (orden de la lista) para que cada input use su posición
-        form.additionalFieldValues = additionalFields.value.map((f) =>
-            form.field_values[String(f.id)] ?? form.field_values[f.id] ?? ''
-        );
+
+        Object.assign(form.field_values, valuesByFieldId);
+        const orderedValues = additionalFields.value.map((f) => {
+            const id = String(f.id);
+            return valuesByFieldId[id] ?? form.field_values[id] ?? '';
+        });
+        form.additionalFieldValues.splice(0, form.additionalFieldValues.length, ...orderedValues);
+        await nextTick();
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el componente', 'error');
         router.push({ name: 'components' });

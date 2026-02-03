@@ -695,12 +695,15 @@ const loadReport = async () => {
                 reportData.diagnosis.forEach((diag, index) => {
                     if (componentsList[index]) {
                         const componentId = String(componentsList[index].id);
-                        if (typeof diag === 'object' && diag.text !== undefined) {
-                            processedDiagnosis[componentId] = diag.text;
+                        if (typeof diag === 'object' && diag !== null) {
+                            processedDiagnosis[componentId] = {
+                                text: diag.text ?? '',
+                                images: Array.isArray(diag.images) ? [...diag.images] : []
+                            };
                         } else if (typeof diag === 'string') {
-                            processedDiagnosis[componentId] = diag;
+                            processedDiagnosis[componentId] = { text: diag, images: [] };
                         } else {
-                            processedDiagnosis[componentId] = '';
+                            processedDiagnosis[componentId] = { text: '', images: [] };
                         }
                     }
                 });
@@ -708,14 +711,16 @@ const loadReport = async () => {
                 // Es un objeto con claves de componente
                 Object.keys(reportData.diagnosis).forEach(componentId => {
                     const diag = reportData.diagnosis[componentId];
-                    // Normalizar componentId a string para consistencia
                     const normalizedId = String(componentId);
-                    if (typeof diag === 'object' && diag.text !== undefined) {
-                        processedDiagnosis[normalizedId] = diag.text;
+                    if (typeof diag === 'object' && diag !== null) {
+                        processedDiagnosis[normalizedId] = {
+                            text: diag.text ?? '',
+                            images: Array.isArray(diag.images) ? [...diag.images] : []
+                        };
                     } else if (typeof diag === 'string') {
-                        processedDiagnosis[normalizedId] = diag;
+                        processedDiagnosis[normalizedId] = { text: diag, images: [] };
                     } else {
-                        processedDiagnosis[normalizedId] = '';
+                        processedDiagnosis[normalizedId] = { text: '', images: [] };
                     }
                 });
             }
@@ -760,7 +765,7 @@ const loadReport = async () => {
             components.value.forEach(component => {
                 const componentId = String(component.id);
                 if (form.diagnosis[componentId] === undefined) {
-                    form.diagnosis[componentId] = '';
+                    form.diagnosis[componentId] = { text: '', images: [] };
                 }
                 if (form.recommendations[componentId] === undefined) {
                     form.recommendations[componentId] = [];
@@ -775,7 +780,7 @@ const loadReport = async () => {
             components.value.forEach(component => {
                 const componentId = String(component.id);
                 if (form.diagnosis[componentId] === undefined) {
-                    form.diagnosis[componentId] = '';
+                    form.diagnosis[componentId] = { text: '', images: [] };
                 }
                 if (form.recommendations[componentId] === undefined) {
                     form.recommendations[componentId] = [];
@@ -813,7 +818,7 @@ const loadEquipmentData = async () => {
                 const componentId = String(component.id);
                 // Solo inicializar si no existe (no sobrescribir datos existentes)
                 if (form.diagnosis[componentId] === undefined) {
-                    form.diagnosis[componentId] = '';
+                    form.diagnosis[componentId] = { text: '', images: [] };
                 }
                 if (form.recommendations[componentId] === undefined) {
                     form.recommendations[componentId] = [];
@@ -827,7 +832,7 @@ const loadEquipmentData = async () => {
             components.value.forEach(component => {
                 const componentId = String(component.id);
                 if (form.diagnosis[componentId] === undefined) {
-                    form.diagnosis[componentId] = '';
+                    form.diagnosis[componentId] = { text: '', images: [] };
                 }
                 if (form.recommendations[componentId] === undefined) {
                     form.recommendations[componentId] = [];
@@ -843,43 +848,29 @@ const loadEquipmentData = async () => {
 };
 
 const getDiagnosisText = (componentId) => {
-    // Normalizar componentId a string para consistencia
     const normalizedId = String(componentId);
-    return form.diagnosis[normalizedId] || '';
+    const d = form.diagnosis[normalizedId];
+    if (!d) return '';
+    return typeof d === 'object' && d !== null ? (d.text ?? '') : String(d);
 };
 
 const updateDiagnosisText = (componentId, value) => {
-    // Normalizar componentId a string para consistencia
     const normalizedId = String(componentId);
-    form.diagnosis[normalizedId] = value;
+    const d = form.diagnosis[normalizedId];
+    if (typeof d === 'object' && d !== null) {
+        form.diagnosis[normalizedId] = { ...d, text: value };
+    } else {
+        form.diagnosis[normalizedId] = { text: value, images: [] };
+    }
 };
 
 const getComponentImages = (componentId) => {
-    // Normalizar componentId a string para consistencia
     const normalizedId = String(componentId);
-    // Obtener imágenes existentes del reporte original
-    let reportDiagnosis = report.value?.diagnosis?.[normalizedId];
-
-    // Si no se encuentra por ID, intentar buscar por índice si diagnosis es un array
-    if (!reportDiagnosis && Array.isArray(report.value?.diagnosis) && components.value) {
-        const componentIndex = components.value.findIndex(c => String(c.id) === normalizedId);
-        if (componentIndex >= 0 && report.value.diagnosis[componentIndex]) {
-            reportDiagnosis = report.value.diagnosis[componentIndex];
-        }
+    const d = form.diagnosis[normalizedId];
+    if (typeof d === 'object' && d !== null && Array.isArray(d.images)) {
+        return d.images;
     }
-
-    let images = [];
-    if (reportDiagnosis && typeof reportDiagnosis === 'object' && reportDiagnosis.images) {
-        images = reportDiagnosis.images;
-    }
-
-    // Filtrar imágenes marcadas para eliminación
-    if (form.imagesToDelete && form.imagesToDelete[normalizedId]) {
-        const imagesToDelete = form.imagesToDelete[normalizedId];
-        images = images.filter(img => !imagesToDelete.includes(img));
-    }
-
-    return images;
+    return [];
 };
 
 const addComponentImage = (componentId) => {
@@ -918,19 +909,20 @@ const removeComponentImage = (componentId, imgIndex) => {
 };
 
 const removeExistingImage = (componentId, imgIndex) => {
-    // Normalizar componentId a string para consistencia
     const normalizedId = String(componentId);
-    // Marcar imagen para eliminación
-    if (!form.imagesToDelete) {
-        form.imagesToDelete = {};
-    }
-    if (!form.imagesToDelete[normalizedId]) {
-        form.imagesToDelete[normalizedId] = [];
-    }
-    const images = getComponentImages(componentId);
-    if (images[imgIndex]) {
-        form.imagesToDelete[normalizedId].push(images[imgIndex]);
-    }
+    const d = form.diagnosis[normalizedId];
+    if (typeof d !== 'object' || !d || !Array.isArray(d.images)) return;
+    if (imgIndex < 0 || imgIndex >= d.images.length) return;
+    const urlToDelete = d.images[imgIndex];
+    // Marcar para que el backend borre el archivo
+    if (!form.imagesToDelete) form.imagesToDelete = {};
+    if (!form.imagesToDelete[normalizedId]) form.imagesToDelete[normalizedId] = [];
+    form.imagesToDelete[normalizedId].push(urlToDelete);
+    // Quitar la imagen del diagnóstico para que el formulario y el envío sean correctos
+    form.diagnosis[normalizedId] = {
+        ...d,
+        images: d.images.filter((_, i) => i !== imgIndex)
+    };
 };
 
 // Helper para obtener recomendaciones normalizando el ID

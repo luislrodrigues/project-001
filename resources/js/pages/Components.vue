@@ -41,7 +41,6 @@
                             </label>
                             <select
                                 v-model="filters.company_id"
-                                @change="fetchComponents"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             >
                                 <option value="">Todas</option>
@@ -61,7 +60,7 @@
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             >
                                 <option value="">Todos</option>
-                                <option v-for="eq in equipments" :key="eq.id" :value="eq.id">
+                                <option v-for="eq in filteredEquipments" :key="eq.id" :value="eq.id">
                                     {{ eq.name }}
                                 </option>
                             </select>
@@ -246,7 +245,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
@@ -273,6 +272,41 @@ const filters = reactive({
     brand_id: '',
 });
 
+// Equipos filtrados por empresa seleccionada; sin duplicados por nombre (muestra cada nombre una vez)
+const filteredEquipments = computed(() => {
+    let list = equipments.value;
+    if (filters.company_id) {
+        const companyId = Number(filters.company_id);
+        list = list.filter(
+            (eq) => Number(eq.company_id ?? eq.company?.id) === companyId
+        );
+    }
+    const seen = new Set();
+    return list.filter((eq) => {
+        const key = `${String(eq.name ?? '').trim()}|${Number(eq.company_id ?? eq.company?.id) ?? ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+});
+
+// Al cambiar empresa, limpiar equipo si ya no aplica
+watch(
+    () => filters.company_id,
+    () => {
+        if (!filters.company_id) {
+            filters.equipment_id = '';
+            return;
+        }
+        const companyId = Number(filters.company_id);
+        const currentEq = equipments.value.find((e) => Number(e.id) === Number(filters.equipment_id));
+        if (currentEq && Number(currentEq.company_id ?? currentEq.company?.id) !== companyId) {
+            filters.equipment_id = '';
+        }
+        fetchComponents(1);
+    }
+);
+
 const toggleSortId = () => {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
     fetchComponents(1);
@@ -285,16 +319,20 @@ onMounted(async () => {
 const loadCatalogs = async () => {
     try {
         const [equipmentsRes, componentTypesRes, companiesRes, brandsRes] = await Promise.all([
-            api.get('/equipment'),
-            api.get('/component-types'),
+            api.get('/catalogs/equipment'),
+            api.get('/catalogs/component-types'),
             api.get('/catalogs/companies'),
             api.get('/catalogs/brands'),
         ]);
 
-        equipments.value = equipmentsRes.data.data;
-        componentTypes.value = componentTypesRes.data.data;
-        companies.value = companiesRes.data.data;
-        brands.value = brandsRes.data.data;
+        // Deduplicar equipos por id (evita duplicados en el dropdown)
+        const rawEquipments = equipmentsRes.data.data ?? [];
+        equipments.value = rawEquipments.filter(
+            (eq, i, arr) => arr.findIndex((e) => Number(e.id) === Number(eq.id)) === i
+        );
+        componentTypes.value = componentTypesRes.data.data ?? [];
+        companies.value = companiesRes.data.data ?? [];
+        brands.value = brandsRes.data.data ?? [];
     } catch (error) {
         console.error('Error al cargar catálogos:', error);
     }

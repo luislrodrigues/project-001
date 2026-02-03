@@ -261,7 +261,39 @@ class ReportController extends Controller
 
             // Obtener diagnosis actual y actualizar con nuevas imágenes
             $currentDiagnosis = $report->diagnosis ? (is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis) : [];
-            $diagnosisData = $request->has('diagnosis') ? $request->diagnosis : $currentDiagnosis;
+            $diagnosisData = $request->has('diagnosis')
+                ? (is_string($request->diagnosis) ? json_decode($request->diagnosis, true) : $request->diagnosis)
+                : $currentDiagnosis;
+            if (!is_array($diagnosisData)) {
+                $diagnosisData = $currentDiagnosis;
+            }
+
+            // Normalizar URL o path a path relativo (ej: images/xxx.jpg) para comparar
+            $normalizeImagePath = function ($urlOrPath) {
+                $u = trim($urlOrPath);
+                if (strpos($u, 'http') === 0 || strpos($u, '//') === 0) {
+                    $u = preg_replace('#^https?://[^/]+/#', '', $u);
+                    $u = preg_replace('#^storage/#', '', $u);
+                }
+                return $u;
+            };
+
+            // Aplicar imágenes a eliminar a diagnosisData para todos los componentes en imagesToDelete
+            foreach ($imagesToDelete as $componentId => $urlsToDelete) {
+                $componentIdStr = (string)$componentId;
+                if (!is_array($urlsToDelete)) {
+                    continue;
+                }
+                $existing = $diagnosisData[$componentIdStr] ?? [];
+                $text = is_array($existing) ? ($existing['text'] ?? '') : (string)$existing;
+                $existingImages = is_array($existing) && isset($existing['images']) ? $existing['images'] : [];
+                $pathsToRemove = array_map($normalizeImagePath, $urlsToDelete);
+                $existingImages = array_values(array_filter($existingImages, function ($img) use ($pathsToRemove, $normalizeImagePath) {
+                    $imgPath = $normalizeImagePath($img);
+                    return !in_array($imgPath, $pathsToRemove, true);
+                }));
+                $diagnosisData[$componentIdStr] = ['text' => $text, 'images' => $existingImages];
+            }
 
             foreach ($componentImages as $componentId => $newImagePaths) {
                 $componentIdStr = (string)$componentId;
@@ -278,12 +310,10 @@ class ReportController extends Controller
                 }
 
                 if (isset($imagesToDelete[$componentIdStr]) && is_array($imagesToDelete[$componentIdStr])) {
-                    foreach ($imagesToDelete[$componentIdStr] as $imageUrlToDelete) {
-                        $pathToDelete = str_replace(asset('storage/'), '', $imageUrlToDelete);
-                        $existingImages = array_filter($existingImages, function($img) use ($pathToDelete) {
-                            return $img !== $pathToDelete;
-                        });
-                    }
+                    $pathsToDelete = array_map($normalizeImagePath, $imagesToDelete[$componentIdStr]);
+                    $existingImages = array_values(array_filter($existingImages, function ($img) use ($pathsToDelete, $normalizeImagePath) {
+                        return !in_array($normalizeImagePath($img), $pathsToDelete, true);
+                    }));
                 }
 
                 // Combinar imágenes existentes con nuevas
@@ -342,7 +372,8 @@ class ReportController extends Controller
             $report = Report::with([
                 'equipment.components.componentType',
                 'equipment.components.brand',
-                'equipment.components.fields.value',
+                'equipment.components.fields',
+                'equipment.components.fieldValues',
                 'equipment.company',
                 'equipment.equipmentType',
                 'equipment.ubication',
@@ -501,6 +532,8 @@ class ReportController extends Controller
             $report = Report::with([
                 'equipment.components.componentType',
                 'equipment.components.brand',
+                'equipment.components.fields',
+                'equipment.components.fieldValues',
                 'equipment.company.users',
                 'equipment.equipmentType',
                 'equipment.ubication',
@@ -675,16 +708,33 @@ class ReportController extends Controller
 
     /**
      * Convierte ruta de imagen en storage a data URI base64 para el PDF.
+     * Acepta ruta relativa (ej. images/equipo.jpg), URL con /storage/ (ej. http://site.com/storage/images/x.jpg)
+     * o ruta con barras invertidas; usa el disco 'public' de Laravel para resolver.
      */
     private static function imageToBase64ForPdf(string $path): string
     {
-        if (filter_var($path, FILTER_VALIDATE_URL)) {
-            return $path;
-        }
-        $fullPath = storage_path('app/public/' . ltrim($path, '/'));
-        if (!is_file($fullPath)) {
+        $path = trim($path);
+        if (empty($path)) {
             return '';
         }
+        // Si es URL de nuestro storage (ej. http://site.com/storage/images/x.jpg), extraer ruta relativa
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            $parsed = parse_url($path);
+            $pathPart = $parsed['path'] ?? '';
+            if (preg_match('#/storage/(.+)$#', $pathPart, $m)) {
+                $path = $m[1];
+            } else {
+                return $path;
+            }
+        }
+        $path = ltrim(str_replace('\\', '/', $path), '/');
+        if (strpos($path, 'storage/') === 0) {
+            $path = substr($path, 8);
+        }
+        if (!Storage::disk('public')->exists($path)) {
+            return '';
+        }
+        $fullPath = Storage::disk('public')->path($path);
         $mime = mime_content_type($fullPath) ?: 'image/jpeg';
         return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
     }
