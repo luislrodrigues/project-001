@@ -94,14 +94,14 @@
 
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-briefcase mr-2 text-blue-600"></i>
-                                    Cargo
+                                    <i class="fas fa-user-tag mr-2 text-blue-600"></i>
+                                    Rol
                                 </label>
                                 <select
                                     v-model="form.role_id"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                                 >
-                                    <option value="">Seleccione un cargo</option>
+                                    <option value="">Seleccione un rol</option>
                                     <option v-for="role in roles" :key="role.id" :value="role.id">
                                         {{ role.name }}
                                     </option>

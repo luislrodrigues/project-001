@@ -71,14 +71,14 @@
                     <div class="bg-gray-50 rounded-lg p-4">
                         <label class="flex items-center mb-2 text-sm font-medium text-gray-500">
                             <i class="fas fa-briefcase mr-2 text-blue-600"></i>
-                            Cargo
+                            Rol
                         </label>
                         <p v-if="user.role" class="text-lg font-semibold text-gray-900">
                             <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800">
                                 {{ user.role.name }}
                             </span>
                         </p>
-                        <p v-else class="text-lg font-semibold text-gray-400">Sin cargo</p>
+                        <p v-else class="text-lg font-semibold text-gray-400">Sin rol</p>
                     </div>
 
                     <div class="bg-gray-50 rounded-lg p-4">

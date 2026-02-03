@@ -73,7 +73,7 @@
                             Tipo Equipo
                         </label>
                         <div class="text-lg font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                            {{ equipment.equipment_type?.name || 'N/A' }}
+                            {{ (equipment.equipment_type && equipment.equipment_type.name) || 'N/A' }}
                         </div>
                     </div>
 
@@ -83,7 +83,7 @@
                             Proceso
                         </label>
                         <div class="text-lg font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                            {{ equipment.process?.name || 'N/A' }}
+                            {{ (equipment.process && equipment.process.name) || 'N/A' }}
                         </div>
                     </div>
 
@@ -93,7 +93,7 @@
                             Ubicación
                         </label>
                         <div class="text-lg font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                            {{ equipment.ubication?.name || 'N/A' }}
+                            {{ (equipment.ubication && equipment.ubication.name) || 'N/A' }}
                         </div>
                     </div>
 
@@ -123,7 +123,7 @@
                             Empresa
                         </label>
                         <div class="text-lg font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                            {{ equipment.company?.name || 'N/A' }}
+                            {{ (equipment.company && equipment.company.name) || 'N/A' }}
                         </div>
                     </div>
 
@@ -134,6 +134,48 @@
                         </label>
                         <div class="text-sm text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 min-h-[60px]">
                             {{ equipment.description || 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Componentes con atributos -->
+                <div v-if="equipment.components && equipment.components.length > 0" class="mt-8 pt-6 border-t border-gray-200">
+                    <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-puzzle-piece text-blue-600 mr-2"></i>
+                        <h4 class="text-lg font-semibold text-gray-800">Componentes</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div
+                            v-for="component in equipment.components"
+                            :key="component.id"
+                            class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
+                        >
+                            <div class="px-4 py-3 bg-white border-b border-gray-200 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                <span class="font-semibold text-gray-800">
+                                    {{ (component.component_type && component.component_type.name) || 'Componente' }}
+                                </span>
+                                <span v-if="component.brand && component.brand.name" class="text-sm text-gray-600">
+                                    <i class="fas fa-tag mr-1 text-gray-400"></i>
+                                    {{ component.brand.name }}
+                                </span>
+                            </div>
+                            <div v-if="component.attributes && component.attributes.length > 0" class="p-4">
+                                <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    <div
+                                        v-for="(attr, idx) in component.attributes"
+                                        :key="idx"
+                                        class="flex flex-col sm:flex-row sm:gap-2"
+                                    >
+                                        <dt class="text-sm font-medium text-gray-500 shrink-0">{{ attr.name }}:</dt>
+                                        <dd class="text-sm text-gray-900">
+                                            {{ attr.value || '—' }}{{ attr.unit ? ' ' + attr.unit : '' }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div v-else class="px-4 py-3 text-sm text-gray-500">
+                                Sin atributos definidos
+                            </div>
                         </div>
                     </div>
                 </div>

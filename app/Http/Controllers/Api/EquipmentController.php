@@ -76,9 +76,18 @@ class EquipmentController extends Controller
 
     public function show(Equipment $equipment): JsonResponse
     {
-        return ApiResponse::success(
-            new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication', 'components']))
-        );
+        $equipment->load([
+            'company',
+            'equipmentType',
+            'process',
+            'ubication',
+            'components.componentType',
+            'components.brand',
+            'components.fieldValues.componentTypeField',
+            'components.fieldValues.option',
+        ]);
+
+        return ApiResponse::success(new EquipmentResource($equipment));
     }
 
     public function update(UpdateEquipmentRequest $request, Equipment $equipment): JsonResponse
