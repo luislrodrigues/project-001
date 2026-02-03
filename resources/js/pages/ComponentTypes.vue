@@ -76,6 +76,17 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gradient-to-r from-blue-50 to-blue-100">
                             <tr>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider cursor-pointer hover:bg-blue-200/50 select-none"
+                                    @click="toggleSortId"
+                                    title="Clic para cambiar orden"
+                                >
+                                    <div class="flex items-center gap-1">
+                                        #
+                                        <i v-if="sortOrder === 'desc'" class="fas fa-sort-down text-sm"></i>
+                                        <i v-else class="fas fa-sort-up text-sm"></i>
+                                    </div>
+                                </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
                                         <i class="fas fa-tag mr-2"></i>
@@ -92,6 +103,9 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             <tr v-for="type in componentTypes" :key="type.id" class="hover:bg-blue-50 transition-colors duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ type.id }}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
@@ -175,6 +189,13 @@ const componentTypes = ref([]);
 const loading = ref(false);
 const pagination = ref(null);
 const search = ref('');
+const sortBy = ref('id');
+const sortOrder = ref('desc');
+
+const toggleSortId = () => {
+    sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
+    fetchComponentTypes(1);
+};
 
 let searchTimeout = null;
 
@@ -184,8 +205,10 @@ const fetchComponentTypes = async (page = 1) => {
         const params = {
             page,
             per_page: 10,
+            sort_by: sortBy.value,
+            sort_order: sortOrder.value,
         };
-        
+
         if (search.value) {
             params.search = search.value;
         }

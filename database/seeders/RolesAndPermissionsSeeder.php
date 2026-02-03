@@ -13,13 +13,14 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        // Definir permisos
-        $permissionsAdm = [
+        // Definir todos los permisos
+        $allPermissions = [
             'save user',
             'edit user',
             'actions user',
             'inactive user',
             'consult user',
+            'delete user',
             'save company',
             'edit company',
             'actions company',
@@ -37,29 +38,36 @@ class RolesAndPermissionsSeeder extends Seeder
             'consult report',
         ];
 
-        // Crear permisos
-        foreach ($permissionsAdm as $permission) {
-            Permission::create(['name' => $permission]);
+        // Crear permisos (si no existen)
+        foreach ($allPermissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // Crear roles y asignar permisos
-        $adminRole = Role::create(['name' => 'admin']);
-        $adminRole->syncPermissions($permissionsAdm);
-
-
-        $permissionsUser= [
+        // Rol Supervisor: tiene limitaciones en crear empresas, usuarios y tipo de componente
+        $supervisorPermissions = [
             'consult user',
+            'consult company',
+            'save equipment',
+            'edit equipment',
+            'actions equipment',
+            'delete equipment',
+            'consult equipment',
+            'save report',
+            'edit report',
+            'actions report',
+            'delete report',
+            'consult report',
+        ];
+        $supervisorRole = Role::firstOrCreate(['name' => 'Supervisor', 'guard_name' => 'web']);
+        $supervisorRole->syncPermissions($supervisorPermissions);
+
+        // Rol 3 - Cliente: Sólo visualiza información de su empresa
+        $clientePermissions = [
             'consult company',
             'consult equipment',
             'consult report',
         ];
-
-
-        $userRole = Role::create(['name' => 'user']);
-        $userRole->syncPermissions($permissionsUser);
-
-
-
-
+        $clienteRole = Role::firstOrCreate(['name' => 'Cliente', 'guard_name' => 'web']);
+        $clienteRole->syncPermissions($clientePermissions);
     }
 }

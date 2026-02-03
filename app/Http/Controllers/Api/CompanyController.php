@@ -18,7 +18,7 @@ class CompanyController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Company::query();
+        $query = Company::query()->with('companySegment');
 
         if ($request->has('search') && !empty($request->search)) {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -29,7 +29,9 @@ class CompanyController extends Controller
             $query->where('status', $request->status);
         }
 
-        $companies = $query->paginate($request->get('per_page', 10));
+        $sortBy = in_array($request->get('sort_by', 'id'), ['id', 'name', 'created_at']) ? $request->sort_by : 'id';
+        $sortOrder = in_array(strtolower($request->get('sort_order', 'desc')), ['asc', 'desc']) ? strtolower($request->sort_order) : 'desc';
+        $companies = $query->orderBy($sortBy, $sortOrder)->paginate($request->get('per_page', 10));
 
         return ApiResponse::success(CompanyResource::collection($companies));
     }
@@ -42,7 +44,7 @@ class CompanyController extends Controller
         try {
             $company = Company::create([
                 'name' => $request->name,
-                'emails' => json_encode($request->emails),
+                'company_segment_id' => $request->company_segment_id,
                 'status' => 'active',
             ]);
 
@@ -57,6 +59,7 @@ class CompanyController extends Controller
      */
     public function show(Company $company): JsonResponse
     {
+        $company->load('companySegment');
         return ApiResponse::success(new CompanyResource($company));
     }
 
@@ -68,7 +71,7 @@ class CompanyController extends Controller
         try {
             $company->update([
                 'name' => $request->name,
-                'emails' => json_encode($request->emails),
+                'company_segment_id' => $request->company_segment_id,
             ]);
 
             return ApiResponse::success(new CompanyResource($company), 'Se actualizó la empresa correctamente');
@@ -111,5 +114,19 @@ class CompanyController extends Controller
             ->get();
 
         return ApiResponse::success($companies);
+    }
+
+    /**
+     * Obtener lista de segmentos de empresa activos para catálogos
+     */
+    public function getCompanySegments(): JsonResponse
+    {
+        $segments = \App\Models\CompanySegment::where('status', 'active')
+            ->whereNull('deleted_at')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return ApiResponse::success($segments);
     }
 }

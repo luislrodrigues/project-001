@@ -24,8 +24,7 @@ class StoreCompanyRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('companies')->whereNull('deleted_at')],
-            'emails' => 'required|array|min:1',
-            'emails.*' => 'required|email',
+            'company_segment_id' => ['nullable', 'integer', 'exists:company_segments,id'],
         ];
     }
 
@@ -39,8 +38,7 @@ class StoreCompanyRequest extends FormRequest
         return [
             'name.required' => 'El nombre de la empresa es obligatorio.',
             'name.unique' => 'Ya existe una empresa con este nombre.',
-            'emails.required' => 'Debe agregar al menos un correo electrónico.',
-            'emails.*.email' => 'Debe proporcionar un correo electrónico válido.',
+            'company_segment_id.exists' => 'El segmento seleccionado no es válido.',
         ];
     }
 }

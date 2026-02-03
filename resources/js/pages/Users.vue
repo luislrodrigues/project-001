@@ -36,21 +36,6 @@
                     <div class="flex flex-col sm:flex-row gap-3">
                         <div class="flex-1">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-filter mr-2 text-gray-400"></i>
-                                Estado
-                            </label>
-                            <select
-                                v-model="filters.status"
-                                @change="fetchUsers"
-                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option value="active">Activo</option>
-                                <option value="inactive">Inactivo</option>
-                            </select>
-                        </div>
-                        <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-building mr-2 text-gray-400"></i>
                                 Empresa
                             </label>
@@ -63,6 +48,21 @@
                                 <option v-for="company in companies" :key="company.id" :value="company.id">
                                     {{ company.name }}
                                 </option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-filter mr-2 text-gray-400"></i>
+                                Estado
+                            </label>
+                            <select
+                                v-model="filters.status"
+                                @change="fetchUsers"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            >
+                                <option value="">Todos</option>
+                                <option value="active">Activo</option>
+                                <option value="inactive">Inactivo</option>
                             </select>
                         </div>
                         <div class="flex-1">
@@ -107,16 +107,15 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gradient-to-r from-blue-50 to-blue-100">
                             <tr>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-user mr-2"></i>
-                                        Nombre
-                                    </div>
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-envelope mr-2"></i>
-                                        Correo
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider cursor-pointer hover:bg-blue-200/50 select-none"
+                                    @click="toggleSortId"
+                                    title="Clic para cambiar orden"
+                                >
+                                    <div class="flex items-center gap-1">
+                                        #
+                                        <i v-if="sortOrder === 'desc'" class="fas fa-sort-down text-sm"></i>
+                                        <i v-else class="fas fa-sort-up text-sm"></i>
                                     </div>
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
@@ -127,8 +126,20 @@
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
+                                        <i class="fas fa-user mr-2"></i>
+                                        Nombre
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                    <div class="flex items-center">
                                         <i class="fas fa-briefcase mr-2"></i>
-                                        Cargo
+                                        Rol
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-envelope mr-2"></i>
+                                        Correo
                                     </div>
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
@@ -147,6 +158,12 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             <tr v-for="user in users" :key="user.id" class="hover:bg-blue-50 transition-colors duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ user.id }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ user.company?.name || 'N/A' }}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
@@ -157,16 +174,13 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ user.company?.name || 'N/A' }}
-                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span v-if="user.role" class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
                                         {{ user.role.name }}
                                     </span>
-                                    <span v-else class="text-gray-400">Sin cargo</span>
+                                    <span v-else class="text-gray-400">Sin rol</span>
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
                                         :class="user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
@@ -263,6 +277,14 @@ const filters = ref({
     company_id: ''
 });
 
+const sortBy = ref('id');
+const sortOrder = ref('desc');
+
+const toggleSortId = () => {
+    sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
+    fetchUsers(1);
+};
+
 let searchTimeout = null;
 
 const fetchUsers = async (page = 1) => {
@@ -271,9 +293,11 @@ const fetchUsers = async (page = 1) => {
         const params = {
             page,
             per_page: 10,
+            sort_by: sortBy.value,
+            sort_order: sortOrder.value,
             ...filters.value
         };
-        
+
         Object.keys(params).forEach(key => {
             if (params[key] === '') {
                 delete params[key];

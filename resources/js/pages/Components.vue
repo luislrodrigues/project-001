@@ -36,6 +36,22 @@
                     <div class="flex flex-wrap items-end gap-3">
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-building mr-2 text-gray-400"></i>
+                                Empresa
+                            </label>
+                            <select
+                                v-model="filters.company_id"
+                                @change="fetchComponents"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            >
+                                <option value="">Todas</option>
+                                <option v-for="company in companies" :key="company.id" :value="company.id">
+                                    {{ company.name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-cog mr-2 text-gray-400"></i>
                                 Equipo
                             </label>
@@ -63,22 +79,6 @@
                                 <option value="">Todos</option>
                                 <option v-for="type in componentTypes" :key="type.id" :value="type.id">
                                     {{ type.name }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="flex-1 min-w-[200px]">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-building mr-2 text-gray-400"></i>
-                                Empresa
-                            </label>
-                            <select
-                                v-model="filters.company_id"
-                                @change="fetchComponents"
-                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todas</option>
-                                <option v-for="company in companies" :key="company.id" :value="company.id">
-                                    {{ company.name }}
                                 </option>
                             </select>
                         </div>
@@ -122,6 +122,23 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gradient-to-r from-blue-50 to-blue-100">
                             <tr>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider cursor-pointer hover:bg-blue-200/50 rounded-tl select-none"
+                                    @click="toggleSortId"
+                                    title="Clic para cambiar orden"
+                                >
+                                    <div class="flex items-center gap-1">
+                                        #
+                                        <i v-if="sortOrder === 'desc'" class="fas fa-sort-down text-sm"></i>
+                                        <i v-else class="fas fa-sort-up text-sm"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-building mr-2"></i>
+                                        Empresa
+                                    </div>
+                                </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
                                         <i class="fas fa-cog mr-2"></i>
@@ -150,6 +167,12 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             <tr v-for="component in components" :key="component.id" class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ component.id }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-700">{{ component.equipment?.company?.name ?? '—' }}</div>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">{{ component.equipment?.name }}</div>
                                 </td>
@@ -240,12 +263,20 @@ const componentTypes = ref([]);
 const companies = ref([]);
 const brands = ref([]);
 
+const sortBy = ref('id');
+const sortOrder = ref('desc');
+
 const filters = reactive({
+    company_id: '',
     equipment_id: '',
     component_type_id: '',
-    company_id: '',
     brand_id: '',
 });
+
+const toggleSortId = () => {
+    sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
+    fetchComponents(1);
+};
 
 onMounted(async () => {
     await Promise.all([loadCatalogs(), fetchComponents()]);
@@ -272,11 +303,11 @@ const loadCatalogs = async () => {
 const fetchComponents = async (page = 1) => {
     loading.value = true;
     try {
-        const params = { page, per_page: 10 };
-        
+        const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: sortOrder.value };
+
+        if (filters.company_id) params.company_id = filters.company_id;
         if (filters.equipment_id) params.equipment_id = filters.equipment_id;
         if (filters.component_type_id) params.component_type_id = filters.component_type_id;
-        if (filters.company_id) params.company_id = filters.company_id;
         if (filters.brand_id) params.brand_id = filters.brand_id;
 
         const response = await api.get('/components', { params });

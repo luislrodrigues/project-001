@@ -55,6 +55,19 @@
                             </svg>
                             {{ downloadingPdf ? 'Generando...' : 'PDF' }}
                         </button>
+                        <button
+                            type="button"
+                            @click.prevent="openSendEmailModal"
+                            :disabled="sendingEmail"
+                            class="flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <i v-if="!sendingEmail" class="fas fa-envelope mr-2"></i>
+                            <svg v-else class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
+                                <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
+                            </svg>
+                            {{ sendingEmail ? 'Enviando...' : 'Enviar correo' }}
+                        </button>
                         <router-link
                             :to="{ name: 'reports' }"
                             class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -132,8 +145,9 @@
                             </label>
                             <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
                                 <span
-                                    :class="getConditionClass(report.condition?.name)"
-                                    class="px-3 py-1 inline-flex text-xs font-semibold rounded-full"
+                                    :class="!report.condition?.color ? getConditionClass(report.condition?.name) : ''"
+                                    :style="report.condition?.color ? { backgroundColor: report.condition.color, color: '#fff', borderColor: report.condition.color } : {}"
+                                    class="px-3 py-1 inline-flex text-xs font-semibold rounded-full border"
                                 >
                                     {{ report.condition?.name }}
                                 </span>
@@ -308,6 +322,122 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal Enviar correo -->
+        <div
+            v-if="showEmailModal"
+            class="fixed z-50 inset-0 overflow-y-auto flex items-center justify-center py-4"
+            @click.self="closeSendEmailModal"
+        >
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm" @click="closeSendEmailModal"></div>
+            <div class="relative z-50 bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-xl">
+                    <h3 class="text-lg font-bold text-white">
+                        <i class="fas fa-envelope mr-2"></i>
+                        Enviar reporte por correo
+                    </h3>
+                    <button
+                        type="button"
+                        @click="closeSendEmailModal"
+                        class="text-white hover:bg-white/20 rounded-lg p-1.5 transition-colors"
+                    >
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto flex-1">
+                    <!-- Usuarios de la empresa -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-users mr-2 text-blue-600"></i>
+                            Usuarios de la empresa {{ report?.equipment?.company?.name ? `(${report.equipment.company.name})` : '' }}
+                        </label>
+                        <div v-if="emailRecipientsLoading" class="text-sm text-gray-500 py-4">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                            Cargando usuarios...
+                        </div>
+                        <div v-else-if="emailRecipients.length === 0" class="text-sm text-gray-500 py-4 bg-gray-50 rounded-lg px-4">
+                            No hay usuarios con correo en esta empresa.
+                        </div>
+                        <div v-else class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                            <label
+                                v-for="user in emailRecipients"
+                                :key="user.id"
+                                class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :value="user.id"
+                                    v-model="selectedUserIds"
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span class="text-sm text-gray-800">{{ user.name }}</span>
+                                <span class="text-xs text-gray-500 truncate flex-1">{{ user.email }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- Correos adicionales -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-plus-circle mr-2 text-blue-600"></i>
+                            Agregar correos
+                        </label>
+                        <div class="flex gap-2">
+                            <input
+                                v-model="additionalEmailInput"
+                                type="email"
+                                placeholder="correo@ejemplo.com"
+                                class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                @keydown.enter.prevent="addAdditionalEmail"
+                            />
+                            <button
+                                type="button"
+                                @click="addAdditionalEmail"
+                                class="px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            >
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div v-if="additionalEmailsList.length > 0" class="mt-3 space-y-2">
+                            <div
+                                v-for="(email, idx) in additionalEmailsList"
+                                :key="idx"
+                                class="flex items-center justify-between gap-2 py-2 px-3 bg-blue-50 border border-blue-200 rounded-lg text-sm"
+                            >
+                                <span class="text-gray-800">{{ email }}</span>
+                                <button
+                                    type="button"
+                                    @click="removeAdditionalEmail(idx)"
+                                    class="text-red-600 hover:text-red-800 hover:bg-red-100 rounded p-1 transition-colors"
+                                    title="Quitar"
+                                >
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Escriba el correo y presione Enter o el botón + para agregar</p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 rounded-b-xl border-t border-gray-200">
+                    <button
+                        type="button"
+                        @click="closeSendEmailModal"
+                        class="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="button"
+                        @click="confirmSendEmail"
+                        :disabled="sendingEmail || (!hasSelectedRecipients() && !hasValidAdditionalEmails())"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <i v-if="sendingEmail" class="fas fa-spinner fa-spin mr-2"></i>
+                        <i v-else class="fas fa-paper-plane mr-2"></i>
+                        {{ sendingEmail ? 'Enviando...' : 'Enviar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -325,8 +455,16 @@ const authStore = useAuthStore();
 const report = ref(null);
 const loading = ref(true);
 const downloadingPdf = ref(false);
+const sendingEmail = ref(false);
 const diagnosisByComponent = ref({});
 const recommendationsByComponent = ref({});
+
+const showEmailModal = ref(false);
+const emailRecipients = ref([]);
+const emailRecipientsLoading = ref(false);
+const selectedUserIds = ref([]);
+const additionalEmailInput = ref('');
+const additionalEmailsList = ref([]);
 
 onMounted(async () => {
     await loadReport();
@@ -429,9 +567,9 @@ const downloadPdf = async (event) => {
         event.preventDefault();
         event.stopPropagation();
     }
-    
+
     downloadingPdf.value = true;
-    
+
     try {
         const response = await api.get(`/reports/${route.params.id}/pdf`, {
             responseType: 'blob'
@@ -450,6 +588,77 @@ const downloadPdf = async (event) => {
         Swal.fire('Error', 'Error al descargar el PDF', 'error');
     } finally {
         downloadingPdf.value = false;
+    }
+};
+
+const openSendEmailModal = async () => {
+    showEmailModal.value = true;
+    selectedUserIds.value = [];
+    additionalEmailInput.value = '';
+    additionalEmailsList.value = [];
+    emailRecipients.value = [];
+    emailRecipientsLoading.value = true;
+    try {
+        const response = await api.get(`/reports/${route.params.id}/email-recipients`);
+        const users = response.data?.data ?? response.data ?? [];
+        emailRecipients.value = users;
+        selectedUserIds.value = users.map(u => u.id);
+    } catch (error) {
+        Swal.fire('Error', 'No se pudieron cargar los destinatarios', 'error');
+        closeSendEmailModal();
+    } finally {
+        emailRecipientsLoading.value = false;
+    }
+};
+
+const closeSendEmailModal = () => {
+    showEmailModal.value = false;
+    selectedUserIds.value = [];
+    additionalEmailInput.value = '';
+    additionalEmailsList.value = [];
+};
+
+const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((e || '').trim());
+
+const addAdditionalEmail = () => {
+    const email = (additionalEmailInput.value || '').trim();
+    if (!email) return;
+    if (!isValidEmail(email)) {
+        Swal.fire('Aviso', 'Ingrese un correo electrónico válido', 'warning');
+        return;
+    }
+    if (additionalEmailsList.value.includes(email)) return;
+    additionalEmailsList.value.push(email);
+    additionalEmailInput.value = '';
+};
+
+const removeAdditionalEmail = (idx) => {
+    additionalEmailsList.value.splice(idx, 1);
+};
+
+const hasSelectedRecipients = () => selectedUserIds.value.length > 0;
+const hasValidAdditionalEmails = () => additionalEmailsList.value.length > 0;
+
+const confirmSendEmail = async () => {
+    const additionalEmails = additionalEmailsList.value;
+    if (!hasSelectedRecipients() && additionalEmails.length === 0) {
+        Swal.fire('Aviso', 'Seleccione al menos un destinatario o agregue un correo', 'warning');
+        return;
+    }
+
+    sendingEmail.value = true;
+    try {
+        await api.post(`/reports/${route.params.id}/send-email`, {
+            user_ids: selectedUserIds.value,
+            additional_emails: additionalEmails,
+        });
+        Swal.fire('Éxito', 'El correo se envió correctamente', 'success');
+        closeSendEmailModal();
+    } catch (error) {
+        const message = error.response?.data?.message ?? 'Error al enviar el correo';
+        Swal.fire('Error', message, 'error');
+    } finally {
+        sendingEmail.value = false;
     }
 };
 

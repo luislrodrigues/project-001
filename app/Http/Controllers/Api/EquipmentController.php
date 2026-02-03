@@ -21,19 +21,26 @@ class EquipmentController extends Controller
     {
         $query = Equipment::with(['company', 'equipmentType', 'process', 'ubication']);
 
+        // Filtrar por empresa si el usuario es Cliente
+        if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
+            $query->where('company_id', auth()->user()->company_id);
+        }
+
         if ($request->has('search') && !empty($request->search)) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->has('company_id')) {
-            $query->where('company_id', $request->company_id);
+        if ($request->filled('company_id')) {
+            $query->where('company_id', (int) $request->company_id);
         }
 
         if ($request->has('equipment_type_id')) {
             $query->where('equipment_type_id', $request->equipment_type_id);
         }
 
-        $equipments = $query->paginate($request->get('per_page', 10));
+        $sortBy = in_array($request->get('sort_by', 'id'), ['id', 'name', 'created_at']) ? $request->sort_by : 'id';
+        $sortOrder = in_array(strtolower($request->get('sort_order', 'desc')), ['asc', 'desc']) ? strtolower($request->sort_order) : 'desc';
+        $equipments = $query->orderBy($sortBy, $sortOrder)->paginate($request->get('per_page', 10));
 
         return ApiResponse::success(EquipmentResource::collection($equipments));
     }
@@ -119,6 +126,20 @@ class EquipmentController extends Controller
         } catch (\Exception $e) {
             return ApiResponse::error('Error al eliminar el equipo', 500, ['detail' => [$e->getMessage()]]);
         }
+    }
+
+    public function getEquipmentForSelect(): JsonResponse
+    {
+        $query = Equipment::with(['company', 'equipmentType'])
+            ->where('status', 'active');
+
+        if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
+            $query->where('company_id', auth()->user()->company_id);
+        }
+
+        $equipment = $query->orderBy('name')->get();
+
+        return ApiResponse::success($equipment);
     }
 
     public function getEquipmentTypes(): JsonResponse

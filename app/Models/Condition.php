@@ -12,9 +12,10 @@ class Condition extends Model
 
     protected $table = 'conditions';
 
-    Protected $fillable = [
+    protected $fillable = [
         'id',
         'name',
+        'color',
         'status',
     ];
 

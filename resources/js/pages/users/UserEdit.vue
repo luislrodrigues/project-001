@@ -202,7 +202,13 @@ const errors = ref({});
 const showPassword = ref(false);
 
 onMounted(async () => {
-    await Promise.all([loadCatalogs(), loadUser()]);
+    loading.value = true;
+    try {
+        await loadCatalogs();
+        await loadUser();
+    } finally {
+        loading.value = false;
+    }
 });
 
 const loadCatalogs = async () => {
@@ -234,8 +240,6 @@ const loadUser = async () => {
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el usuario', 'error');
         router.push({ name: 'users' });
-    } finally {
-        loading.value = false;
     }
 };
 

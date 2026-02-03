@@ -83,23 +83,24 @@
                 </div>
 
                 <!-- Campos Adicionales -->
-                <div v-if="component.field_values && Object.keys(component.field_values).length > 0">
+                <div v-if="additionalFieldsWithValues.length > 0">
                     <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
                         <i class="fas fa-list-ul text-blue-600 mr-2"></i>
                         <h4 class="text-lg font-semibold text-gray-800">Atributos Adicionales</h4>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div
-                            v-for="(fieldValue, fieldId) in component.field_values"
-                            :key="fieldId"
+                            v-for="item in additionalFieldsWithValues"
+                            :key="item.fieldId"
                             class="bg-gray-50 rounded-lg p-4"
                         >
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-info-circle mr-2 text-blue-600"></i>
-                                Campo {{ fieldId }}
+                                {{ item.name }}
+                                <span v-if="item.unit" class="ml-2 text-xs text-gray-500">({{ item.unit }})</span>
                             </label>
                             <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
-                                {{ fieldValue.value || 'N/A' }}
+                                {{ item.value || 'N/A' }}
                             </div>
                         </div>
                     </div>
@@ -110,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
@@ -122,6 +123,7 @@ const authStore = useAuthStore();
 
 const component = ref(null);
 const loading = ref(true);
+const fieldDefinitions = ref([]);
 
 onMounted(async () => {
     await loadComponent();
@@ -132,6 +134,10 @@ const loadComponent = async () => {
     try {
         const response = await api.get(`/components/${route.params.id}`);
         component.value = response.data.data;
+        if (component.value?.component_type_id) {
+            const fieldsRes = await api.get(`/components/type/${component.value.component_type_id}/fields`);
+            fieldDefinitions.value = fieldsRes.data.data;
+        }
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el componente', 'error');
         router.push({ name: 'components' });
@@ -139,4 +145,48 @@ const loadComponent = async () => {
         loading.value = false;
     }
 };
+
+// Combinar definiciones de campos con valores, mostrando nombre real (Potencia, Velocidad, etc.)
+const additionalFieldsWithValues = computed(() => {
+    if (!component.value?.field_values) return [];
+    const fv = component.value.field_values;
+    const fieldsById = Object.fromEntries(
+        (fieldDefinitions.value || []).map((f) => [String(f.id), f])
+    );
+    const items = [];
+    if (Array.isArray(fv)) {
+        fv.forEach((item) => {
+            if (item && 'field_id' in item) {
+                const fieldId = String(item.field_id);
+                const def = fieldsById[fieldId];
+                items.push({
+                    fieldId,
+                    name: def?.name ?? `Campo ${fieldId}`,
+                    unit: def?.unit ?? '',
+                    value: item.value ?? 'N/A',
+                });
+            }
+        });
+    } else {
+        Object.keys(fv).forEach((fieldId) => {
+            const item = fv[fieldId];
+            const val = item && typeof item === 'object' && 'value' in item ? item.value : item;
+            const def = fieldsById[String(fieldId)];
+            items.push({
+                fieldId,
+                name: def?.name ?? `Campo ${fieldId}`,
+                unit: def?.unit ?? '',
+                value: val ?? 'N/A',
+            });
+        });
+    }
+    // Ordenar por el orden de fieldDefinitions si existen
+    if (fieldDefinitions.value?.length) {
+        const order = Object.fromEntries(
+            fieldDefinitions.value.map((f, i) => [String(f.id), i])
+        );
+        items.sort((a, b) => (order[a.fieldId] ?? 999) - (order[b.fieldId] ?? 999));
+    }
+    return items;
+});
 </script>

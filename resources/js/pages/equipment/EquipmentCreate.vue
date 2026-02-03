@@ -1,6 +1,15 @@
 <template>
     <div class="container mx-auto px-4 sm:px-8">
-        <div class="py-6">
+        <div v-if="catalogsLoading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
+            <div class="flex flex-col items-center justify-center h-full">
+                <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
+                    <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
+                </svg>
+                <p class="text-gray-700 font-medium">Cargando formulario...</p>
+            </div>
+        </div>
+        <div v-else class="py-6">
             <!-- Header -->
             <div class="mb-6">
                 <div class="flex items-center justify-between mb-4">
@@ -306,6 +315,7 @@ onMounted(async () => {
 });
 
 const loadCatalogs = async () => {
+    catalogsLoading.value = true;
     try {
         const [equipmentTypesRes, processesRes, ubicationsRes, companiesRes] = await Promise.all([
             api.get('/catalogs/equipment-types'),
@@ -314,12 +324,16 @@ const loadCatalogs = async () => {
             api.get('/catalogs/companies'),
         ]);
 
-        equipmentTypes.value = equipmentTypesRes.data.data;
-        processes.value = processesRes.data.data;
-        ubications.value = ubicationsRes.data.data;
-        companies.value = companiesRes.data.data;
+        equipmentTypes.value = equipmentTypesRes.data?.data ?? equipmentTypesRes.data ?? [];
+        processes.value = processesRes.data?.data ?? processesRes.data ?? [];
+        ubications.value = ubicationsRes.data?.data ?? ubicationsRes.data ?? [];
+        companies.value = companiesRes.data?.data ?? companiesRes.data ?? [];
     } catch (error) {
-        Swal.fire('Error', 'Error al cargar catálogos', 'error');
+        console.error('Error al cargar catálogos:', error);
+        const msg = error.response?.data?.message || error.message || 'Error al cargar catálogos';
+        Swal.fire('Error', msg, 'error');
+    } finally {
+        catalogsLoading.value = false;
     }
 };
 

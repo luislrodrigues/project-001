@@ -51,46 +51,30 @@
                     </div>
 
                     <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                <i class="fas fa-envelope mr-2 text-blue-600"></i>
-                                Correos Electrónicos
-                                <span class="text-red-500 ml-1">*</span>
-                            </label>
-                            <button
-                                @click="addEmail"
-                                type="button"
-                                class="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                        <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                            <i class="fas fa-chart-pie mr-2 text-blue-600"></i>
+                            Segmento de la empresa
+                        </label>
+                        <div class="flex space-x-2 items-stretch">
+                            <select
+                                v-model="form.company_segment_id"
+                                class="flex-1 min-w-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200"
                             >
-                                <i class="fas fa-plus mr-2"></i>
-                                Agregar Correo
+                                <option :value="null">Sin segmento</option>
+                                <option v-for="seg in companySegments" :key="seg.id" :value="seg.id">
+                                    {{ seg.name }}
+                                </option>
+                            </select>
+                            <button
+                                type="button"
+                                @click="showSegmentModal = true"
+                                class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                title="Gestionar segmentos"
+                            >
+                                <i class="fas fa-cog text-sm"></i>
                             </button>
                         </div>
-                        <div class="space-y-3">
-                            <div v-for="(email, index) in form.emails" :key="index" class="flex gap-2 items-start">
-                                <div class="flex-1">
-                                    <input
-                                        v-model="form.emails[index]"
-                                        type="email"
-                                        required
-                                        class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                        :placeholder="`Correo ${index + 1}`"
-                                    />
-                                    <p v-if="errors[`emails.${index}`]" class="mt-1 text-sm text-red-600">
-                                        {{ errors[`emails.${index}`] }}
-                                    </p>
-                                </div>
-                                <button
-                                    v-if="form.emails.length > 1"
-                                    @click="removeEmail(index)"
-                                    type="button"
-                                    class="px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                                    title="Eliminar correo"
-                                >
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
+                        <p v-if="errors.company_segment_id" class="mt-1 text-sm text-red-600">{{ errors.company_segment_id }}</p>
                     </div>
 
                     <!-- Footer -->
@@ -113,6 +97,16 @@
                 </form>
             </div>
         </div>
+
+        <!-- Modal para gestionar segmentos de empresa -->
+        <CreateSelectModal
+            v-model:show="showSegmentModal"
+            field="company_segment"
+            label="Segmento de empresa"
+            api-endpoint="/catalogs/company-segments"
+            @item-saved="handleSegmentSaved"
+            @options-updated="loadCompanySegments"
+        />
     </div>
 </template>
 
@@ -122,6 +116,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
+import CreateSelectModal from '../../components/CreateSelectModal.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -129,16 +124,36 @@ const authStore = useAuthStore();
 
 const form = ref({
     name: '',
-    emails: ['']
+    company_segment_id: null
 });
 
 const loading = ref(true);
 const saving = ref(false);
 const errors = ref({});
+const companySegments = ref([]);
+const showSegmentModal = ref(false);
 
 onMounted(async () => {
+    await loadCompanySegments();
     await loadCompany();
 });
+
+const loadCompanySegments = async () => {
+    try {
+        const response = await api.get('/catalogs/company-segments');
+        companySegments.value = response.data.data || [];
+    } catch (error) {
+        console.error('Error al cargar segmentos:', error);
+        companySegments.value = [];
+    }
+};
+
+const handleSegmentSaved = (data) => {
+    if (data.field === 'company_segment' && data.id) {
+        form.value.company_segment_id = data.id;
+    }
+    loadCompanySegments();
+};
 
 const loadCompany = async () => {
     loading.value = true;
@@ -147,7 +162,7 @@ const loadCompany = async () => {
         const company = response.data.data;
         form.value = {
             name: company.name,
-            emails: company.emails.length > 0 ? company.emails : ['']
+            company_segment_id: company.company_segment_id ?? null
         };
     } catch (error) {
         Swal.fire('Error', 'Error al cargar la empresa', 'error');
@@ -157,25 +172,14 @@ const loadCompany = async () => {
     }
 };
 
-const addEmail = () => {
-    form.value.emails.push('');
-};
-
-const removeEmail = (index) => {
-    if (form.value.emails.length > 1) {
-        form.value.emails.splice(index, 1);
-    }
-};
-
 const updateCompany = async () => {
     saving.value = true;
     errors.value = {};
 
     try {
-        const emails = form.value.emails.filter(e => e.trim() !== '');
         const data = {
             name: form.value.name,
-            emails: emails
+            company_segment_id: form.value.company_segment_id || null
         };
 
         await api.post(`/companies/${route.params.id}`, data);

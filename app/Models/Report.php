@@ -14,7 +14,7 @@ class Report extends Model
     protected $guard = 'web';
 
     protected $table = 'reports';
-    
+
     Protected $fillable = [
         'id',
         'equipment_id',
@@ -47,6 +47,7 @@ class Report extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function componentFail()
     {
         return $this->belongsTo(ComponentFail::class);

@@ -15,6 +15,16 @@ use Illuminate\Http\Request;
 
 class ComponentTypeController extends Controller
 {
+    public function getComponentTypesForSelect(): JsonResponse
+    {
+        $types = ComponentType::where('status', 'active')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return ApiResponse::success($types);
+    }
+
     public function index(Request $request): JsonResponse
     {
         if (!auth()->user()->can('consult equipment')) {
@@ -27,7 +37,9 @@ class ComponentTypeController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        $types = $query->paginate($request->get('per_page', 10));
+        $sortBy = in_array($request->get('sort_by', 'id'), ['id', 'name', 'created_at']) ? $request->sort_by : 'id';
+        $sortOrder = in_array(strtolower($request->get('sort_order', 'desc')), ['asc', 'desc']) ? strtolower($request->sort_order) : 'desc';
+        $types = $query->orderBy($sortBy, $sortOrder)->paginate($request->get('per_page', 10));
 
         return ApiResponse::success(ComponentTypeResource::collection($types));
     }
@@ -96,7 +108,7 @@ class ComponentTypeController extends Controller
                     // Actualizar campo existente
                     $requestedFieldIds[] = $fieldData['id'];
                     $field = $componentType->componentTypeFields()->find($fieldData['id']);
-                    
+
                     if ($field) {
                         $field->update([
                             'name' => $fieldData['name'],

@@ -1,8 +1,8 @@
 <template>
     <div class="font-sans antialiased bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 min-h-screen">
         <!-- Sidebar -->
-        <aside 
-            id="sidebar" 
+        <aside
+            id="sidebar"
             class="fixed left-0 top-0 h-screen sidebar-gradient shadow-2xl z-40 transition-all duration-300 ease-in-out"
             :style="{ width: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)' }"
         >
@@ -12,14 +12,14 @@
                     <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                         <i class="fas fa-cog text-white text-xl"></i>
                     </div>
-                    <span 
+                    <span
                         v-show="!sidebarCollapsed"
                         class="text-white font-bold text-xl transition-opacity duration-300"
                     >
                         3Sanchez
                     </span>
                 </div>
-                <button 
+                <button
                     @click="toggleSidebar"
                     class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
                 >
@@ -28,7 +28,7 @@
             </div>
 
             <!-- User Profile Section -->
-            <div 
+            <div
                 class="px-4 py-4 border-b border-blue-400/30"
                 :class="{ 'py-2': sidebarCollapsed }"
             >
@@ -39,14 +39,14 @@
                     <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg flex-shrink-0">
                         {{ userInitials }}
                     </div>
-                    <div 
+                    <div
                         v-show="!sidebarCollapsed"
                         class="flex-1 min-w-0 transition-opacity duration-300"
                     >
                         <p class="text-white font-semibold text-sm truncate">{{ authStore.user?.name }}</p>
                         <p class="text-blue-100 text-xs truncate">{{ authStore.user?.email }}</p>
                     </div>
-                    <i 
+                    <i
                         v-show="!sidebarCollapsed"
                         class="fas fa-chevron-right text-blue-200 text-xs transition-opacity duration-300"
                     ></i>
@@ -54,49 +54,52 @@
             </div>
 
             <!-- Navigation -->
+            <!-- Orden: Empresa, Usuario, Tipo Componente, Componentes, Equipos, Informes -->
             <nav class="px-4 py-4 space-y-2 overflow-y-auto" style="max-height: calc(100vh - 200px);">
                 <router-link
-                    :to="{ name: 'dashboard' }"
+                    :to="{ name: 'companies' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('dashboard') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Inicio"
+                    :class="isActive('companies') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Empresa"
                 >
-                    <i class="fas fa-home text-lg w-5"></i>
-                    <span 
+                    <i class="fas fa-building text-lg w-5"></i>
+                    <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Inicio
+                        Empresa
                     </span>
                 </router-link>
 
                 <router-link
-                    :to="{ name: 'reports' }"
+                    v-if="authStore.hasPermission('consult user')"
+                    :to="{ name: 'users' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('reports') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Informes"
+                    :class="isActive('users') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Usuario"
                 >
-                    <i class="fas fa-file-alt text-lg w-5"></i>
-                    <span 
+                    <i class="fas fa-users text-lg w-5"></i>
+                    <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Informes
+                        Usuario
                     </span>
                 </router-link>
 
                 <router-link
-                    :to="{ name: 'equipment' }"
+                    v-if="authStore.hasPermission('consult equipment')"
+                    :to="{ name: 'component-types' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('equipment') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Equipos"
+                    :class="isActive('component-types') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Tipo Componente"
                 >
-                    <i class="fas fa-toolbox text-lg w-5"></i>
-                    <span 
+                    <i class="fas fa-snowplow text-lg w-5"></i>
+                    <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Equipos
+                        Tipo Componente
                     </span>
                 </router-link>
 
@@ -108,7 +111,7 @@
                     title="Componentes"
                 >
                     <i class="fas fa-weight text-lg w-5"></i>
-                    <span 
+                    <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
@@ -117,49 +120,32 @@
                 </router-link>
 
                 <router-link
-                    v-if="authStore.hasPermission('consult equipment')"
-                    :to="{ name: 'component-types' }"
+                    :to="{ name: 'equipment' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('component-types') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Tipos de Componentes"
+                    :class="isActive('equipment') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Equipos"
                 >
-                    <i class="fas fa-snowplow text-lg w-5"></i>
-                    <span 
+                    <i class="fas fa-toolbox text-lg w-5"></i>
+                    <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Tipos de Componentes
+                        Equipos
                     </span>
                 </router-link>
 
                 <router-link
-                    :to="{ name: 'companies' }"
+                    :to="{ name: 'reports' }"
                     class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('companies') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Empresas"
+                    :class="isActive('reports') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Informes"
                 >
-                    <i class="fas fa-building text-lg w-5"></i>
-                    <span 
+                    <i class="fas fa-file-alt text-lg w-5"></i>
+                    <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
-                        Empresas
-                    </span>
-                </router-link>
-
-                <router-link
-                    v-if="authStore.hasPermission('consult user')"
-                    :to="{ name: 'users' }"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
-                    :class="isActive('users') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Usuarios"
-                >
-                    <i class="fas fa-users text-lg w-5"></i>
-                    <span 
-                        v-show="!sidebarCollapsed"
-                        class="font-medium transition-opacity duration-300"
-                    >
-                        Usuarios
+                        Informes
                     </span>
                 </router-link>
             </nav>
@@ -172,7 +158,7 @@
                     title="Cerrar Sesión"
                 >
                     <i class="fas fa-sign-out-alt text-lg w-5"></i>
-                    <span 
+                    <span
                         v-show="!sidebarCollapsed"
                         class="font-medium transition-opacity duration-300"
                     >
@@ -183,7 +169,7 @@
         </aside>
 
         <!-- Main Content Area -->
-        <div 
+        <div
             class="flex flex-col transition-all duration-300 ease-in-out"
             :style="{ marginLeft: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)' }"
         >

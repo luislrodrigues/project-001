@@ -310,7 +310,13 @@ const imageUrl = ref(null);
 const imageFile = ref(null);
 
 onMounted(async () => {
-    await Promise.all([loadCatalogs(), loadEquipment()]);
+    loading.value = true;
+    try {
+        await loadCatalogs();
+        await loadEquipment();
+    } finally {
+        loading.value = false;
+    }
 });
 
 const loadCatalogs = async () => {
@@ -332,7 +338,6 @@ const loadCatalogs = async () => {
 };
 
 const loadEquipment = async () => {
-    loading.value = true;
     try {
         const response = await api.get(`/equipment/${route.params.id}`);
         const equipment = response.data.data;
@@ -349,8 +354,6 @@ const loadEquipment = async () => {
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el equipo', 'error');
         router.push({ name: 'equipment' });
-    } finally {
-        loading.value = false;
     }
 };
 

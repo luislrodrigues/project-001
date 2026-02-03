@@ -18,7 +18,14 @@ class ComponentController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Component::with(['equipment', 'componentType', 'brand', 'fieldValues']);
+        $query = Component::with(['equipment.company', 'componentType', 'brand', 'fieldValues']);
+
+        // Filtrar por empresa si el usuario es Cliente
+        if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
+            $query->whereHas('equipment', function ($q) {
+                $q->where('company_id', auth()->user()->company_id);
+            });
+        }
 
         if ($request->has('equipment_id')) {
             $query->where('equipment_id', $request->equipment_id);
@@ -28,17 +35,20 @@ class ComponentController extends Controller
             $query->where('component_type_id', $request->component_type_id);
         }
 
+        if ($request->filled('company_id')) {
+            $companyId = (int) $request->company_id;
+            $query->whereHas('equipment', function ($q) use ($companyId) {
+                $q->where('company_id', $companyId);
+            });
+        }
+
         if ($request->has('brand_id')) {
             $query->where('brand_id', $request->brand_id);
         }
 
-        if ($request->has('company_id')) {
-            $query->whereHas('equipment', function ($q) use ($request) {
-                $q->where('company_id', $request->company_id);
-            });
-        }
-
-        $components = $query->paginate($request->get('per_page', 10));
+        $sortBy = in_array($request->get('sort_by', 'id'), ['id', 'created_at']) ? $request->sort_by : 'id';
+        $sortOrder = in_array(strtolower($request->get('sort_order', 'desc')), ['asc', 'desc']) ? strtolower($request->sort_order) : 'desc';
+        $components = $query->orderBy($sortBy, $sortOrder)->paginate($request->get('per_page', 10));
 
         return ApiResponse::success(ComponentResource::collection($components));
     }
@@ -118,9 +128,11 @@ class ComponentController extends Controller
                 $fieldValues = json_decode($fieldValues, true);
             }
             if (is_array($fieldValues)) {
-                foreach ($fieldValues as $fieldId => $value) {
-                    $fieldId = (int) $fieldId;
-                    if ($fieldId < 0) {
+                $items = $this->normalizeFieldValuesForUpdate($fieldValues);
+                foreach ($items as $item) {
+                    $fieldId = (int) $item['field_id'];
+                    $value = $item['value'] ?? '';
+                    if ($fieldId <= 0) {
                         continue;
                     }
                     if ($value === '' || $value === null) {
@@ -129,7 +141,7 @@ class ComponentController extends Controller
                     $value = is_string($value) ? trim($value) : (string) $value;
 
                     $field = ComponentTypeField::find($fieldId);
-                    if (!$field) {
+                    if (! $field) {
                         continue;
                     }
 
@@ -161,6 +173,38 @@ class ComponentController extends Controller
         } catch (\Exception $e) {
             return ApiResponse::error('Error al actualizar el componente', 500, ['detail' => [$e->getMessage()]]);
         }
+    }
+
+    /**
+     * Normaliza field_values: acepta array de { field_id, value } o objeto { "1": "x", "2": "y" }.
+     * Siempre devuelve lista de [ 'field_id' => int, 'value' => string ] para evitar cruce de campos.
+     */
+    private function normalizeFieldValuesForUpdate(array $fieldValues): array
+    {
+        $first = reset($fieldValues);
+        $isListFormat = is_array($first) && array_key_exists('field_id', $first);
+
+        if ($isListFormat) {
+            $items = [];
+            foreach ($fieldValues as $item) {
+                if (is_array($item) && isset($item['field_id'])) {
+                    $items[] = [
+                        'field_id' => (int) $item['field_id'],
+                        'value' => $item['value'] ?? '',
+                    ];
+                }
+            }
+            return $items;
+        }
+
+        $items = [];
+        foreach ($fieldValues as $fieldId => $value) {
+            $items[] = [
+                'field_id' => (int) $fieldId,
+                'value' => $value,
+            ];
+        }
+        return $items;
     }
 
     public function destroy(Component $component): JsonResponse

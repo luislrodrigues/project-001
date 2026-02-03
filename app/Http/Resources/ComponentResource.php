@@ -26,6 +26,10 @@ class ComponentResource extends JsonResource
             'equipment' => [
                 'id' => $this->equipment->id ?? null,
                 'name' => $this->equipment->name ?? null,
+                'company' => $this->equipment?->company ? [
+                    'id' => $this->equipment->company->id ?? null,
+                    'name' => $this->equipment->company->name ?? null,
+                ] : null,
             ],
             'component_type_id' => $this->component_type_id,
             'component_type' => [

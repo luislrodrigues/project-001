@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [ReportController::class, 'update'])->middleware('permission:edit report');
         Route::delete('/{id}', [ReportController::class, 'destroy'])->middleware('permission:delete report');
         Route::get('/{id}/pdf', [ReportController::class, 'downloadPdf'])->middleware('permission:consult report');
+        Route::get('/{id}/email-recipients', [ReportController::class, 'getEmailRecipients'])->middleware('permission:consult report');
         Route::post('/export', [ReportController::class, 'export'])->middleware('permission:consult report');
         Route::post('/{id}/send-email', [ReportController::class, 'sendEmail'])->middleware('permission:consult report');
     });
@@ -72,7 +73,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->middleware('permission:inactive user');
     Route::get('/catalogs/roles', [UserController::class, 'getRoles']);
 
-    // Catálogos y opciones
+    // Catálogos y opciones (algunos con permission.or para formularios de creación)
+    Route::get('/catalogs/equipment', [EquipmentController::class, 'getEquipmentForSelect'])
+        ->middleware('permission.or:consult equipment,save equipment,consult report,save report');
+    Route::get('/catalogs/component-types', [ComponentTypeController::class, 'getComponentTypesForSelect'])
+        ->middleware('permission.or:consult equipment,save equipment');
     Route::get('/catalogs/conditions', [ReportController::class, 'getConditions']);
     Route::get('/catalogs/mechanism-fails', [ReportController::class, 'getMechanismFails']);
     Route::get('/catalogs/component-fails', [ReportController::class, 'getComponentFails']);
@@ -81,6 +86,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/catalogs/ubications', [EquipmentController::class, 'getUbications']);
     Route::get('/catalogs/brands', [ComponentController::class, 'getBrands']);
     Route::get('/catalogs/companies', [CompanyController::class, 'getCompanies']);
+    Route::get('/catalogs/company-segments', [CompanyController::class, 'getCompanySegments']);
     Route::get('/catalogs/users', [UserController::class, 'getUsers']);
 
     // CRUD para catálogos

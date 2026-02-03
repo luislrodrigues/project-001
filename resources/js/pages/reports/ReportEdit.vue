@@ -590,26 +590,34 @@ const showComponentFailModal = ref(false);
 const report = ref(null);
 
 onMounted(async () => {
-    await Promise.all([loadCatalogs(), loadReport()]);
+    loading.value = true;
+    try {
+        await loadCatalogs();
+        await loadReport();
+    } finally {
+        loading.value = false;
+    }
 });
 
 const loadCatalogs = async () => {
     try {
         const [equipmentsRes, conditionsRes, mechanismFailsRes, componentFailsRes, usersRes] = await Promise.all([
-            api.get('/equipment'),
+            api.get('/catalogs/equipment'),
             api.get('/catalogs/conditions'),
             api.get('/catalogs/mechanism-fails'),
             api.get('/catalogs/component-fails'),
             api.get('/catalogs/users'),
         ]);
 
-        equipments.value = equipmentsRes.data.data;
-        conditions.value = conditionsRes.data.data;
-        mechanismFails.value = mechanismFailsRes.data.data;
-        componentFails.value = componentFailsRes.data.data;
-        users.value = usersRes.data.data;
+        equipments.value = equipmentsRes.data?.data ?? equipmentsRes.data ?? [];
+        conditions.value = conditionsRes.data?.data ?? conditionsRes.data ?? [];
+        mechanismFails.value = mechanismFailsRes.data?.data ?? mechanismFailsRes.data ?? [];
+        componentFails.value = componentFailsRes.data?.data ?? componentFailsRes.data ?? [];
+        users.value = usersRes.data?.data ?? usersRes.data ?? [];
     } catch (error) {
-        Swal.fire('Error', 'Error al cargar catálogos', 'error');
+        console.error('Error al cargar catálogos:', error);
+        const msg = error.response?.data?.message || error.message || 'Error al cargar catálogos';
+        Swal.fire('Error', msg, 'error');
     }
 };
 
@@ -652,7 +660,6 @@ const handleItemSaved = (data) => {
 };
 
 const loadReport = async () => {
-    loading.value = true;
     try {
         const response = await api.get(`/reports/${route.params.id}`);
         report.value = response.data.data;
@@ -675,14 +682,14 @@ const loadReport = async () => {
         if (reportData.components && reportData.components.length > 0) {
             componentsList = reportData.components;
         }
-        
+
         const processedDiagnosis = {};
         if (reportData.diagnosis) {
             // Verificar si es un array indexado numéricamente
-            const isNumericArray = Array.isArray(reportData.diagnosis) && 
-                reportData.diagnosis.length > 0 && 
+            const isNumericArray = Array.isArray(reportData.diagnosis) &&
+                reportData.diagnosis.length > 0 &&
                 Object.keys(reportData.diagnosis).every((key, index) => key == index);
-            
+
             if (isNumericArray && componentsList.length > 0) {
                 // Mapear array indexado a IDs de componentes
                 reportData.diagnosis.forEach((diag, index) => {
@@ -714,15 +721,15 @@ const loadReport = async () => {
             }
         }
         form.diagnosis = processedDiagnosis;
-        
+
         // Normalizar recomendaciones con IDs como strings
         const processedRecommendations = {};
         if (reportData.recommendations && typeof reportData.recommendations === 'object') {
             // Verificar si es un array indexado numéricamente
-            const isNumericArray = Array.isArray(reportData.recommendations) && 
-                reportData.recommendations.length > 0 && 
+            const isNumericArray = Array.isArray(reportData.recommendations) &&
+                reportData.recommendations.length > 0 &&
                 Object.keys(reportData.recommendations).every((key, index) => key == index);
-            
+
             if (isNumericArray && componentsList.length > 0) {
                 // Mapear array indexado a IDs de componentes
                 reportData.recommendations.forEach((rec, index) => {
@@ -735,14 +742,14 @@ const loadReport = async () => {
                 // Es un objeto con claves de componente
                 Object.keys(reportData.recommendations).forEach(componentId => {
                     const normalizedId = String(componentId);
-                    processedRecommendations[normalizedId] = Array.isArray(reportData.recommendations[componentId]) 
-                        ? reportData.recommendations[componentId] 
+                    processedRecommendations[normalizedId] = Array.isArray(reportData.recommendations[componentId])
+                        ? reportData.recommendations[componentId]
                         : [];
                 });
             }
         }
         form.recommendations = processedRecommendations;
-        
+
         form.component_images = {}; // Inicializar para nuevas imágenes
         form.imagesToDelete = {}; // Para marcar imágenes a eliminar
 
@@ -784,8 +791,6 @@ const loadReport = async () => {
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el reporte', 'error');
         router.push({ name: 'reports' });
-    } finally {
-        loading.value = false;
     }
 };
 
@@ -795,11 +800,11 @@ const loadEquipmentData = async () => {
     try {
         const response = await api.get(`/equipment/${form.equipment_id}`);
         const equipment = response.data.data;
-        
+
         equipmentData.equipment_type = equipment.equipment_type?.name || '';
         equipmentData.location = equipment.ubication?.name || '';
         equipmentData.process = equipment.process?.name || '';
-        
+
         // Solo cargar componentes si no se cargaron ya del reporte
         if (equipment.components && (!components.value || components.value.length === 0)) {
             components.value = equipment.components;
@@ -854,7 +859,7 @@ const getComponentImages = (componentId) => {
     const normalizedId = String(componentId);
     // Obtener imágenes existentes del reporte original
     let reportDiagnosis = report.value?.diagnosis?.[normalizedId];
-    
+
     // Si no se encuentra por ID, intentar buscar por índice si diagnosis es un array
     if (!reportDiagnosis && Array.isArray(report.value?.diagnosis) && components.value) {
         const componentIndex = components.value.findIndex(c => String(c.id) === normalizedId);
@@ -862,18 +867,18 @@ const getComponentImages = (componentId) => {
             reportDiagnosis = report.value.diagnosis[componentIndex];
         }
     }
-    
+
     let images = [];
     if (reportDiagnosis && typeof reportDiagnosis === 'object' && reportDiagnosis.images) {
         images = reportDiagnosis.images;
     }
-    
+
     // Filtrar imágenes marcadas para eliminación
     if (form.imagesToDelete && form.imagesToDelete[normalizedId]) {
         const imagesToDelete = form.imagesToDelete[normalizedId];
         images = images.filter(img => !imagesToDelete.includes(img));
     }
-    
+
     return images;
 };
 
@@ -995,7 +1000,7 @@ const updateReport = async () => {
                 formData.append(key, form[key]);
             }
         });
-        
+
         // Enviar también un JSON con la estructura de imágenes para referencia
         const componentImagesStructure = {};
         Object.keys(form.component_images).forEach(componentId => {

@@ -119,7 +119,7 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div
-                                v-for="field in additionalFields"
+                                v-for="(field, index) in additionalFields"
                                 :key="field.id"
                                 class="bg-gray-50 rounded-lg p-4"
                             >
@@ -130,11 +130,11 @@
                                     <span v-if="field.is_required" class="text-red-500 ml-1">*</span>
                                 </label>
 
-                                <!-- Mismos campos que Create -->
+                                <!-- Valores por índice para que cada input coincida con su campo -->
                                 <select
                                     v-if="field.type === 'select' || field.type === 'multiselect'"
                                     :id="`field_${field.id}`"
-                                    v-model="form.field_values[field.id]"
+                                    v-model="form.additionalFieldValues[index]"
                                     :multiple="field.type === 'multiselect'"
                                     :required="field.is_required"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
@@ -148,7 +148,7 @@
                                 <select
                                     v-else-if="field.type === 'boolean'"
                                     :id="`field_${field.id}`"
-                                    v-model="form.field_values[field.id]"
+                                    v-model="form.additionalFieldValues[index]"
                                     :required="field.is_required"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                                 >
@@ -161,7 +161,7 @@
                                     v-else-if="field.type === 'date' || field.type === 'datetime'"
                                     :type="field.type === 'date' ? 'date' : 'datetime-local'"
                                     :id="`field_${field.id}`"
-                                    v-model="form.field_values[field.id]"
+                                    v-model="form.additionalFieldValues[index]"
                                     :required="field.is_required"
                                     :placeholder="field.placeholder || `Ingresar ${field.name}`"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
@@ -170,7 +170,7 @@
                                 <textarea
                                     v-else-if="field.type === 'textarea'"
                                     :id="`field_${field.id}`"
-                                    v-model="form.field_values[field.id]"
+                                    v-model="form.additionalFieldValues[index]"
                                     :required="field.is_required"
                                     :placeholder="field.placeholder || `Ingresar ${field.name}`"
                                     rows="3"
@@ -181,7 +181,7 @@
                                     v-else
                                     :type="getInputType(field.type)"
                                     :id="`field_${field.id}`"
-                                    v-model="form.field_values[field.id]"
+                                    v-model="form.additionalFieldValues[index]"
                                     :required="field.is_required"
                                     :placeholder="field.placeholder || `Ingresar ${field.name}`"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
@@ -248,6 +248,8 @@ const form = reactive({
     component_type_id: '',
     brand_id: '',
     field_values: {},
+    /** Valores por índice (mismo orden que additionalFields) para evitar cruce de campos */
+    additionalFieldValues: [],
 });
 
 const equipments = ref([]);
@@ -260,22 +262,30 @@ const errors = ref({});
 const showBrandModal = ref(false);
 
 onMounted(async () => {
-    await Promise.all([loadCatalogs(), loadComponent()]);
+    loading.value = true;
+    try {
+        await loadCatalogs();
+        await loadComponent();
+    } finally {
+        loading.value = false;
+    }
 });
 
 const loadCatalogs = async () => {
     try {
         const [equipmentsRes, componentTypesRes, brandsRes] = await Promise.all([
-            api.get('/equipment'),
-            api.get('/component-types'),
+            api.get('/catalogs/equipment'),
+            api.get('/catalogs/component-types'),
             api.get('/catalogs/brands'),
         ]);
 
-        equipments.value = equipmentsRes.data.data;
-        componentTypes.value = componentTypesRes.data.data;
-        brands.value = brandsRes.data.data;
+        equipments.value = equipmentsRes.data?.data ?? equipmentsRes.data ?? [];
+        componentTypes.value = componentTypesRes.data?.data ?? componentTypesRes.data ?? [];
+        brands.value = brandsRes.data?.data ?? brandsRes.data ?? [];
     } catch (error) {
-        Swal.fire('Error', 'Error al cargar catálogos', 'error');
+        console.error('Error al cargar catálogos:', error);
+        const msg = error.response?.data?.message || error.message || 'Error al cargar catálogos';
+        Swal.fire('Error', msg, 'error');
     }
 };
 
@@ -298,21 +308,36 @@ const loadComponent = async () => {
 
         await loadComponentTypeFields();
 
+        // Cargar valores siempre por field_id (no por índice) para evitar cruces
         if (component.field_values && typeof component.field_values === 'object') {
-            Object.keys(component.field_values).forEach((fieldId) => {
-                const item = component.field_values[fieldId];
-                const val = item && typeof item === 'object' && 'value' in item
-                    ? (item.value ?? '')
-                    : (typeof item === 'string' ? item : '');
-                const key = String(fieldId);
-                form.field_values[key] = val;
-            });
+            const fv = component.field_values;
+            if (Array.isArray(fv)) {
+                // Si viene como array [{ field_id, value }, ...] usar field_id como clave (no el índice)
+                fv.forEach((item) => {
+                    if (item && 'field_id' in item) {
+                        const fieldId = String(item.field_id);
+                        const val = item.value != null && item.value !== undefined ? item.value : '';
+                        form.field_values[fieldId] = val;
+                    }
+                });
+            } else {
+                // Si viene como objeto { "1": { value: "x" }, "2": { value: "y" } }
+                Object.keys(fv).forEach((key) => {
+                    const item = fv[key];
+                    const val = item && typeof item === 'object' && 'value' in item
+                        ? (item.value ?? '')
+                        : (typeof item === 'string' ? item : '');
+                    form.field_values[String(key)] = val;
+                });
+            }
         }
+        // Sincronizar array por índice (orden de la lista) para que cada input use su posición
+        form.additionalFieldValues = additionalFields.value.map((f) =>
+            form.field_values[String(f.id)] ?? form.field_values[f.id] ?? ''
+        );
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el componente', 'error');
         router.push({ name: 'components' });
-    } finally {
-        loading.value = false;
     }
 };
 
@@ -320,19 +345,24 @@ const loadComponentTypeFields = async () => {
     if (!form.component_type_id) {
         additionalFields.value = [];
         form.field_values = {};
+        form.additionalFieldValues = [];
         return;
     }
 
     try {
         const response = await api.get(`/components/type/${form.component_type_id}/fields`);
         additionalFields.value = response.data.data;
-        // Inicializar field_values si no existen
+        // Inicializar field_values por id
         additionalFields.value.forEach((field) => {
             const key = String(field.id);
             if (form.field_values[key] === undefined || form.field_values[key] === null) {
                 form.field_values[key] = '';
             }
         });
+        // Array por índice: valor en posición i corresponde al campo additionalFields[i]
+        form.additionalFieldValues = additionalFields.value.map((f) =>
+            form.field_values[String(f.id)] ?? form.field_values[f.id] ?? ''
+        );
     } catch (error) {
         Swal.fire('Error', 'Error al cargar campos del tipo de componente', 'error');
     }
@@ -369,7 +399,23 @@ const updateComponent = async () => {
     errors.value = {};
 
     try {
-        await api.post(`/components/${route.params.id}`, form);
+        // Enviar array de { field_id, value } para que el backend no dependa de claves de objeto
+        const field_values = additionalFields.value.map((field, index) => {
+            const val = form.additionalFieldValues[index];
+            return {
+                field_id: field.id,
+                value: val === null || val === undefined ? '' : val,
+            };
+        });
+
+        const payload = {
+            equipment_id: form.equipment_id,
+            component_type_id: form.component_type_id,
+            brand_id: form.brand_id,
+            field_values,
+        };
+
+        await api.post(`/components/${route.params.id}`, payload);
         Swal.fire('Éxito', 'Componente actualizado correctamente', 'success');
         router.push({ name: 'components' });
     } catch (error) {

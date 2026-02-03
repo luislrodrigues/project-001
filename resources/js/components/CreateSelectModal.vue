@@ -62,23 +62,45 @@
                                 <i class="fas fa-times text-xs"></i>
                             </button>
                         </div>
-                        <div class="bg-white rounded-lg p-3 shadow-sm">
-                            <label class="flex items-center mb-1.5 text-xs font-medium text-gray-700">
-                                <i class="fas fa-tag mr-1.5 text-blue-600 text-xs"></i>
-                                Nombre
-                                <span class="text-red-500 ml-1">*</span>
-                            </label>
-                            <input
-                                v-model="valueNew"
-                                type="text"
-                                @keydown.enter.prevent="saveField"
-                                class="w-full bg-white border-2 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 transition-all duration-200"
-                                :placeholder="`Ejemplo: Nombre del ${label.toLowerCase()}`"
-                            />
-                            <p v-if="errors.valueNew" class="mt-1.5 text-xs text-red-600">
-                                <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
-                                {{ errors.valueNew }}
-                            </p>
+                        <div class="bg-white rounded-lg p-3 shadow-sm space-y-3">
+                            <div>
+                                <label class="flex items-center mb-1.5 text-xs font-medium text-gray-700">
+                                    <i class="fas fa-tag mr-1.5 text-blue-600 text-xs"></i>
+                                    Nombre
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    v-model="valueNew"
+                                    type="text"
+                                    @keydown.enter.prevent="saveField"
+                                    class="w-full bg-white border-2 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 transition-all duration-200"
+                                    :placeholder="`Ejemplo: Nombre del ${label.toLowerCase()}`"
+                                />
+                                <p v-if="errors.valueNew" class="mt-1.5 text-xs text-red-600">
+                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
+                                    {{ errors.valueNew }}
+                                </p>
+                            </div>
+                            <div v-if="field === 'condition'">
+                                <label class="flex items-center mb-1.5 text-xs font-medium text-gray-700">
+                                    <i class="fas fa-palette mr-1.5 text-blue-600 text-xs"></i>
+                                    Color
+                                </label>
+                                <div class="flex gap-2 items-center">
+                                    <input
+                                        v-model="valueColor"
+                                        type="color"
+                                        class="h-9 w-14 cursor-pointer rounded border border-gray-300"
+                                        :title="valueColor"
+                                    />
+                                    <input
+                                        v-model="valueColor"
+                                        type="text"
+                                        placeholder="#22c55e o green"
+                                        class="flex-1 bg-white border-2 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-3 py-2"
+                                    />
+                                </div>
+                            </div>
                         </div>
                         <div class="flex justify-end mt-3">
                             <button
@@ -121,7 +143,12 @@
                                     class="flex items-center justify-between bg-gray-50 rounded-lg p-2.5 border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
                                 >
                                     <div class="flex items-center space-x-2 flex-1">
-                                        <div class="bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
+                                        <div
+                                            v-if="field === 'condition' && item.color"
+                                            class="rounded-full w-5 h-5 flex-shrink-0 border border-gray-300"
+                                            :style="{ backgroundColor: item.color }"
+                                        ></div>
+                                        <div v-else class="bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
                                             <i class="fas fa-tag text-blue-600 text-xs"></i>
                                         </div>
                                         <span class="text-xs font-medium text-gray-900 truncate">
@@ -212,6 +239,7 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'item-saved', 'options-updated']);
 
 const valueNew = ref('');
+const valueColor = ref('#22c55e');
 const editingId = ref(null);
 const search = ref('');
 const items = ref([]);
@@ -221,6 +249,7 @@ const errors = ref({});
 
 const endpointMap = {
     'brand': '/catalogs/brands',
+    'company_segment': '/catalogs/company-segments',
     'equipment_type': '/catalogs/equipment-types',
     'process': '/catalogs/processes',
     'ubication': '/catalogs/ubications',
@@ -231,6 +260,7 @@ const endpointMap = {
 
 const createEndpointMap = {
     'brand': 'brands',
+    'company_segment': 'company-segments',
     'equipment_type': 'equipment-types',
     'process': 'processes',
     'ubication': 'ubications',
@@ -273,6 +303,7 @@ const startEdit = (id) => {
     if (item) {
         editingId.value = id;
         valueNew.value = item.name;
+        valueColor.value = item.color || '#22c55e';
         errors.value = {};
     }
 };
@@ -280,6 +311,7 @@ const startEdit = (id) => {
 const cancelEdit = () => {
     editingId.value = null;
     valueNew.value = '';
+    valueColor.value = '#22c55e';
     errors.value = {};
 };
 
@@ -298,30 +330,30 @@ const saveField = async () => {
         if (!catalogName && props.apiEndpoint) {
             catalogName = props.apiEndpoint.replace('/catalogs/', '').replace(/^\//, '');
         }
-        
+
         if (!catalogName) {
             throw new Error('No se pudo determinar el nombre del catálogo');
         }
-        
+
         const endpoint = `/catalogs/${catalogName}`;
-        
+
+        const payload = { name: valueNew.value.trim() };
+        if (catalogName === 'conditions' && valueColor.value) {
+            payload.color = valueColor.value.trim();
+        }
         if (editingId.value) {
-            await api.put(`${endpoint}/${editingId.value}`, {
-                name: valueNew.value.trim()
-            });
+            await api.put(`${endpoint}/${editingId.value}`, payload);
             Swal.fire('Éxito', 'Registro actualizado correctamente', 'success');
         } else {
-            const response = await api.post(endpoint, {
-                name: valueNew.value.trim()
-            });
+            const response = await api.post(endpoint, payload);
             Swal.fire('Éxito', 'Registro creado correctamente', 'success');
-            
+
             // Emitir evento con el ID del nuevo registro
             emit('item-saved', {
                 field: props.field,
                 id: response.data.data?.id || response.data.id
             });
-            
+
             closeModal();
         }
 
@@ -358,11 +390,11 @@ const deleteItem = async (id) => {
             if (!catalogName && props.apiEndpoint) {
                 catalogName = props.apiEndpoint.replace('/catalogs/', '').replace(/^\//, '');
             }
-            
+
             if (!catalogName) {
                 throw new Error('No se pudo determinar el nombre del catálogo');
             }
-            
+
             const endpoint = `/catalogs/${catalogName}`;
             await api.delete(`${endpoint}/${id}`);
             Swal.fire('Eliminado', 'Registro eliminado correctamente', 'success');
@@ -376,6 +408,7 @@ const deleteItem = async (id) => {
 
 const resetForm = () => {
     valueNew.value = '';
+    valueColor.value = '#22c55e';
     editingId.value = null;
     search.value = '';
     errors.value = {};

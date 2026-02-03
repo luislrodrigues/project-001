@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Helpers\ApiResponse;
 use App\Models\Brand;
+use App\Models\CompanySegment;
 use App\Models\ComponentFail;
 use App\Models\Condition;
 use App\Models\EquipmentType;
@@ -19,6 +20,7 @@ class CatalogController extends Controller
 {
     private $modelMap = [
         'brands' => Brand::class,
+        'company-segments' => CompanySegment::class,
         'equipment-types' => EquipmentType::class,
         'processes' => Process::class,
         'ubications' => Ubication::class,
@@ -38,9 +40,11 @@ class CatalogController extends Controller
             $uniqueRule .= ',NULL,id,deleted_at,NULL';
         }
 
-        $validator = Validator::make($request->all(), [
-            'name' => $uniqueRule,
-        ]);
+        $rules = ['name' => $uniqueRule];
+        if ($catalog === 'conditions') {
+            $rules['color'] = 'nullable|string|max:50';
+        }
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return ApiResponse::validationError($validator->errors());
@@ -49,11 +53,13 @@ class CatalogController extends Controller
         try {
             $modelClass = $this->modelMap[$catalog];
             $data = ['name' => ucfirst(trim($request->name))];
-            
+            if ($catalog === 'conditions' && $request->has('color')) {
+                $data['color'] = $request->color ? trim($request->color) : null;
+            }
             if (in_array('status', (new $modelClass)->getFillable())) {
                 $data['status'] = 'active';
             }
-            
+
             $item = $modelClass::create($data);
 
             return ApiResponse::success($item, 'Registro creado correctamente', 201);
@@ -73,9 +79,11 @@ class CatalogController extends Controller
             $uniqueRule .= ',id,deleted_at,NULL';
         }
 
-        $validator = Validator::make($request->all(), [
-            'name' => $uniqueRule,
-        ]);
+        $rules = ['name' => $uniqueRule];
+        if ($catalog === 'conditions') {
+            $rules['color'] = 'nullable|string|max:50';
+        }
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return ApiResponse::validationError($validator->errors());
@@ -84,9 +92,11 @@ class CatalogController extends Controller
         try {
             $modelClass = $this->modelMap[$catalog];
             $item = $modelClass::findOrFail($id);
-            $item->update([
-                'name' => ucfirst(trim($request->name)),
-            ]);
+            $updateData = ['name' => ucfirst(trim($request->name))];
+            if ($catalog === 'conditions') {
+                $updateData['color'] = $request->color ? trim($request->color) : null;
+            }
+            $item->update($updateData);
 
             return ApiResponse::success($item, 'Registro actualizado correctamente');
         } catch (\Exception $e) {
@@ -103,10 +113,10 @@ class CatalogController extends Controller
         try {
             $modelClass = $this->modelMap[$catalog];
             $item = $modelClass::findOrFail($id);
-            
+
             $traits = class_uses_recursive($modelClass);
             $usesSoftDeletes = in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, $traits);
-            
+
             if ($usesSoftDeletes) {
                 $item->delete();
             } else {
@@ -129,6 +139,7 @@ class CatalogController extends Controller
     {
         $tableMap = [
             'brands' => 'brands',
+            'company-segments' => 'company_segments',
             'equipment-types' => 'equipment_types',
             'processes' => 'processes',
             'ubications' => 'ubications',

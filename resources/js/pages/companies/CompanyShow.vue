@@ -56,6 +56,16 @@
 
                     <div class="bg-gray-50 rounded-lg p-4">
                         <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                            <i class="fas fa-chart-pie mr-2 text-blue-600"></i>
+                            Segmento de la empresa
+                        </label>
+                        <div class="text-lg font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                            {{ company.company_segment?.name ?? 'Sin segmento' }}
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                             <i class="fas fa-info-circle mr-2 text-blue-600"></i>
                             Estado
                         </label>
@@ -66,26 +76,6 @@
                             >
                                 {{ company.status === 'active' ? 'Activo' : 'Inactivo' }}
                             </span>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 rounded-lg p-4 md:col-span-2">
-                        <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                            <i class="fas fa-envelope mr-2 text-blue-600"></i>
-                            Correos Electrónicos
-                        </label>
-                        <div class="bg-white px-4 py-3 rounded-lg border border-gray-200">
-                            <div v-if="company.emails && company.emails.length > 0" class="space-y-2">
-                                <div
-                                    v-for="(email, index) in company.emails"
-                                    :key="index"
-                                    class="flex items-center text-gray-900"
-                                >
-                                    <i class="fas fa-envelope text-gray-400 mr-2"></i>
-                                    {{ email }}
-                                </div>
-                            </div>
-                            <p v-else class="text-gray-500 italic">No hay correos registrados</p>
                         </div>
                     </div>
                 </div>
