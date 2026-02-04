@@ -284,15 +284,25 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Marca <span class="text-red-500">*</span></label>
-                                        <select
-                                            v-model="comp.brand_id"
-                                            class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
-                                        >
-                                            <option value="">Seleccione</option>
-                                            <option v-for="brand in brands" :key="brand.id" :value="brand.id">
-                                                {{ brand.name }}
-                                            </option>
-                                        </select>
+                                        <div class="flex space-x-2 items-stretch">
+                                            <select
+                                                v-model="comp.brand_id"
+                                                class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
+                                            >
+                                                <option value="">Seleccione</option>
+                                                <option v-for="brand in brands" :key="brand.id" :value="brand.id">
+                                                    {{ brand.name }}
+                                                </option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                @click="openBrandModal(compIndex)"
+                                                class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                                title="Gestionar marcas"
+                                            >
+                                                <i class="fas fa-cog text-sm"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <!-- Atributos del tipo de componente -->
@@ -399,6 +409,14 @@
             @item-saved="handleItemSaved"
             @options-updated="loadUbications"
         />
+        <CreateSelectModal
+            v-model:show="showBrandModal"
+            field="brand"
+            label="Marca"
+            api-endpoint="/catalogs/brands"
+            @item-saved="handleBrandSaved"
+            @options-updated="loadBrands"
+        />
     </div>
 </template>
 
@@ -438,6 +456,8 @@ const errors = ref({});
 const showEquipmentTypeModal = ref(false);
 const showProcessModal = ref(false);
 const showUbicationModal = ref(false);
+const showBrandModal = ref(false);
+const currentComponentIndexForBrand = ref(null);
 
 onMounted(async () => {
     await loadCatalogs();
@@ -539,6 +559,31 @@ const handleItemSaved = (data) => {
         form.process_id = data.id;
     } else if (data.field === 'ubication' && data.id) {
         form.ubication_id = data.id;
+    }
+};
+
+const openBrandModal = (compIndex) => {
+    currentComponentIndexForBrand.value = compIndex;
+    showBrandModal.value = true;
+};
+
+const handleBrandSaved = (data) => {
+    if (data.field === 'brand' && data.id && currentComponentIndexForBrand.value !== null) {
+        const comp = form.components[currentComponentIndexForBrand.value];
+        if (comp) {
+            comp.brand_id = data.id;
+        }
+    }
+    currentComponentIndexForBrand.value = null;
+    loadBrands();
+};
+
+const loadBrands = async () => {
+    try {
+        const response = await api.get('/catalogs/brands');
+        brands.value = response.data?.data ?? response.data ?? [];
+    } catch (error) {
+        console.error('Error al cargar marcas:', error);
     }
 };
 
