@@ -169,8 +169,60 @@ class EquipmentController extends Controller
             }
             $equipment->update($data);
 
+            $componentsInput = $request->input('components');
+            if (is_string($componentsInput)) {
+                $componentsInput = json_decode($componentsInput, true);
+            }
+            if (is_array($componentsInput)) {
+                foreach ($equipment->components as $oldComponent) {
+                    ComponentTypeValue::where('component_id', $oldComponent->id)->delete();
+                }
+                $equipment->components()->delete();
+                foreach ($componentsInput as $item) {
+                    $typeId = isset($item['component_type_id']) ? (int) $item['component_type_id'] : 0;
+                    $brandId = isset($item['brand_id']) ? (int) $item['brand_id'] : 0;
+                    if ($typeId <= 0 || $brandId <= 0) {
+                        continue;
+                    }
+                    $component = $equipment->components()->create([
+                        'component_type_id' => $typeId,
+                        'brand_id' => $brandId,
+                        'status' => 'active',
+                    ]);
+                    $fieldValues = $item['field_values'] ?? [];
+                    if (is_array($fieldValues)) {
+                        foreach ($fieldValues as $fieldId => $value) {
+                            $fieldId = (int) $fieldId;
+                            if ($fieldId <= 0 || $value === '' || $value === null) {
+                                continue;
+                            }
+                            $field = ComponentTypeField::find($fieldId);
+                            if (!$field) {
+                                continue;
+                            }
+                            $optionId = null;
+                            $storedValue = is_scalar($value) ? (string) $value : '';
+                            if ($field->hasOptions()) {
+                                $option = $field->options()->where('value', $storedValue)->first();
+                                if ($option) {
+                                    $optionId = $option->id;
+                                    $storedValue = $option->value;
+                                }
+                            }
+                            ComponentTypeValue::create([
+                                'component_id' => $component->id,
+                                'component_type_field_id' => $fieldId,
+                                'option_id' => $optionId,
+                                'value' => $storedValue,
+                                'raw_value' => is_scalar($value) ? (string) $value : '',
+                            ]);
+                        }
+                    }
+                }
+            }
+
             return ApiResponse::success(
-                new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication'])),
+                new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication', 'components.componentType', 'components.brand', 'components.fieldValues'])),
                 'Equipo actualizado correctamente'
             );
         } catch (\Exception $e) {

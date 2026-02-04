@@ -224,6 +224,140 @@
                         </div>
                     </div>
 
+                    <!-- Componentes del equipo -->
+                    <div class="pt-6 border-t border-gray-200">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-200">
+                            <div class="flex items-center">
+                                <i class="fas fa-puzzle-piece text-blue-600 mr-2"></i>
+                                <h4 class="text-lg font-semibold text-gray-800">Componentes del equipo</h4>
+                            </div>
+                            <button
+                                type="button"
+                                @click="addComponent"
+                                class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm"
+                            >
+                                <i class="fas fa-plus mr-2"></i>
+                                Agregar componente
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">Opcional. Añade o modifica los componentes que forman parte de este equipo.</p>
+
+                        <div v-if="form.components.length === 0" class="bg-gray-50 border border-dashed border-gray-200 rounded-lg p-6 text-center text-gray-500">
+                            <i class="fas fa-puzzle-piece text-2xl mb-2 text-gray-400"></i>
+                            <p>No hay componentes agregados. Haz clic en "Agregar componente" para añadir uno.</p>
+                        </div>
+
+                        <div v-else class="space-y-6">
+                            <div
+                                v-for="(comp, compIndex) in form.components"
+                                :key="compIndex"
+                                class="bg-gray-50 rounded-lg border border-gray-200 p-4"
+                            >
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="font-medium text-gray-800">Componente #{{ compIndex + 1 }}</span>
+                                    <button
+                                        type="button"
+                                        @click="removeComponent(compIndex)"
+                                        class="text-red-600 hover:text-red-800 p-1 rounded"
+                                        title="Quitar componente"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de componente <span class="text-red-500">*</span></label>
+                                        <select
+                                            v-model="comp.component_type_id"
+                                            @change="loadComponentTypeFieldsForRow(compIndex)"
+                                            class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
+                                        >
+                                            <option value="">Seleccione</option>
+                                            <option v-for="type in componentTypes" :key="type.id" :value="type.id">
+                                                {{ type.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Marca <span class="text-red-500">*</span></label>
+                                        <div class="flex space-x-2 items-stretch">
+                                            <select
+                                                v-model="comp.brand_id"
+                                                class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
+                                            >
+                                                <option value="">Seleccione</option>
+                                                <option v-for="brand in brands" :key="brand.id" :value="brand.id">
+                                                    {{ brand.name }}
+                                                </option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                @click="openBrandModal(compIndex)"
+                                                class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                                title="Gestionar marcas"
+                                            >
+                                                <i class="fas fa-cog text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-if="comp._fields && comp._fields.length > 0" class="pt-4 border-t border-gray-200">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div
+                                            v-for="field in comp._fields"
+                                            :key="field.id"
+                                            class="bg-white rounded-lg p-3 border border-gray-200"
+                                        >
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                {{ field.name }}
+                                                <span v-if="field.unit" class="text-xs text-gray-500">({{ field.unit }})</span>
+                                                <span v-if="field.is_required" class="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                v-if="field.type === 'select' || field.type === 'multiselect'"
+                                                v-model="comp.field_values[field.id]"
+                                                :multiple="field.type === 'multiselect'"
+                                                class="block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                                            >
+                                                <option value="">Seleccione</option>
+                                                <option v-for="opt in (field.options || [])" :key="opt.id" :value="opt.value">
+                                                    {{ opt.label || opt.value }}
+                                                </option>
+                                            </select>
+                                            <select
+                                                v-else-if="field.type === 'boolean'"
+                                                v-model="comp.field_values[field.id]"
+                                                class="block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                                            >
+                                                <option value="">Seleccione</option>
+                                                <option value="1">Sí</option>
+                                                <option value="0">No</option>
+                                            </select>
+                                            <input
+                                                v-else-if="field.type === 'date' || field.type === 'datetime'"
+                                                :type="field.type === 'date' ? 'date' : 'datetime-local'"
+                                                v-model="comp.field_values[field.id]"
+                                                class="block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                                            />
+                                            <textarea
+                                                v-else-if="field.type === 'textarea'"
+                                                v-model="comp.field_values[field.id]"
+                                                rows="2"
+                                                class="block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                                            />
+                                            <input
+                                                v-else
+                                                :type="field.type === 'numeric' ? 'number' : 'text'"
+                                                v-model="comp.field_values[field.id]"
+                                                class="block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Footer -->
                     <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <router-link
@@ -247,7 +381,8 @@
 
         <!-- Modales para gestionar opciones -->
         <CreateSelectModal
-            v-model:show="showEquipmentTypeModal"
+            :show="showEquipmentTypeModal"
+            @update:show="showEquipmentTypeModal = $event"
             field="equipment_type"
             label="Tipo Equipo"
             api-endpoint="/catalogs/equipment-types"
@@ -255,7 +390,8 @@
             @options-updated="loadEquipmentTypes"
         />
         <CreateSelectModal
-            v-model:show="showProcessModal"
+            :show="showProcessModal"
+            @update:show="showProcessModal = $event"
             field="process"
             label="Proceso"
             api-endpoint="/catalogs/processes"
@@ -263,12 +399,22 @@
             @options-updated="loadProcesses"
         />
         <CreateSelectModal
-            v-model:show="showUbicationModal"
+            :show="showUbicationModal"
+            @update:show="showUbicationModal = $event"
             field="ubication"
             label="Ubicación"
             api-endpoint="/catalogs/ubications"
             @item-saved="handleItemSaved"
             @options-updated="loadUbications"
+        />
+        <CreateSelectModal
+            :show="showBrandModal"
+            @update:show="showBrandModal = $event"
+            field="brand"
+            label="Marca"
+            api-endpoint="/catalogs/brands"
+            @item-saved="handleBrandSaved"
+            @options-updated="loadBrands"
         />
     </div>
 </template>
@@ -294,18 +440,23 @@ const form = reactive({
     tag: '',
     description: '',
     company_id: '',
+    components: [],
 });
 
 const equipmentTypes = ref([]);
 const processes = ref([]);
 const ubications = ref([]);
 const companies = ref([]);
+const componentTypes = ref([]);
+const brands = ref([]);
 const loading = ref(true);
 const saving = ref(false);
 const errors = ref({});
 const showEquipmentTypeModal = ref(false);
 const showProcessModal = ref(false);
 const showUbicationModal = ref(false);
+const showBrandModal = ref(false);
+const currentComponentIndexForBrand = ref(null);
 const imageUrl = ref(null);
 const imageFile = ref(null);
 
@@ -321,17 +472,21 @@ onMounted(async () => {
 
 const loadCatalogs = async () => {
     try {
-        const [equipmentTypesRes, processesRes, ubicationsRes, companiesRes] = await Promise.all([
+        const [equipmentTypesRes, processesRes, ubicationsRes, companiesRes, componentTypesRes, brandsRes] = await Promise.all([
             api.get('/catalogs/equipment-types'),
             api.get('/catalogs/processes'),
             api.get('/catalogs/ubications'),
             api.get('/catalogs/companies'),
+            api.get('/catalogs/component-types'),
+            api.get('/catalogs/brands'),
         ]);
 
-        equipmentTypes.value = equipmentTypesRes.data.data;
-        processes.value = processesRes.data.data;
-        ubications.value = ubicationsRes.data.data;
-        companies.value = companiesRes.data.data;
+        equipmentTypes.value = equipmentTypesRes.data?.data ?? equipmentTypesRes.data ?? [];
+        processes.value = processesRes.data?.data ?? processesRes.data ?? [];
+        ubications.value = ubicationsRes.data?.data ?? ubicationsRes.data ?? [];
+        companies.value = companiesRes.data?.data ?? companiesRes.data ?? [];
+        componentTypes.value = componentTypesRes.data?.data ?? componentTypesRes.data ?? [];
+        brands.value = brandsRes.data?.data ?? brandsRes.data ?? [];
     } catch (error) {
         Swal.fire('Error', 'Error al cargar catálogos', 'error');
     }
@@ -340,27 +495,76 @@ const loadCatalogs = async () => {
 const loadEquipment = async () => {
     try {
         const response = await api.get(`/equipment/${route.params.id}`);
-        const equipment = response.data.data;
+        const equipment = response.data?.data ?? response.data;
 
-        form.name = equipment.name;
-        form.equipment_type_id = equipment.equipment_type?.id || '';
-        form.process_id = equipment.process?.id || '';
-        form.ubication_id = equipment.ubication?.id || '';
-        form.code = equipment.code || '';
-        form.tag = equipment.tag || '';
-        form.description = equipment.description || '';
-        form.company_id = equipment.company?.id || '';
+        form.name = equipment.name ?? '';
+        form.equipment_type_id = equipment.equipment_type_id ?? (equipment.equipment_type?.id ?? '');
+        form.process_id = equipment.process_id ?? (equipment.process?.id ?? '');
+        form.ubication_id = equipment.ubication_id ?? (equipment.ubication?.id ?? '');
+        form.code = equipment.code ?? '';
+        form.tag = equipment.tag ?? '';
+        form.description = equipment.description ?? '';
+        form.company_id = equipment.company_id ?? (equipment.company?.id ?? '');
         imageUrl.value = equipment.image_url || null;
+
+        const components = equipment.components ?? [];
+        const savedFieldValues = components.map((c) => ({ ...(c.field_values || {}) }));
+        form.components = components.map((c) => ({
+            component_type_id: c.component_type_id ?? (c.component_type?.id ?? ''),
+            brand_id: c.brand_id ?? (c.brand?.id ?? ''),
+            field_values: {},
+            _fields: [],
+        }));
+        for (let i = 0; i < form.components.length; i++) {
+            await loadComponentTypeFieldsForRow(i);
+            const defaults = form.components[i].field_values || {};
+            form.components[i].field_values = { ...defaults, ...savedFieldValues[i] };
+        }
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el equipo', 'error');
         router.push({ name: 'equipment' });
     }
 };
 
+const addComponent = () => {
+    form.components.push({
+        component_type_id: '',
+        brand_id: '',
+        field_values: {},
+        _fields: [],
+    });
+};
+
+const removeComponent = (index) => {
+    form.components.splice(index, 1);
+};
+
+const loadComponentTypeFieldsForRow = async (index) => {
+    const comp = form.components[index];
+    if (!comp || !comp.component_type_id) {
+        comp._fields = [];
+        comp.field_values = {};
+        return;
+    }
+    try {
+        const response = await api.get(`/components/type/${comp.component_type_id}/fields`);
+        const fields = response.data?.data ?? response.data ?? [];
+        comp._fields = fields;
+        comp.field_values = {};
+        fields.forEach((f) => {
+            comp.field_values[f.id] = f.type === 'multiselect' ? (comp.field_values[f.id] || []) : (comp.field_values[f.id] ?? '');
+        });
+    } catch (error) {
+        console.error('Error al cargar campos del tipo de componente:', error);
+        comp._fields = [];
+        comp.field_values = {};
+    }
+};
+
 const loadEquipmentTypes = async () => {
     try {
         const response = await api.get('/catalogs/equipment-types');
-        equipmentTypes.value = response.data.data;
+        equipmentTypes.value = response.data?.data ?? response.data ?? [];
     } catch (error) {
         console.error('Error al cargar tipos de equipo:', error);
     }
@@ -369,7 +573,7 @@ const loadEquipmentTypes = async () => {
 const loadProcesses = async () => {
     try {
         const response = await api.get('/catalogs/processes');
-        processes.value = response.data.data;
+        processes.value = response.data?.data ?? response.data ?? [];
     } catch (error) {
         console.error('Error al cargar procesos:', error);
     }
@@ -378,9 +582,18 @@ const loadProcesses = async () => {
 const loadUbications = async () => {
     try {
         const response = await api.get('/catalogs/ubications');
-        ubications.value = response.data.data;
+        ubications.value = response.data?.data ?? response.data ?? [];
     } catch (error) {
         console.error('Error al cargar ubicaciones:', error);
+    }
+};
+
+const loadBrands = async () => {
+    try {
+        const response = await api.get('/catalogs/brands');
+        brands.value = response.data?.data ?? response.data ?? [];
+    } catch (error) {
+        console.error('Error al cargar marcas:', error);
     }
 };
 
@@ -392,6 +605,22 @@ const handleItemSaved = (data) => {
     } else if (data.field === 'ubication' && data.id) {
         form.ubication_id = data.id;
     }
+};
+
+const openBrandModal = (compIndex) => {
+    currentComponentIndexForBrand.value = compIndex;
+    showBrandModal.value = true;
+};
+
+const handleBrandSaved = (data) => {
+    if (data.field === 'brand' && data.id && currentComponentIndexForBrand.value !== null) {
+        const comp = form.components[currentComponentIndexForBrand.value];
+        if (comp) {
+            comp.brand_id = data.id;
+        }
+    }
+    currentComponentIndexForBrand.value = null;
+    loadBrands();
 };
 
 const onImageChange = (event) => {
@@ -420,6 +649,14 @@ const updateEquipment = async () => {
         if (imageFile.value) {
             formData.append('image', imageFile.value);
         }
+        const componentsPayload = form.components
+            .filter((c) => c.component_type_id && c.brand_id)
+            .map((c) => ({
+                component_type_id: c.component_type_id,
+                brand_id: c.brand_id,
+                field_values: c.field_values || {},
+            }));
+        formData.append('components', JSON.stringify(componentsPayload));
         await api.post(`/equipment/${route.params.id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });

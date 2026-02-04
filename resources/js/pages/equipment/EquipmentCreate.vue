@@ -33,6 +33,47 @@
             <!-- Form -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <form @submit.prevent="saveEquipment" class="space-y-6">
+                    <!-- Copiar desde equipo existente -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center mb-3 pb-2 border-b border-blue-200">
+                            <i class="fas fa-copy text-blue-600 mr-2"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Copiar atributos desde un equipo</h4>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Selecciona un equipo para copiar su información y componentes. El nombre no se copia para que puedas indicar el nuevo.</p>
+                        <div class="flex flex-wrap items-end gap-3">
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Equipo a copiar</label>
+                                <select
+                                    v-model="copyFromEquipmentId"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
+                                >
+                                    <option value="">Ninguno (formulario vacío)</option>
+                                    <option v-for="eq in existingEquipments" :key="eq.id" :value="eq.id">
+                                        {{ eq.name }} {{ eq.equipment_type && eq.equipment_type.name ? `(${eq.equipment_type.name})` : '' }}
+                                    </option>
+                                </select>
+                            </div>
+                            <button
+                                type="button"
+                                :disabled="!copyFromEquipmentId || copyLoading"
+                                @click="copyFromEquipment"
+                                class="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+                            >
+                                <i class="fas fa-copy text-sm"></i>
+                                {{ copyLoading ? 'Copiando...' : 'Copiar atributos' }}
+                            </button>
+                            <button
+                                type="button"
+                                @click="clearCopiedData"
+                                class="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                title="Vaciar todo el formulario"
+                            >
+                                <i class="fas fa-eraser text-sm"></i>
+                                Borrar lo copiado
+                            </button>
+                        </div>
+                    </div>
+
                     <div>
                         <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
                             <i class="fas fa-info-circle text-blue-600 mr-2"></i>
@@ -458,9 +499,13 @@ const showProcessModal = ref(false);
 const showUbicationModal = ref(false);
 const showBrandModal = ref(false);
 const currentComponentIndexForBrand = ref(null);
+const existingEquipments = ref([]);
+const copyFromEquipmentId = ref('');
+const copyLoading = ref(false);
 
 onMounted(async () => {
     await loadCatalogs();
+    await loadExistingEquipments();
 });
 
 const loadCatalogs = async () => {
@@ -488,6 +533,77 @@ const loadCatalogs = async () => {
     } finally {
         catalogsLoading.value = false;
     }
+};
+
+const loadExistingEquipments = async () => {
+    try {
+        const response = await api.get('/catalogs/equipment');
+        existingEquipments.value = response.data?.data ?? response.data ?? [];
+    } catch (error) {
+        console.error('Error al cargar equipos:', error);
+        existingEquipments.value = [];
+    }
+};
+
+const copyFromEquipment = async () => {
+    const id = copyFromEquipmentId.value;
+    if (!id) return;
+    copyLoading.value = true;
+    try {
+        const response = await api.get(`/equipment/${id}`);
+        const eq = response.data?.data ?? response.data;
+        if (!eq) {
+            Swal.fire('Error', 'No se pudo cargar el equipo', 'error');
+            return;
+        }
+        form.equipment_type_id = eq.equipment_type_id ?? (eq.equipment_type?.id ?? '');
+        form.process_id = eq.process_id ?? (eq.process?.id ?? '');
+        form.ubication_id = eq.ubication_id ?? (eq.ubication?.id ?? '');
+        form.company_id = eq.company_id ?? (eq.company?.id ?? '');
+        form.code = eq.code ?? '';
+        form.tag = eq.tag ?? '';
+        form.description = eq.description ?? '';
+        form.name = '';
+
+        const components = eq.components ?? [];
+        const savedFieldValues = components.map((c) => ({ ...(c.field_values || {}) }));
+
+        form.components = components.map((c) => ({
+            component_type_id: c.component_type_id ?? (c.component_type?.id ?? ''),
+            brand_id: c.brand_id ?? (c.brand?.id ?? ''),
+            field_values: {},
+            _fields: [],
+        }));
+
+        for (let i = 0; i < form.components.length; i++) {
+            await loadComponentTypeFieldsForRow(i);
+            const defaults = form.components[i].field_values || {};
+            form.components[i].field_values = { ...defaults, ...savedFieldValues[i] };
+        }
+
+        Swal.fire('Listo', 'Atributos copiados. Indica el nombre del nuevo equipo y guarda.', 'success');
+    } catch (error) {
+        const msg = error.response?.data?.message || error.message || 'Error al copiar el equipo';
+        Swal.fire('Error', msg, 'error');
+    } finally {
+        copyLoading.value = false;
+    }
+};
+
+const clearCopiedData = () => {
+    form.name = '';
+    form.equipment_type_id = '';
+    form.process_id = '';
+    form.ubication_id = '';
+    form.company_id = '';
+    form.code = '';
+    form.tag = '';
+    form.description = '';
+    form.components = [];
+    imageFile.value = null;
+    errors.value = {};
+    copyFromEquipmentId.value = '';
+    Swal.fire('Listo', 'Formulario vaciado.', 'success');
 };
 
 const addComponent = () => {

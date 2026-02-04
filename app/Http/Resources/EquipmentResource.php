@@ -38,17 +38,22 @@ class EquipmentResource extends JsonResource
             'components' => $this->whenLoaded('components', function () {
                 return $this->components->map(function ($component) {
                     $attributes = [];
+                    $fieldValues = [];
                     if ($component->relationLoaded('fieldValues')) {
                         foreach ($component->fieldValues as $fv) {
+                            $fieldId = $fv->component_type_field_id;
                             $attributes[] = [
                                 'name' => $fv->componentTypeField->name ?? '',
                                 'value' => $fv->display_value ?? $fv->value ?? '',
                                 'unit' => $fv->componentTypeField->unit ?? '',
                             ];
+                            $fieldValues[(string) $fieldId] = $fv->value ?? $fv->raw_value ?? '';
                         }
                     }
                     return [
                         'id' => $component->id,
+                        'component_type_id' => $component->component_type_id ?? ($component->componentType->id ?? null),
+                        'brand_id' => $component->brand_id ?? ($component->brand->id ?? null),
                         'component_type' => [
                             'id' => $component->componentType->id ?? null,
                             'name' => $component->componentType->name ?? null,
@@ -58,6 +63,7 @@ class EquipmentResource extends JsonResource
                             'name' => $component->brand->name ?? null,
                         ],
                         'attributes' => $attributes,
+                        'field_values' => $fieldValues,
                     ];
                 });
             }),
