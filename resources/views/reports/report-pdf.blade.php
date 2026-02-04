@@ -424,7 +424,7 @@
                             $val = $fieldVal?->value ?? '';
                         @endphp
                         @if (trim((string) $val) !== '')
-                            <strong>{{ $field->name }}:</strong> {{ $val }}.
+                            <strong>{{ $field->name }}:</strong> {{ $val }}{{ !empty($field->unit) ? ' ' . $field->unit : '' }}.
                         @endif
                     @endforeach
                 </p>
