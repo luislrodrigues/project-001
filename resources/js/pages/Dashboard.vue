@@ -10,7 +10,7 @@
             </div>
         </div>
 
-        <div v-else class="py-6">
+        <div v-else class="py-4 sm:py-6">
             <!-- Estadísticas -->
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
                 <!-- Card Empresas -->

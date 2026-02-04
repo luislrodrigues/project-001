@@ -4,10 +4,10 @@
         :style="{ backgroundImage: `url('/images/login-1.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }"
     >
         <div class="relative w-full flex flex-col justify-center items-center min-h-screen">
-            <div class="w-full max-w-md min-h-[600px] flex flex-col justify-center items-center border-2 border-white shadow-2xl rounded-2xl bg-white p-8">
+            <div class="w-full max-w-md min-h-[500px] flex flex-col justify-center items-center border-2 border-white shadow-2xl rounded-2xl bg-white p-4 sm:p-8 mx-4">
                 <div class="px-6 py-8 w-full">
                     <div class="flex justify-center mb-12 mt-2">
-                        <img src="/images/logo-2.jpg" alt="Logo" width="400px">
+                        <img src="/images/logo-2.jpg" alt="Logo" class="max-w-full h-auto w-64 sm:w-[400px]">
                     </div>
                     <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
                         <div class="rounded-md shadow-sm space-y-6">

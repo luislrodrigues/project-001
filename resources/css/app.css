@@ -6,4 +6,11 @@
     display: none;
 }
 
+/* Tablas responsive: scroll horizontal en móvil */
+@layer utilities {
+    .table-responsive {
+        @apply overflow-x-auto -mx-4 sm:mx-0;
+    }
+}
+
 

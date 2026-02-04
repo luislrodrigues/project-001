@@ -1,27 +1,47 @@
 <template>
     <div class="font-sans antialiased bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 min-h-screen">
-        <!-- Sidebar -->
+        <!-- Backdrop móvil -->
+        <div
+            v-show="mobileMenuOpen"
+            class="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            aria-hidden="true"
+            @click="mobileMenuOpen = false"
+        ></div>
+
+        <!-- Sidebar: móvil full-screen drawer, desktop fijo -->
         <aside
             id="sidebar"
-            class="fixed left-0 top-0 h-screen sidebar-gradient shadow-2xl z-40 transition-all duration-300 ease-in-out"
-            :style="{ width: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)' }"
+            class="fixed left-0 top-0 h-screen sidebar-gradient shadow-2xl z-40 transition-transform duration-300 ease-out w-full max-w-[320px] lg:max-w-none -translate-x-full lg:translate-x-0 lg:w-auto rounded-r-2xl lg:rounded-none"
+            :class="{ 'translate-x-0': mobileMenuOpen }"
+            :style="isDesktop ? { width: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)' } : {}"
         >
-            <!-- Logo and Toggle: cuando está pequeño (colapsado) solo el icono hamburguesa centrado -->
-            <div
-                class="flex items-center px-6 py-5 border-b border-blue-400/30"
-                :class="sidebarCollapsed ? 'justify-center' : 'justify-between'"
-            >
-                <div v-show="!sidebarCollapsed" class="flex items-center space-x-3 min-w-0">
-                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
+            <!-- Logo and Toggle: móvil = cerrar (X), desktop = hamburger -->
+            <div class="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-blue-400/30 ">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm shrink-0">
                         <i class="fas fa-cog text-white text-xl"></i>
                     </div>
-                    <span class="text-white font-bold text-xl transition-opacity duration-300 truncate">
+                    <span
+                        v-show="!sidebarCollapsed || !isDesktop"
+                        class="text-white font-bold text-xl transition-opacity duration-300 truncate"
+                    >
                         3Sanchez
                     </span>
                 </div>
+                <!-- Móvil: botón cerrar -->
                 <button
+                    v-if="!isDesktop"
+                    @click="mobileMenuOpen = false"
+                    class="lg:hidden w-11 h-11 flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors -mr-1"
+                    aria-label="Cerrar menú"
+                >
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+                <!-- Desktop: toggle collapse -->
+                <button
+                    v-else
                     @click="toggleSidebar"
-                    class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                    class="hidden lg:flex text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
                 >
                     <i class="fas fa-bars text-lg"></i>
                 </button>
@@ -30,24 +50,25 @@
             <!-- User Profile Section -->
             <div
                 class="px-4 py-4 border-b border-blue-400/30"
-                :class="{ 'py-2': sidebarCollapsed }"
+                :class="{ 'py-2': sidebarCollapsed && isDesktop }"
             >
                 <router-link
                     :to="{ name: 'profile' }"
-                    class="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/15 transition-colors cursor-pointer"
+                    @click="mobileMenuOpen = false"
+                    class="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 lg:p-3 min-h-[52px] lg:min-h-0 hover:bg-white/15 active:bg-white/20 transition-colors cursor-pointer"
                 >
                     <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg flex-shrink-0">
                         {{ userInitials }}
                     </div>
                     <div
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="flex-1 min-w-0 transition-opacity duration-300"
                     >
                         <p class="text-white font-semibold text-sm truncate">{{ authStore.user && authStore.user.name }}</p>
                         <p class="text-blue-100 text-xs truncate">{{ authStore.user && authStore.user.email }}</p>
                     </div>
                     <i
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="fas fa-chevron-right text-blue-200 text-xs transition-opacity duration-300"
                     ></i>
                 </router-link>
@@ -55,16 +76,17 @@
 
             <!-- Navigation -->
             <!-- Orden: Inicio, Informes, Equipos, Componentes, Tipo Componente, Usuario, Empresa -->
-            <nav class="px-4 py-4 space-y-2 overflow-y-auto" style="max-height: calc(100vh - 200px);">
+            <nav class="px-4 py-4 space-y-1 overflow-y-auto overscroll-contain" style="max-height: calc(100vh - 220px);">
                 <router-link
                     :to="{ name: 'dashboard' }"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
                     :class="isActive('dashboard') ? 'nav-item-active' : 'nav-item-hover'"
                     title="Inicio"
                 >
                     <i class="fas fa-home text-lg w-5"></i>
                     <span
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="font-medium transition-opacity duration-300"
                     >
                         Inicio
@@ -73,13 +95,14 @@
 
                 <router-link
                     :to="{ name: 'reports' }"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
                     :class="isActive('reports') ? 'nav-item-active' : 'nav-item-hover'"
                     title="Informes"
                 >
                     <i class="fas fa-file-alt text-lg w-5"></i>
                     <span
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="font-medium transition-opacity duration-300"
                     >
                         Informes
@@ -88,13 +111,14 @@
 
                 <router-link
                     :to="{ name: 'equipment' }"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
                     :class="isActive('equipment') ? 'nav-item-active' : 'nav-item-hover'"
                     title="Equipos"
                 >
                     <i class="fas fa-toolbox text-lg w-5"></i>
                     <span
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="font-medium transition-opacity duration-300"
                     >
                         Equipos
@@ -104,13 +128,14 @@
                 <router-link
                     v-if="authStore.hasPermission('consult equipment')"
                     :to="{ name: 'components' }"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
                     :class="isActive('components') ? 'nav-item-active' : 'nav-item-hover'"
                     title="Componentes"
                 >
                     <i class="fas fa-weight text-lg w-5"></i>
                     <span
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="font-medium transition-opacity duration-300"
                     >
                         Componentes
@@ -120,13 +145,14 @@
                 <router-link
                     v-if="authStore.hasPermission('consult equipment')"
                     :to="{ name: 'component-types' }"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
                     :class="isActive('component-types') ? 'nav-item-active' : 'nav-item-hover'"
                     title="Tipo Componente"
                 >
                     <i class="fas fa-snowplow text-lg w-5"></i>
                     <span
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="font-medium transition-opacity duration-300"
                     >
                         Tipo Componente
@@ -136,13 +162,14 @@
                 <router-link
                     v-if="authStore.hasPermission('consult user')"
                     :to="{ name: 'users' }"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
                     :class="isActive('users') ? 'nav-item-active' : 'nav-item-hover'"
                     title="Usuario"
                 >
                     <i class="fas fa-users text-lg w-5"></i>
                     <span
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="font-medium transition-opacity duration-300"
                     >
                         Usuario
@@ -151,13 +178,14 @@
 
                 <router-link
                     :to="{ name: 'companies' }"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl transition-all duration-200"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
                     :class="isActive('companies') ? 'nav-item-active' : 'nav-item-hover'"
                     title="Empresa"
                 >
                     <i class="fas fa-building text-lg w-5"></i>
                     <span
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="font-medium transition-opacity duration-300"
                     >
                         Empresa
@@ -169,12 +197,12 @@
             <div class="absolute bottom-0 left-0 right-0 px-4 py-4 border-t border-blue-400/30">
                 <button
                     @click="handleLogout"
-                    class="nav-item flex items-center space-x-3 px-4 py-3 text-white rounded-xl bg-red-500/20 hover:bg-red-500/30 transition-all duration-200 w-full"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl bg-red-500/20 hover:bg-red-500/30 active:bg-red-500/40 transition-all duration-200 w-full"
                     title="Cerrar Sesión"
                 >
                     <i class="fas fa-sign-out-alt text-lg w-5"></i>
                     <span
-                        v-show="!sidebarCollapsed"
+                        v-show="!sidebarCollapsed || !isDesktop"
                         class="font-medium transition-opacity duration-300"
                     >
                         Cerrar Sesión
@@ -185,17 +213,25 @@
 
         <!-- Main Content Area -->
         <div
-            class="flex flex-col transition-all duration-300 ease-in-out"
-            :style="{ marginLeft: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)' }"
+            class="flex flex-col transition-all duration-300 ease-in-out min-w-0"
+            :style="mainContentStyle"
         >
             <!-- Top Header -->
             <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 sticky top-0 z-30">
-                <div class="flex items-center justify-between px-6 py-4">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-800">{{ pageTitle }}</h1>
-                        <p class="text-sm text-gray-500 mt-1">{{ pageDescription }}</p>
+                <div class="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4">
+                    <!-- Hamburger móvil -->
+                    <button
+                        class="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
+                        @click="mobileMenuOpen = true"
+                        aria-label="Abrir menú"
+                    >
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="flex-1 min-w-0">
+                        <h1 class="text-lg sm:text-2xl font-bold text-gray-800 truncate">{{ pageTitle }}</h1>
+                        <p class="text-xs sm:text-sm text-gray-500 truncate">{{ pageDescription }}</p>
                     </div>
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center gap-2 sm:gap-4 shrink-0">
                         <!-- Notifications -->
                         <button class="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                             <i class="fas fa-bell text-lg"></i>
@@ -204,25 +240,25 @@
                         <!-- Profile Quick Access -->
                         <router-link
                             :to="{ name: 'profile' }"
-                            class="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                            class="flex items-center gap-2 px-3 py-2 sm:px-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
                         >
-                            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-xs font-semibold">
+                            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
                                 {{ userInitials }}
                             </div>
-                            <span class="text-sm font-medium">Mi Perfil</span>
+                            <span class="hidden sm:inline text-sm font-medium">Mi Perfil</span>
                         </router-link>
                     </div>
                 </div>
             </header>
 
             <!-- Main Content -->
-            <main class="flex-1 p-6 min-h-screen">
+            <main class="flex-1 p-4 sm:p-6 min-h-screen min-w-0">
                 <router-view />
             </main>
 
             <!-- Footer -->
-            <footer class="bg-white/60 backdrop-blur-sm border-t border-gray-200/50 py-4">
-                <div class="px-6 flex items-center justify-between">
+            <footer class="bg-white/60 backdrop-blur-sm border-t border-gray-200/50 py-3 sm:py-4">
+                <div class="px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
                     <p class="text-sm text-gray-600">
                         © {{ currentYear }} <span class="font-semibold text-blue-600">3Sanchez</span>. Todos los derechos reservados.
                     </p>
@@ -239,7 +275,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
@@ -248,6 +284,30 @@ const router = useRouter();
 const route = useRoute();
 
 const sidebarCollapsed = ref(false);
+const mobileMenuOpen = ref(false);
+const isDesktop = ref(typeof window !== 'undefined' && window.innerWidth >= 1024);
+
+const mainContentStyle = computed(() => {
+    if (!isDesktop.value) return { marginLeft: 0 };
+    return { marginLeft: sidebarCollapsed.value ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)' };
+});
+
+function onResize() {
+    isDesktop.value = window.innerWidth >= 1024;
+    if (isDesktop.value) mobileMenuOpen.value = false;
+}
+
+watch(() => route.path, () => {
+    mobileMenuOpen.value = false;
+});
+
+onMounted(() => {
+    onResize();
+    window.addEventListener('resize', onResize);
+});
+onUnmounted(() => {
+    window.removeEventListener('resize', onResize);
+});
 
 const userInitials = computed(() => {
     if (!authStore.user?.name) return 'U';
@@ -321,7 +381,11 @@ const isActive = (routeName) => {
 };
 
 const toggleSidebar = () => {
-    sidebarCollapsed.value = !sidebarCollapsed.value;
+    if (window.innerWidth >= 1024) {
+        sidebarCollapsed.value = !sidebarCollapsed.value;
+    } else {
+        mobileMenuOpen.value = false;
+    }
 };
 
 const handleLogout = async () => {
