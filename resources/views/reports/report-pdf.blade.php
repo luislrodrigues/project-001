@@ -70,8 +70,7 @@
         }
 
         .component-section {
-            page-break-inside: avoid;
-            break-inside: avoid;
+            /* Permitir que la sección se parta entre páginas para no dejar espacio en blanco */
         }
 
         .equipment-data {
@@ -109,15 +108,19 @@
         }
 
         .equipment-image-block {
-            margin-bottom: 28px;
+            margin-bottom: 12px;
             text-align: center;
+            line-height: 0;
         }
 
         .equipment-image {
-            width: 100%;
-            max-width: 100%;
+            width: 50%;
+            max-width: 50%;
             height: auto;
             display: block;
+            margin: 0 auto;
+            object-fit: contain;
+            vertical-align: bottom;
         }
 
         .condition-alarma {
