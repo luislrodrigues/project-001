@@ -18,13 +18,13 @@ class ComponentType extends Model
         'name',
         'status',
     ];
-    
+
     public function components()
     {
         return $this->hasMany(Component::class);
     }
     public function componentTypeFields()
     {
-        return $this->hasMany(ComponentTypeField::class);
+        return $this->hasMany(ComponentTypeField::class)->ordered();
     }
 }

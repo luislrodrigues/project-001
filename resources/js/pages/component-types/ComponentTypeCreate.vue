@@ -3,7 +3,7 @@
         <div class="py-6">
             <!-- Header -->
             <div class="mb-6">
-                <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center justify-between mb-4">
                     <div>
                         <h2 class="text-3xl font-bold text-gray-800 flex items-center">
                             <i class="fas fa-snowplow text-blue-600 mr-3"></i>
@@ -82,14 +82,38 @@
                                         </div>
                                         <h5 class="font-medium text-gray-800">Atributo #{{ index + 1 }}</h5>
                                     </div>
-                                    <button
-                                        type="button"
-                                        @click="removeField(index)"
-                                        class="flex items-center px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors duration-200"
-                                    >
-                                        <i class="fas fa-trash mr-1"></i>
-                                        <span class="text-sm">Eliminar</span>
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                @click="moveFieldUp(index)"
+                                                class="w-9 h-9 flex items-center justify-center text-blue-600 border border-blue-200 rounded-lg transition-colors duration-200"
+                                                :class="index === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-blue-50'"
+                                                :disabled="index === 0"
+                                                title="Mover arriba"
+                                            >
+                                                <i class="fas fa-arrow-up text-sm"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                @click="moveFieldDown(index)"
+                                                class="w-9 h-9 flex items-center justify-center text-blue-600 border border-blue-200 rounded-lg transition-colors duration-200"
+                                                :class="index === form.fields.length - 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-blue-50'"
+                                                :disabled="index === form.fields.length - 1"
+                                                title="Mover abajo"
+                                            >
+                                                <i class="fas fa-arrow-down text-sm"></i>
+                                            </button>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            @click="removeField(index)"
+                                            class="flex items-center px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors duration-200"
+                                        >
+                                            <i class="fas fa-trash mr-1"></i>
+                                            <span class="text-sm">Eliminar</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -278,6 +302,20 @@ const addField = () => {
 
 const removeField = (index) => {
     form.fields.splice(index, 1);
+};
+
+const moveField = (fromIndex, toIndex) => {
+    if (toIndex < 0 || toIndex >= form.fields.length) return;
+    const movedField = form.fields.splice(fromIndex, 1)[0];
+    form.fields.splice(toIndex, 0, movedField);
+};
+
+const moveFieldUp = (index) => {
+    moveField(index, index - 1);
+};
+
+const moveFieldDown = (index) => {
+    moveField(index, index + 1);
 };
 
 const openOptionsManager = (index) => {
