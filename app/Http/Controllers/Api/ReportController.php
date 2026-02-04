@@ -600,10 +600,25 @@ class ReportController extends Controller
             $pdfPath = $tempPath . '/reporte-' . $report->id . '.pdf';
             $pdf->save($pdfPath);
 
-            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $report) {
+            $equipmentName = $report->equipment?->name ?? 'N/A';
+            $subject = 'Informe Vibraciones ' . $equipmentName;
+
+            $htmlBody = '<p>Buen día Estimado Ingeniero, Cordial saludo,</p>
+<p>Adjunto envío informe de análisis vibraciones ' . e($equipmentName) . '.</p>
+<p>Posterior medición y análisis de vibraciones mecánicas, se realizan las recomendaciones más apropiadas en función de los hallazgos encontrados.</p>
+<p>Cualquier duda e inquietud estaré atento.</p>
+<p>Saludos!</p>
+<p><strong>Álvaro Sánchez Maldonado</strong><br>
+Ingeniero de Mantenimiento & Confiabilidad<br>
+Analista de Vibraciones CAT II<br>
+SYNERGY SMART S.A.S.<br>
+Móvil: +57 (316) 4048830<br>
+Fundación, Magdalena.</p>';
+
+            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $htmlBody, $report) {
                 $message->to($recipients)
-                    ->subject('Reporte - ' . ($report->equipment?->name ?? 'N/A'))
-                    ->html('Se adjunta el reporte solicitado.');
+                    ->subject($subject)
+                    ->html($htmlBody);
                 $message->attach($pdfPath, [
                     'as' => 'reporte-' . $report->id . '.pdf',
                     'mime' => 'application/pdf',
