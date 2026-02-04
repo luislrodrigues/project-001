@@ -603,7 +603,14 @@ class ReportController extends Controller
             $equipmentName = $report->equipment?->name ?? 'N/A';
             $subject = 'Informe Vibraciones ' . $equipmentName;
 
-            $htmlBody = '<p>Buen día Estimado Ingeniero, Cordial saludo,</p>
+            $firmaPath = public_path('images/firma_correo.jpeg');
+
+            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $report, $firmaPath) {
+                $firmaCid = file_exists($firmaPath)
+                    ? $message->embed($firmaPath)
+                    : null;
+
+                $htmlBody = '<p>Buen día Estimado Ingeniero, Cordial saludo,</p>
 <p>Adjunto envío informe de análisis vibraciones ' . e($equipmentName) . '.</p>
 <p>Posterior medición y análisis de vibraciones mecánicas, se realizan las recomendaciones más apropiadas en función de los hallazgos encontrados.</p>
 <p>Cualquier duda e inquietud estaré atento.</p>
@@ -613,9 +620,9 @@ Ingeniero de Mantenimiento & Confiabilidad<br>
 Analista de Vibraciones CAT II<br>
 SYNERGY SMART S.A.S.<br>
 Móvil: +57 (316) 4048830<br>
-Fundación, Magdalena.</p>';
+Fundación, Magdalena.</p>' .
+                    ($firmaCid ? '<p><img src="' . $firmaCid . '" alt="Firma" style="max-width: 200px; height: auto;"></p>' : '');
 
-            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $htmlBody, $report) {
                 $message->to($recipients)
                     ->subject($subject)
                     ->html($htmlBody);
