@@ -621,7 +621,7 @@ Analista de Vibraciones CAT II<br>
 SYNERGY SMART S.A.S.<br>
 Móvil: +57 (316) 4048830<br>
 Fundación, Magdalena.</p>' .
-                    ($firmaCid ? '<p><img src="' . $firmaCid . '" alt="Firma" style="max-width: 200px; height: auto;"></p>' : '');
+                    ($firmaCid ? '<p><img src="' . $firmaCid . '" alt="Firma" style="width: 100%; max-width: 100%; height: auto;"></p>' : '');
 
                 $message->to($recipients)
                     ->subject($subject)
