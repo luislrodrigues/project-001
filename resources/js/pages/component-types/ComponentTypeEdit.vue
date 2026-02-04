@@ -372,6 +372,7 @@ const openOptionsManager = (index) => {
 const updateFieldOptions = (options) => {
     if (currentFieldIndex.value !== null) {
         form.fields[currentFieldIndex.value].options = options;
+        currentFieldOptions.value = options;
     }
 };
 

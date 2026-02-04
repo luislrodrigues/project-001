@@ -73,54 +73,61 @@
             /* Permitir que la sección se parta entre páginas para no dejar espacio en blanco */
         }
 
-        .equipment-data {
-            border-collapse: collapse;
+        .equipment-top-table {
             width: 100%;
-            font-size: 12pt;
+            border-collapse: collapse;
             margin-bottom: 28px;
-            margin-left: 0;
-            margin-right: 0;
         }
 
-        .equipment-data td {
-            padding: 4px 14px 4px 0;
-            vertical-align: middle;
+        .equipment-top-table td {
+            width: 50%;
+            vertical-align: top;
         }
 
-        .equipment-data td.value-cell {
-            padding: 4px 0 4px 14px;
+        .equipment-top-table .equipment-image-cell {
+            padding-right: 12px;
+            text-align: center;
         }
 
-        .equipment-data .label-cell {
-            font-weight: bold;
-            width: 220px;
-            color: #1a1a1a;
+        .equipment-top-table .equipment-data-cell {
+            padding-left: 12px;
+        }
+
+        .equipment-data-div {
             font-size: 12pt;
-        }
-
-        .equipment-data .value-cell {
             color: #1a1a1a;
-            font-size: 12pt;
         }
 
-        .equipment-data .value-equipo {
+        .equipment-data-div .data-line {
+            margin: 0 0 6px 0;
+            line-height: 1.4;
+        }
+
+        .equipment-data-div .data-line .label {
             font-weight: bold;
+        }
+
+        .equipment-data-div .data-line .value-equipo {
+            font-weight: bold;
+        }
+
+        .equipment-image-div {
+            text-align: center;
         }
 
         .equipment-image-block {
-            margin-bottom: 12px;
+            margin: 0;
             text-align: center;
             line-height: 0;
         }
 
         .equipment-image {
-            width: 50%;
-            max-width: 50%;
+            width: 100%;
+            max-width: 100%;
             height: auto;
             display: block;
             margin: 0 auto;
             object-fit: contain;
-            vertical-align: bottom;
         }
 
         .condition-alarma {
@@ -375,53 +382,41 @@
     </htmlpagefooter>
 
     <div class="report-content">
-        {{-- Datos del equipo --}}
-        <table class="equipment-data">
+        {{-- Tabla 50% / 50%: imagen izquierda, datos derecha --}}
+        <table class="equipment-top-table" cellpadding="0" cellspacing="0">
             <tr>
-                <td class="label-cell">PLANTA:</td>
-                <td class="value-cell">{{ $reportData->equipment?->company?->name ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label-cell">EQUIPO:</td>
-                <td class="value-cell value-equipo">{{ $reportData->equipment?->name ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label-cell">CONDICIÓN:</td>
-                <td class="value-cell">
-                    @php
-                        $condicion = $reportData->condition?->name ?? '';
-                        $esAlarma = stripos($condicion, 'alarma') !== false;
-                    @endphp
-                    @if ($esAlarma)
-                        <span class="condition-alarma">{{ $condicion }}</span>
-                    @else
-                        {{ $condicion }}
-                    @endif
+                <td class="equipment-image-cell">
+                    <div class="equipment-image-div">
+                        @if(!empty($equipmentImage))
+                        <div class="equipment-image-block">
+                            <img src="{{ $equipmentImage }}" alt="Equipo" class="equipment-image" />
+                        </div>
+                        @endif
+                    </div>
+                </td>
+                <td class="equipment-data-cell">
+                    <div class="equipment-data-div">
+                        <div class="data-line"><span class="label">PLANTA:</span> {{ $reportData->equipment?->company?->name ?? '—' }}</div>
+                        <div class="data-line"><span class="label">EQUIPO:</span> <span class="value-equipo">{{ $reportData->equipment?->name ?? '—' }}</span></div>
+                        <div class="data-line"><span class="label">CONDICIÓN:</span>
+                            @php
+                                $condicion = $reportData->condition?->name ?? '';
+                                $esAlarma = stripos($condicion, 'alarma') !== false;
+                            @endphp
+                            @if ($esAlarma)
+                                <span class="condition-alarma">{{ $condicion }}</span>
+                            @else
+                                {{ $condicion }}
+                            @endif
+                        </div>
+                        <div class="data-line"><span class="label">MECANISMO FALLA:</span> {{ $reportData->mechanismFail->name ?? '—' }}</div>
+                        <div class="data-line"><span class="label">COMPONENTE EN FALLA:</span> {{ $reportData->componentFail->name ?? '—' }}</div>
+                        <div class="data-line"><span class="label">PRIORIDAD ATENCIÓN:</span> {{ $reportData->priority ?? '—' }}</div>
+                        <div class="data-line"><span class="label">FECHA MEDICIÓN:</span> {{ $reportData->measurement_date ? \Carbon\Carbon::parse($reportData->measurement_date)->format('d/m/Y') : '—' }}</div>
+                    </div>
                 </td>
             </tr>
-            <tr>
-                <td class="label-cell">MECANISMO FALLA:</td>
-                <td class="value-cell">{{ $reportData->mechanismFail->name ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label-cell">COMPONENTE EN FALLA:</td>
-                <td class="value-cell">{{ $reportData->componentFail->name ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label-cell">PRIORIDAD ATENCIÓN:</td>
-                <td class="value-cell">{{ $reportData->priority ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label-cell">FECHA MEDICIÓN:</td>
-                <td class="value-cell">{{ $reportData->measurement_date ? \Carbon\Carbon::parse($reportData->measurement_date)->format('d/m/Y') : '—' }}</td>
-            </tr>
         </table>
-
-        @if(!empty($equipmentImage))
-        <div class="equipment-image-block">
-            <img src="{{ $equipmentImage }}" alt="Equipo" class="equipment-image" />
-        </div>
-        @endif
 
         @foreach ($components as $component)
             <div class="section block component-section">
