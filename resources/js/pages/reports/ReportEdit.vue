@@ -142,19 +142,6 @@
                                 <p v-if="errors.analist_id" class="mt-1 text-sm text-red-600">{{ errors.analist_id }}</p>
                             </div>
 
-                            <!-- Fecha de Ejecución -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                    <i class="fas fa-calendar-check mr-2 text-blue-600"></i>
-                                    Fecha de Ejecución
-                                </label>
-                                <input
-                                    v-model="form.execution_date"
-                                    type="date"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                />
-                            </div>
-
                         </div>
                     </div>
 
@@ -412,7 +399,26 @@
                                     <i class="fas fa-info-circle mr-2 text-blue-600"></i>
                                     Estado de OT
                                 </label>
-                                <input v-model="form.status_ot" type="text" class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5" placeholder="Ingresar estado de OT" />
+                                <select
+                                    v-model="form.status_ot"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
+                                >
+                                    <option value="">Seleccione</option>
+                                    <option value="Cerrada">Cerrada</option>
+                                    <option value="Abierta">Abierta</option>
+                                    <option value="En ejecución">En ejecución</option>
+                                </select>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-calendar-check mr-2 text-blue-600"></i>
+                                    Fecha de Ejecución
+                                </label>
+                                <input
+                                    v-model="form.execution_date"
+                                    type="date"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                />
                             </div>
                             <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
