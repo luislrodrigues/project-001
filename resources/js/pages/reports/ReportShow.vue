@@ -302,6 +302,15 @@
                                 {{ report.status_ot || 'N/A' }}
                             </div>
                         </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-calendar-check mr-2 text-blue-600"></i>
+                                Fecha de Ejecución
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.execution_date ? formatDate(report.execution_date) : 'N/A' }}
+                            </div>
+                        </div>
                         <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-check-double mr-2 text-blue-600"></i>
