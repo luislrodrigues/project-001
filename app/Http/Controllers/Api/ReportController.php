@@ -118,11 +118,11 @@ class ReportController extends Controller
             ];
 
             if ($request->has('diagnosis')) {
-                $data['diagnosis'] = json_encode($request->diagnosis);
+                $data['diagnosis'] = is_array($request->diagnosis) ? $request->diagnosis : (json_decode($request->diagnosis, true) ?? []);
             }
 
             if ($request->has('recommendations')) {
-                $data['recommendations'] = json_encode($request->recommendations);
+                $data['recommendations'] = is_array($request->recommendations) ? $request->recommendations : (json_decode($request->recommendations, true) ?? []);
             }
 
             $componentImages = [];
@@ -158,7 +158,7 @@ class ReportController extends Controller
                     }
                     $diagnosisData[$componentId]['images'] = $imagePaths;
                 }
-                $data['diagnosis'] = json_encode($diagnosisData);
+                $data['diagnosis'] = $diagnosisData;
             }
 
             $report = Report::create($data);
@@ -221,11 +221,11 @@ class ReportController extends Controller
             ];
 
             if ($request->has('diagnosis')) {
-                $data['diagnosis'] = is_array($request->diagnosis) ? json_encode($request->diagnosis) : $request->diagnosis;
+                $data['diagnosis'] = is_array($request->diagnosis) ? $request->diagnosis : (json_decode($request->diagnosis, true) ?? []);
             }
 
             if ($request->has('recommendations')) {
-                $data['recommendations'] = is_array($request->recommendations) ? json_encode($request->recommendations) : $request->recommendations;
+                $data['recommendations'] = is_array($request->recommendations) ? $request->recommendations : (json_decode($request->recommendations, true) ?? []);
             }
 
             $componentImages = [];
@@ -263,7 +263,7 @@ class ReportController extends Controller
             }
 
             // Obtener diagnosis actual y actualizar con nuevas imágenes
-            $currentDiagnosis = $report->diagnosis ? (is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis) : [];
+            $currentDiagnosis = self::decodeJsonField($report->diagnosis ?? []);
             $diagnosisData = $request->has('diagnosis')
                 ? (is_string($request->diagnosis) ? json_decode($request->diagnosis, true) : $request->diagnosis)
                 : $currentDiagnosis;
@@ -329,8 +329,7 @@ class ReportController extends Controller
                 ];
             }
 
-            $data['diagnosis'] = json_encode($diagnosisData);
-
+            $data['diagnosis'] = $diagnosisData;
 
             $report->update($data);
 
@@ -391,25 +390,27 @@ class ReportController extends Controller
 
             $diagnosis = [];
             if ($report->diagnosis) {
-                $decoded = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis;
+                $decoded = self::decodeJsonField($report->diagnosis);
                 if (is_array($decoded)) {
-                    $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
-                    if ($isNumericArray && $report->equipment && $report->equipment->components) {
+                    $componentsList = $report->equipment ? $report->equipment->components : collect();
+                    $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                    if ($isNumericArray) {
                         foreach ($decoded as $index => $data) {
-                            if (isset($report->equipment->components[$index])) {
-                                $componentId = $report->equipment->components[$index]->id;
+                            if ($componentsList->has($index)) {
+                                $componentId = (string) $componentsList->get($index)->id;
                                 if (is_array($data) && isset($data['text'])) {
                                     $diagnosis[$componentId] = $data['text'];
-                                } else if (is_string($data)) {
+                                } elseif (is_string($data)) {
                                     $diagnosis[$componentId] = $data;
                                 }
                             }
                         }
                     } else {
                         foreach ($decoded as $componentId => $data) {
+                            $componentId = (string) $componentId;
                             if (is_array($data) && isset($data['text'])) {
-                                $diagnosis[$componentId] = $data['text'];
-                            } else if (is_string($data)) {
+                                $diagnosis[$componentId] = (string) ($data['text'] ?? '');
+                            } elseif (is_string($data)) {
                                 $diagnosis[$componentId] = $data;
                             }
                         }
@@ -417,54 +418,58 @@ class ReportController extends Controller
                 }
             }
 
-            // Procesar recomendaciones para el PDF
+            // Procesar recomendaciones para el PDF (claves normalizadas a string)
             $recommendations = [];
             if ($report->recommendations) {
-                $decoded = is_string($report->recommendations) ? json_decode($report->recommendations, true) : $report->recommendations;
+                $decoded = self::decodeJsonField($report->recommendations);
                 if (is_array($decoded)) {
-                    $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
-                    if ($isNumericArray && $report->equipment && $report->equipment->components) {
+                    $componentsList = $report->equipment ? $report->equipment->components : collect();
+                    $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                    if ($isNumericArray) {
                         foreach ($decoded as $index => $data) {
-                            if (isset($report->equipment->components[$index])) {
-                                $componentId = $report->equipment->components[$index]->id;
-                                $recommendations[$componentId] = is_array($data) ? $data : [];
+                            if ($componentsList->has($index)) {
+                                $componentId = (string) $componentsList->get($index)->id;
+                                $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($r) => trim((string) $r) !== '')) : [];
                             }
                         }
                     } else {
-                        $recommendations = $decoded;
+                        foreach ($decoded as $componentId => $data) {
+                            $componentId = (string) $componentId;
+                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($r) => trim((string) $r) !== '')) : [];
+                        }
                     }
                 }
             }
 
             $componentImages = [];
             if ($report->diagnosis) {
-                $decoded = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis;
+                $decoded = self::decodeJsonField($report->diagnosis);
                 if (is_array($decoded)) {
-                    $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
-                    if ($isNumericArray && $report->equipment && $report->equipment->components) {
+                    $componentsList = $report->equipment ? $report->equipment->components : collect();
+                    $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                    if ($isNumericArray) {
                         foreach ($decoded as $index => $data) {
-                            if (isset($report->equipment->components[$index])) {
-                                $componentId = $report->equipment->components[$index]->id;
-                                if (is_array($data) && isset($data['images'])) {
-                                    $componentImages[$componentId] = array_map(function ($path) {
-                                        return self::imageToBase64ForPdf($path);
-                                    }, $data['images']);
-                                }
+                            if ($componentsList->has($index) && is_array($data) && !empty($data['images'])) {
+                                $componentId = (string) $componentsList->get($index)->id;
+                                $componentImages[$componentId] = array_values(array_filter(array_map(function ($path) {
+                                    return self::imageToBase64ForPdf($path);
+                                }, $data['images'])));
                             }
                         }
                     } else {
                         foreach ($decoded as $componentId => $data) {
-                            if (is_array($data) && isset($data['images'])) {
-                                $componentImages[$componentId] = array_map(function ($path) {
+                            if (is_array($data) && !empty($data['images'])) {
+                                $componentId = (string) $componentId;
+                                $componentImages[$componentId] = array_values(array_filter(array_map(function ($path) {
                                     return self::imageToBase64ForPdf($path);
-                                }, $data['images']);
+                                }, $data['images'])));
                             }
                         }
                     }
                 }
             }
 
-            $components = $report->equipment->components ?? [];
+            $components = $report->equipment->components ?? collect();
 
             $equipmentImage = null;
             if ($report->equipment && !empty($report->equipment->image)) {
@@ -626,18 +631,20 @@ class ReportController extends Controller
 
         $diagnosis = [];
         if ($report->diagnosis) {
-            $decoded = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis;
-            if (is_array($decoded)) {
-                $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
-                if ($isNumericArray && $report->equipment && $report->equipment->components) {
+            $decoded = self::decodeJsonField($report->diagnosis);
+            if (is_array($decoded) && !empty($decoded)) {
+                $componentsList = $report->equipment ? $report->equipment->components : collect();
+                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                if ($isNumericArray) {
                     foreach ($decoded as $index => $data) {
-                        if (isset($report->equipment->components[$index])) {
-                            $componentId = $report->equipment->components[$index]->id;
+                        if ($componentsList->has($index)) {
+                            $componentId = (string) $componentsList->get($index)->id;
                             $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? $data['text'] : (is_string($data) ? $data : '');
                         }
                     }
                 } else {
                     foreach ($decoded as $componentId => $data) {
+                        $componentId = (string) $componentId;
                         $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? $data['text'] : (is_string($data) ? $data : '');
                     }
                 }
@@ -646,42 +653,50 @@ class ReportController extends Controller
 
         $recommendations = [];
         if ($report->recommendations) {
-            $decoded = is_string($report->recommendations) ? json_decode($report->recommendations, true) : $report->recommendations;
-            if (is_array($decoded)) {
-                $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
-                if ($isNumericArray && $report->equipment && $report->equipment->components) {
+            $decoded = self::decodeJsonField($report->recommendations);
+            if (is_array($decoded) && !empty($decoded)) {
+                $componentsList = $report->equipment ? $report->equipment->components : collect();
+                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                if ($isNumericArray) {
                     foreach ($decoded as $index => $data) {
-                        if (isset($report->equipment->components[$index])) {
-                            $recommendations[$report->equipment->components[$index]->id] = is_array($data) ? $data : [];
+                        if ($componentsList->has($index)) {
+                            $componentId = (string) $componentsList->get($index)->id;
+                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($r) => trim((string) $r) !== '')) : [];
                         }
                     }
                 } else {
-                    $recommendations = $decoded;
+                    foreach ($decoded as $componentId => $data) {
+                        $componentId = (string) $componentId;
+                        $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($r) => trim((string) $r) !== '')) : [];
+                    }
                 }
             }
         }
 
         $componentImages = [];
         if ($report->diagnosis) {
-            $decoded = is_string($report->diagnosis) ? json_decode($report->diagnosis, true) : $report->diagnosis;
-            if (is_array($decoded)) {
-                $isNumericArray = array_keys($decoded) === range(0, count($decoded) - 1);
-                if ($isNumericArray && $report->equipment && $report->equipment->components) {
+            $decoded = self::decodeJsonField($report->diagnosis);
+            if (is_array($decoded) && !empty($decoded)) {
+                $componentsList = $report->equipment ? $report->equipment->components : collect();
+                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                if ($isNumericArray) {
                     foreach ($decoded as $index => $data) {
-                        if (isset($report->equipment->components[$index]) && is_array($data) && isset($data['images'])) {
-                            $componentImages[$report->equipment->components[$index]->id] = array_map(
+                        if ($componentsList->has($index) && is_array($data) && !empty($data['images'])) {
+                            $componentId = (string) $componentsList->get($index)->id;
+                            $componentImages[$componentId] = array_values(array_filter(array_map(
                                 fn ($path) => self::imageToBase64ForPdf($path),
                                 $data['images']
-                            );
+                            )));
                         }
                     }
                 } else {
                     foreach ($decoded as $componentId => $data) {
-                        if (is_array($data) && isset($data['images'])) {
-                            $componentImages[$componentId] = array_map(
+                        if (is_array($data) && !empty($data['images'])) {
+                            $componentId = (string) $componentId;
+                            $componentImages[$componentId] = array_values(array_filter(array_map(
                                 fn ($path) => self::imageToBase64ForPdf($path),
                                 $data['images']
-                            );
+                            )));
                         }
                     }
                 }
@@ -710,6 +725,22 @@ class ReportController extends Controller
     }
 
     /**
+     * Decodifica campo JSON que puede estar doble o múltiplemente codificado.
+     * El modelo Report usa cast 'array', pero si se guardó con json_encode previo, queda doble codificado.
+     */
+    private static function decodeJsonField($value): array
+    {
+        if (empty($value)) {
+            return [];
+        }
+        $decoded = is_string($value) ? json_decode($value, true) : $value;
+        while (is_string($decoded)) {
+            $decoded = json_decode($decoded, true);
+        }
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
      * Convierte ruta de imagen en storage a data URI base64 para el PDF.
      * Acepta ruta relativa (ej. images/equipo.jpg), URL con /storage/ (ej. http://site.com/storage/images/x.jpg)
      * o ruta con barras invertidas; usa el disco 'public' de Laravel para resolver.
@@ -720,25 +751,31 @@ class ReportController extends Controller
         if (empty($path)) {
             return '';
         }
+        // Si ya es data URI, devolver tal cual
+        if (str_starts_with($path, 'data:')) {
+            return $path;
+        }
         // Si es URL de nuestro storage (ej. http://site.com/storage/images/x.jpg), extraer ruta relativa
         if (filter_var($path, FILTER_VALIDATE_URL)) {
             $parsed = parse_url($path);
             $pathPart = $parsed['path'] ?? '';
             if (preg_match('#/storage/(.+)$#', $pathPart, $m)) {
                 $path = $m[1];
+            } elseif (preg_match('#^/(.+)$#', $pathPart, $m)) {
+                $path = $m[1];
             } else {
-                return $path;
+                return '';
             }
         }
         $path = ltrim(str_replace('\\', '/', $path), '/');
-        if (strpos($path, 'storage/') === 0) {
+        if (str_starts_with($path, 'storage/')) {
             $path = substr($path, 8);
         }
         if (!Storage::disk('public')->exists($path)) {
             return '';
         }
         $fullPath = Storage::disk('public')->path($path);
-        $mime = mime_content_type($fullPath) ?: 'image/jpeg';
+        $mime = @mime_content_type($fullPath) ?: 'image/jpeg';
         return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
     }
 }

@@ -79,18 +79,17 @@
             margin-bottom: 28px;
         }
 
-        .equipment-top-table td {
-            width: 50%;
-            vertical-align: top;
+        .equipment-top-table .equipment-data-cell {
+            width: 55%;
+            vertical-align: middle;
+            padding: 0 20px 0 0;
         }
 
         .equipment-top-table .equipment-image-cell {
-            padding-right: 12px;
-            text-align: center;
-        }
-
-        .equipment-top-table .equipment-data-cell {
-            padding-left: 12px;
+            width: 45%;
+            vertical-align: middle;
+            padding: 0 0 0 12px;
+            text-align: right;
         }
 
         .equipment-data-div {
@@ -99,8 +98,12 @@
         }
 
         .equipment-data-div .data-line {
-            margin: 0 0 6px 0;
-            line-height: 1.4;
+            margin: 0 0 14px 0;
+            line-height: 1.6;
+        }
+
+        .equipment-data-div .data-line:last-child {
+            margin-bottom: 0;
         }
 
         .equipment-data-div .data-line .label {
@@ -112,21 +115,15 @@
         }
 
         .equipment-image-div {
-            text-align: center;
-        }
-
-        .equipment-image-block {
-            margin: 0;
-            text-align: center;
-            line-height: 0;
+            display: block;
+            border: 1px solid #e5e7eb;
+            padding: 8px;
+            background: #fafafa;
         }
 
         .equipment-image {
-            width: 100%;
             max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
+            height: 220px;
             object-fit: contain;
         }
 
@@ -382,23 +379,14 @@
     </htmlpagefooter>
 
     <div class="report-content">
-        {{-- Tabla 50% / 50%: imagen izquierda, datos derecha --}}
+        {{-- Tabla: datos izquierda, imagen derecha --}}
         <table class="equipment-top-table" cellpadding="0" cellspacing="0">
-            <tr>
-                <td class="equipment-image-cell">
-                    <div class="equipment-image-div">
-                        @if(!empty($equipmentImage))
-                        <div class="equipment-image-block">
-                            <img src="{{ $equipmentImage }}" alt="Equipo" class="equipment-image" />
-                        </div>
-                        @endif
-                    </div>
-                </td>
+            <tr style="height: 260px;">
                 <td class="equipment-data-cell">
                     <div class="equipment-data-div">
-                        <div class="data-line"><span class="label">PLANTA:</span> {{ $reportData->equipment?->company?->name ?? '—' }}</div>
-                        <div class="data-line"><span class="label">EQUIPO:</span> <span class="value-equipo">{{ $reportData->equipment?->name ?? '—' }}</span></div>
-                        <div class="data-line"><span class="label">CONDICIÓN:</span>
+                        <div class="data-line" ><strong>PLANTA:</strong> {{ $reportData->equipment?->company?->name ?? '—' }}</div>
+                        <div class="data-line"><strong>EQUIPO:</strong> <span class="value-equipo">{{ $reportData->equipment?->name ?? '—' }}</span></div>
+                        <div class="data-line"><strong>CONDICIÓN:</strong>
                             @php
                                 $condicion = $reportData->condition?->name ?? '';
                                 $esAlarma = stripos($condicion, 'alarma') !== false;
@@ -409,10 +397,17 @@
                                 {{ $condicion }}
                             @endif
                         </div>
-                        <div class="data-line"><span class="label">MECANISMO FALLA:</span> {{ $reportData->mechanismFail->name ?? '—' }}</div>
-                        <div class="data-line"><span class="label">COMPONENTE EN FALLA:</span> {{ $reportData->componentFail->name ?? '—' }}</div>
-                        <div class="data-line"><span class="label">PRIORIDAD ATENCIÓN:</span> {{ $reportData->priority ?? '—' }}</div>
-                        <div class="data-line"><span class="label">FECHA MEDICIÓN:</span> {{ $reportData->measurement_date ? \Carbon\Carbon::parse($reportData->measurement_date)->format('d/m/Y') : '—' }}</div>
+                        <div class="data-line"><strong>MECANISMO FALLA:</strong> {{ $reportData->mechanismFail->name ?? '—' }}</div>
+                        <div class="data-line"><strong>COMPONENTE EN FALLA:</strong> {{ $reportData->componentFail->name ?? '—' }}</div>
+                        <div class="data-line"><strong>PRIORIDAD ATENCIÓN:</strong> {{ $reportData->priority ?? '—' }}</div>
+                        <div class="data-line"><strong>FECHA MEDICIÓN:</strong> {{ $reportData->measurement_date ? \Carbon\Carbon::parse($reportData->measurement_date)->format('d/m/Y') : '—' }}</div>
+                    </div>
+                </td>
+                <td class="equipment-image-cell">
+                    <div class="equipment-image-div">
+                        @if(!empty($equipmentImage))
+                            <img src="{{ $equipmentImage }}" alt="Equipo" class="equipment-image" />
+                        @endif
                     </div>
                 </td>
             </tr>
@@ -435,29 +430,34 @@
                 </p>
 
                 @php
-                    $diagnosisText = '';
-                    if (isset($diagnosis) && isset($diagnosis[$component->id])) {
-                        $d = $diagnosis[$component->id];
-                        $diagnosisText = is_array($d) ? $d['text'] ?? '' : $d;
-                    }
+                    $componentIdStr = (string) $component->id;
+                    $diagnosisText = ($diagnosis ?? [])[$componentIdStr] ?? '';
+                    $diagnosisText = is_array($diagnosisText) ? ($diagnosisText['text'] ?? '') : (string) $diagnosisText;
                 @endphp
-                @if (!empty($diagnosisText))
+                @if (!empty(trim($diagnosisText)))
                     <p class="diagnosis-label">Diagnóstico:</p>
                     <p class="diagnosis-text">{{ $diagnosisText }}</p>
                 @endif
 
-                @if (isset($recommendations) && isset($recommendations[$component->id]) && is_array($recommendations[$component->id]) && !empty($recommendations[$component->id]))
+                @php
+                    $recs = ($recommendations ?? [])[$componentIdStr] ?? [];
+                    $recs = is_array($recs) ? array_filter($recs, fn($r) => trim((string) $r) !== '') : [];
+                @endphp
+                @if (!empty($recs))
                     <p class="diagnosis-label">Recomendaciones:</p>
                     <ul class="rec-list">
-                        @foreach ($recommendations[$component->id] as $rec)
+                        @foreach ($recs as $rec)
                             <li>{{ $rec }}</li>
                         @endforeach
                     </ul>
                 @endif
 
-                @if (isset($componentImages) && isset($componentImages[$component->id]) && !empty($componentImages[$component->id]))
+                @php
+                    $images = ($componentImages ?? [])[$componentIdStr] ?? [];
+                    $images = is_array($images) ? array_values(array_filter($images, fn($url) => !empty($url))) : [];
+                @endphp
+                @if (!empty($images))
                     @php
-                        $images = array_values(array_filter($componentImages[$component->id], fn($url) => !empty($url)));
                         $rows = array_chunk($images, 2);
                     @endphp
                     <div class="spectrum-section">
