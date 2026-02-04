@@ -7,10 +7,13 @@ use App\Http\Helpers\ApiResponse;
 use App\Http\Requests\Api\StoreEquipmentRequest;
 use App\Http\Requests\Api\UpdateEquipmentRequest;
 use App\Http\Resources\EquipmentResource;
+use App\Models\Component;
 use App\Models\Equipment;
 use App\Models\EquipmentType;
 use App\Models\Process;
 use App\Models\Ubication;
+use App\Models\ComponentTypeField;
+use App\Models\ComponentTypeValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -71,8 +74,56 @@ class EquipmentController extends Controller
             }
             $equipment = Equipment::create($data);
 
+            $componentsInput = $request->input('components');
+            if (is_string($componentsInput)) {
+                $componentsInput = json_decode($componentsInput, true);
+            }
+            if (is_array($componentsInput)) {
+                foreach ($componentsInput as $item) {
+                    $typeId = isset($item['component_type_id']) ? (int) $item['component_type_id'] : 0;
+                    $brandId = isset($item['brand_id']) ? (int) $item['brand_id'] : 0;
+                    if ($typeId <= 0 || $brandId <= 0) {
+                        continue;
+                    }
+                    $component = $equipment->components()->create([
+                        'component_type_id' => $typeId,
+                        'brand_id' => $brandId,
+                        'status' => 'active',
+                    ]);
+                    $fieldValues = $item['field_values'] ?? [];
+                    if (is_array($fieldValues)) {
+                        foreach ($fieldValues as $fieldId => $value) {
+                            $fieldId = (int) $fieldId;
+                            if ($fieldId <= 0 || $value === '' || $value === null) {
+                                continue;
+                            }
+                            $field = ComponentTypeField::find($fieldId);
+                            if (!$field) {
+                                continue;
+                            }
+                            $optionId = null;
+                            $storedValue = is_scalar($value) ? (string) $value : '';
+                            if ($field->hasOptions()) {
+                                $option = $field->options()->where('value', $storedValue)->first();
+                                if ($option) {
+                                    $optionId = $option->id;
+                                    $storedValue = $option->value;
+                                }
+                            }
+                            ComponentTypeValue::create([
+                                'component_id' => $component->id,
+                                'component_type_field_id' => $fieldId,
+                                'option_id' => $optionId,
+                                'value' => $storedValue,
+                                'raw_value' => is_scalar($value) ? (string) $value : '',
+                            ]);
+                        }
+                    }
+                }
+            }
+
             return ApiResponse::success(
-                new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication'])),
+                new EquipmentResource($equipment->load(['company', 'equipmentType', 'process', 'ubication', 'components.componentType', 'components.brand', 'components.fieldValues'])),
                 'Se guardó el equipo correctamente',
                 201
             );

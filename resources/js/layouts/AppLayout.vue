@@ -127,23 +127,6 @@
 
                 <router-link
                     v-if="authStore.hasPermission('consult equipment')"
-                    :to="{ name: 'components' }"
-                    @click="mobileMenuOpen = false"
-                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
-                    :class="isActive('components') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Componentes"
-                >
-                    <i class="fas fa-weight text-lg w-5"></i>
-                    <span
-                        v-show="!sidebarCollapsed || !isDesktop"
-                        class="font-medium transition-opacity duration-300"
-                    >
-                        Componentes
-                    </span>
-                </router-link>
-
-                <router-link
-                    v-if="authStore.hasPermission('consult equipment')"
                     :to="{ name: 'component-types' }"
                     @click="mobileMenuOpen = false"
                     class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"

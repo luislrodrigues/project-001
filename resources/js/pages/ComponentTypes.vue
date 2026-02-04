@@ -93,7 +93,7 @@
                                         Nombre del Tipo
                                     </div>
                                 </th>
-                                <th v-if="authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="authStore.hasPermission('consult equipment') || authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center justify-end">
                                         <i class="fas fa-cog mr-2"></i>
                                         Acciones
@@ -121,8 +121,16 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td v-if="authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td v-if="authStore.hasPermission('consult equipment') || authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
+                                        <router-link
+                                            :to="{ name: 'component-types.show', params: { id: type.id } }"
+                                            class="inline-flex items-center px-3 py-2 bg-white border border-blue-100 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors duration-200"
+                                            title="Ver detalles"
+                                        >
+                                            <i class="fas fa-eye text-sm"></i>
+                                            <span class="ml-1.5 text-xs font-medium">Ver</span>
+                                        </router-link>
                                         <router-link
                                             v-if="authStore.hasPermission('edit equipment')"
                                             :to="{ name: 'component-types.edit', params: { id: type.id } }"
