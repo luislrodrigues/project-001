@@ -491,9 +491,12 @@ class ReportController extends Controller
                 'margin_footer' => 10,
             ]);
 
+            $equipmentName = $report->equipment?->name ?? 'reporte-' . $report->id;
+            $filename = 'Informe Vibraciones ' . preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName)) . '.pdf';
+
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
-            }, 'reporte-' . $report->id . '.pdf', [
+            }, $filename, [
                 'Content-Type' => 'application/pdf',
             ]);
         } catch (\Exception $e) {
@@ -602,10 +605,11 @@ class ReportController extends Controller
 
             $equipmentName = $report->equipment?->name ?? 'N/A';
             $subject = 'Informe Vibraciones ' . $equipmentName;
+            $pdfFilename = 'Informe Vibraciones ' . preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName)) . '.pdf';
 
             $firmaPath = public_path('images/firma_correo.jpeg');
 
-            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $report, $firmaPath) {
+            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $pdfFilename, $firmaPath) {
                 $firmaCid = file_exists($firmaPath)
                     ? $message->embed($firmaPath)
                     : null;
@@ -628,7 +632,7 @@ Fundación, Magdalena.</p>' .
                     ->subject($subject)
                     ->html($htmlBody);
                 $message->attach($pdfPath, [
-                    'as' => 'reporte-' . $report->id . '.pdf',
+                    'as' => $pdfFilename,
                     'mime' => 'application/pdf',
                 ]);
             });

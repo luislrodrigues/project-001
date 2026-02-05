@@ -573,6 +573,7 @@ const getConditionClass = () => {
     return 'bg-gray-100 text-gray-900 border border-gray-300';
 };
 
+const sanitizeFilename = (name) => (name || '').replace(/[\\/:*?"<>|]/g, '_').trim();
 const downloadPdf = async (event) => {
     if (event) {
         event.preventDefault();
@@ -585,10 +586,13 @@ const downloadPdf = async (event) => {
         const response = await api.get(`/reports/${route.params.id}/pdf`, {
             responseType: 'blob'
         });
+        const eqName = report.value?.equipment?.name;
+        const baseName = sanitizeFilename(eqName) || `reporte-${route.params.id}`;
+        const filename = `Informe Vibraciones ${baseName}.pdf`;
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `reporte-${route.params.id}.pdf`);
+        link.setAttribute('download', filename);
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
