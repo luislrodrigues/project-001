@@ -402,6 +402,7 @@
                                     <option value="Alta">Alta</option>
                                     <option value="Media">Media</option>
                                     <option value="Baja">Baja</option>
+                                    <option value="Normal">Normal</option>
                                 </select>
                                 <p v-if="errors.priority" class="mt-1 text-sm text-red-600">{{ errors.priority }}</p>
                             </div>

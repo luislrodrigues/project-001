@@ -96,6 +96,7 @@
                                 <option value="Alta">Alta</option>
                                 <option value="Media">Media</option>
                                 <option value="Baja">Baja</option>
+                                <option value="Normal">Normal</option>
                             </select>
                         </div>
                     </div>
