@@ -90,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/catalogs/companies', [CompanyController::class, 'getCompanies']);
     Route::get('/catalogs/company-segments', [CompanyController::class, 'getCompanySegments']);
     Route::get('/catalogs/users', [UserController::class, 'getUsers']);
+    Route::get('/catalogs/analists', [UserController::class, 'getAnalists']);
 
     // CRUD para catálogos
     Route::prefix('catalogs')->group(function () {

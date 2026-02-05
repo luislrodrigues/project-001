@@ -573,7 +573,7 @@ const loadCatalogs = async () => {
             api.get('/catalogs/conditions'),
             api.get('/catalogs/mechanism-fails'),
             api.get('/catalogs/component-fails'),
-            api.get('/catalogs/users'),
+            api.get('/catalogs/analists'),
         ]);
 
         equipments.value = equipmentsRes.data?.data ?? equipmentsRes.data ?? [];

@@ -172,6 +172,21 @@ class UserController extends Controller
         return ApiResponse::success($users);
     }
 
+    /**
+     * Usuarios con rol Supervisor (para selector de analista en reportes).
+     */
+    public function getAnalists(): JsonResponse
+    {
+        $users = User::where('status', 'active')
+            ->whereNull('deleted_at')
+            ->whereHas('roles', fn ($q) => $q->where('name', 'Supervisor'))
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+
+        return ApiResponse::success($users);
+    }
+
     public function getRoles(): JsonResponse
     {
         $roles = Role::where('guard_name', 'web')
