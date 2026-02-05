@@ -111,7 +111,7 @@
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                     <i class="fas fa-briefcase mr-2 text-blue-600"></i>
-                                    Puesto de Trabajo
+                                    Cargo
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <input
@@ -119,7 +119,7 @@
                                     type="text"
                                     required
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    placeholder="Ingresar puesto de trabajo"
+                                    placeholder="Ingresar cargo"
                                 />
                                 <p v-if="errors.workstation" class="mt-1 text-sm text-red-600">{{ errors.workstation }}</p>
                             </div>
