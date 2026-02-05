@@ -179,7 +179,7 @@ class UserController extends Controller
     {
         $users = User::where('status', 'active')
             ->whereNull('deleted_at')
-            ->whereHas('roles', fn ($q) => $q->where('name', 'Supervisor'))
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['Supervisor', 'Administrador']))
             ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get();
