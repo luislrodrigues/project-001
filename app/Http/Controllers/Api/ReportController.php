@@ -615,7 +615,10 @@ class ReportController extends Controller
 
             $firmaPath = public_path('images/firma_correo.jpeg');
 
-            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $pdfFilename, $firmaPath) {
+            $analistName = $report->analist?->name ?? '—';
+            $analistWorkstation = $report->analist?->workstation ?? '—';
+
+            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $pdfFilename, $firmaPath, $analistName, $analistWorkstation) {
                 $firmaCid = file_exists($firmaPath)
                     ? $message->embed($firmaPath)
                     : null;
@@ -625,10 +628,8 @@ class ReportController extends Controller
 <p>Posterior medición y análisis de vibraciones mecánicas, se realizan las recomendaciones más apropiadas en función de los hallazgos encontrados.</p>
 <p>Cualquier duda e inquietud estaré atento.</p>
 <p>Saludos!</p>
-<p><strong>Álvaro Sánchez Maldonado</strong><br>
-Ingeniero de Mantenimiento & Confiabilidad<br>
-Analista de Vibraciones CAT II<br>
-Andrés Martínez Durán<br>
+<p><strong>' . e($analistName) . '</strong><br>
+' . e($analistWorkstation) . '<br>
 SYNERGY SMART S.A.S.<br>
 Móvil: +57 (316) 4048830<br>
 Fundación, Magdalena.</p>' .

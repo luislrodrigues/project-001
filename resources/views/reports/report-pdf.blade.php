@@ -492,6 +492,7 @@
         @endif
 
         <p class="elaboro-line"><strong>Elaboró:</strong> {{ $reportData->analist?->name ?? '—' }}</p>
+        <p class="elaboro-line">{{ $reportData->analist?->workstation ?? '—' }}</p>
     </div>
 </body>
 
