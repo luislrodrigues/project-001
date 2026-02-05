@@ -126,7 +126,7 @@
                 </router-link>
 
                 <router-link
-                    v-if="authStore.hasPermission('consult equipment')"
+                    v-if="authStore.hasPermission('consult component type')"
                     :to="{ name: 'component-types' }"
                     @click="mobileMenuOpen = false"
                     class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"

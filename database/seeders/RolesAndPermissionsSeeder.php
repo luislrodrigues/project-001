@@ -34,6 +34,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'actions equipment',
             'delete equipment',
             'consult equipment',
+            'save component type',
+            'edit component type',
+            'actions component type',
+            'delete component type',
+            'consult component type',
             'save report',
             'edit report',
             'actions report',
@@ -55,6 +60,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'actions equipment',
             'delete equipment',
             'consult equipment',
+            'save component type',
+            'edit component type',
+            'actions component type',
+            'delete component type',
+            'consult component type',
             'save report',
             'edit report',
             'actions report',
@@ -68,9 +78,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $adminRole = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
         $adminRole->syncPermissions($allPermissions);
 
-        // Rol Cliente: Sólo visualiza información de su empresa
+        // Rol Cliente: Sólo Inicio, Informes y Equipos (sin Tipo Componente, Usuario, Empresa)
         $clientePermissions = [
-            'consult company',
             'consult equipment',
             'consult report',
         ];

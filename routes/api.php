@@ -66,8 +66,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/components/type/{componentTypeId}/fields', [ComponentController::class, 'getComponentTypeFields']);
 
     // Tipos de Componentes (POST para update evita problemas de parsing PUT)
-    Route::post('component-types/{component_type}', [ComponentTypeController::class, 'update'])->middleware('permission:consult equipment');
-    Route::apiResource('component-types', ComponentTypeController::class)->middleware('permission:consult equipment');
+    Route::post('component-types/{component_type}', [ComponentTypeController::class, 'update'])->middleware('permission:consult component type');
+    Route::apiResource('component-types', ComponentTypeController::class)->middleware('permission:consult component type');
 
     // Usuarios (POST para update evita problemas de parsing PUT)
     Route::post('users/{user}', [UserController::class, 'update'])->middleware('permission:consult user');
@@ -79,7 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/catalogs/equipment', [EquipmentController::class, 'getEquipmentForSelect'])
         ->middleware('permission.or:consult equipment,save equipment,consult report,save report');
     Route::get('/catalogs/component-types', [ComponentTypeController::class, 'getComponentTypesForSelect'])
-        ->middleware('permission.or:consult equipment,save equipment');
+        ->middleware('permission.or:consult equipment,save equipment,consult component type,save component type');
     Route::get('/catalogs/conditions', [ReportController::class, 'getConditions']);
     Route::get('/catalogs/mechanism-fails', [ReportController::class, 'getMechanismFails']);
     Route::get('/catalogs/component-fails', [ReportController::class, 'getComponentFails']);

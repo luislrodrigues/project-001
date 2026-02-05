@@ -157,7 +157,7 @@
 
                 <!-- Tipo Componente Card -->
                 <router-link
-                    v-if="authStore.hasPermission('consult equipment')"
+                    v-if="authStore.hasPermission('consult component type')"
                     :to="{ name: 'component-types' }"
                     class="group"
                 >
