@@ -19,7 +19,7 @@
     <style>
         :root {
             --sidebar-width: 260px;
-            --sidebar-collapsed-width: 70px;
+            --sidebar-collapsed-width: 76px;
         }
         .sidebar-gradient {
             background: linear-gradient(180deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);

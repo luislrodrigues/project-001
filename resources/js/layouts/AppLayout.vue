@@ -15,11 +15,17 @@
             :class="{ 'translate-x-0': mobileMenuOpen }"
             :style="isDesktop ? { width: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)' } : {}"
         >
-            <!-- Logo and Toggle: móvil = cerrar (X), desktop = hamburger -->
-            <div class="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-blue-400/30 ">
-                <div class="flex items-center space-x-3 min-w-0">
-                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm shrink-0">
-                        <i class="fas fa-cog text-white text-xl"></i>
+            <!-- Logo and Toggle: móvil = cerrar (X), desktop = expandir/colapsar -->
+            <div
+                class="flex items-center justify-between border-b border-blue-400/30 py-4 sm:py-5 transition-all duration-300"
+                :class="sidebarCollapsed && isDesktop ? 'px-2' : 'px-4 sm:px-6'"
+            >
+                <div class="flex items-center space-x-3 min-w-0 shrink">
+                    <div
+                        v-show="!sidebarCollapsed || !isDesktop"
+                        class="bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm shrink-0 transition-all duration-300 w-10 h-10"
+                    >
+                        <i class="fas fa-cog text-white text-xl shrink-0"></i>
                     </div>
                     <span
                         v-show="!sidebarCollapsed || !isDesktop"
@@ -37,11 +43,12 @@
                 >
                     <i class="fas fa-times text-xl"></i>
                 </button>
-                <!-- Desktop: toggle collapse -->
+                <!-- Desktop: toggle collapse/expand (siempre visible) -->
                 <button
                     v-else
                     @click="toggleSidebar"
-                    class="hidden lg:flex text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                    class="hidden lg:flex flex-shrink-0 text-white hover:bg-white/20 rounded-lg p-2 transition-colors min-w-[2.25rem] min-h-[2.25rem] items-center justify-center"
+                    :aria-label="sidebarCollapsed ? 'Expandir menú' : 'Colapsar menú'"
                 >
                     <i class="fas fa-bars text-lg"></i>
                 </button>
