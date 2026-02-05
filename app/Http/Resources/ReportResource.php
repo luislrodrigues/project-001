@@ -30,6 +30,7 @@ class ReportResource extends JsonResource
                 'id' => $this->condition->id ?? null,
                 'name' => $this->condition->name ?? null,
                 'color' => $this->condition->color ?? null,
+                'text_color' => $this->condition->text_color ?? null,
             ] : null,
             'mechanism_fail' => $this->mechanismFail ? [
                 'id' => $this->mechanismFail->id ?? null,

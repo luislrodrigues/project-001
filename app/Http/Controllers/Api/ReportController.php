@@ -25,7 +25,7 @@ class ReportController extends Controller
     {
         $conditions = Condition::where('status', 'active')
             ->whereNull('deleted_at')
-            ->select('id', 'name', 'color')
+            ->select('id', 'name', 'color', 'text_color')
             ->orderBy('name')
             ->get();
 

@@ -397,11 +397,13 @@
                             @php
                                 $condicion = $reportData->condition?->name ?? '';
                                 $esAlarma = stripos($condicion, 'alarma') !== false;
+                                $condTextColor = $reportData->condition?->text_color ?? '#000';
+                                $condBgColor = $reportData->condition?->color;
                             @endphp
                             @if ($esAlarma)
-                                <span class="condition-alarma">{{ $condicion }}</span>
+                                <span class="condition-alarma" style="color: {{ $condTextColor }};{{ $condBgColor ? ' background: ' . $condBgColor . ';' : '' }}">{{ $condicion }}</span>
                             @else
-                                <span class="condition-value">{{ $condicion }}</span>
+                                <span class="condition-value" style="color: {{ $condTextColor }};{{ $condBgColor ? ' background: ' . $condBgColor . ';' : '' }}">{{ $condicion }}</span>
                             @endif
                         </div>
                         <div class="data-line"><strong>MECANISMO FALLA:</strong> {{ $reportData->mechanismFail->name ?? '—' }}</div>

@@ -16,6 +16,7 @@ class Condition extends Model
         'id',
         'name',
         'color',
+        'text_color',
         'status',
     ];
 

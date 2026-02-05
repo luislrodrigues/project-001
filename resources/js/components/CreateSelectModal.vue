@@ -84,9 +84,9 @@
                             <div v-if="field === 'condition'">
                                 <label class="flex items-center mb-1.5 text-xs font-medium text-gray-700">
                                     <i class="fas fa-palette mr-1.5 text-blue-600 text-xs"></i>
-                                    Color
+                                    Color de fondo
                                 </label>
-                                <div class="flex gap-2 items-center">
+                                <div class="flex gap-2 items-center mb-3">
                                     <input
                                         v-model="valueColor"
                                         type="color"
@@ -97,6 +97,24 @@
                                         v-model="valueColor"
                                         type="text"
                                         placeholder="#22c55e o green"
+                                        class="flex-1 bg-white border-2 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-3 py-2"
+                                    />
+                                </div>
+                                <label class="flex items-center mb-1.5 text-xs font-medium text-gray-700">
+                                    <i class="fas fa-font mr-1.5 text-blue-600 text-xs"></i>
+                                    Color de letra
+                                </label>
+                                <div class="flex gap-2 items-center">
+                                    <input
+                                        v-model="valueTextColor"
+                                        type="color"
+                                        class="h-9 w-14 cursor-pointer rounded border border-gray-300"
+                                        :title="valueTextColor"
+                                    />
+                                    <input
+                                        v-model="valueTextColor"
+                                        type="text"
+                                        placeholder="#000000 o black"
                                         class="flex-1 bg-white border-2 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block px-3 py-2"
                                     />
                                 </div>
@@ -240,6 +258,7 @@ const emit = defineEmits(['update:show', 'item-saved', 'options-updated']);
 
 const valueNew = ref('');
 const valueColor = ref('#22c55e');
+const valueTextColor = ref('#000000');
 const editingId = ref(null);
 const search = ref('');
 const items = ref([]);
@@ -304,6 +323,7 @@ const startEdit = (id) => {
         editingId.value = id;
         valueNew.value = item.name;
         valueColor.value = item.color || '#22c55e';
+        valueTextColor.value = item.text_color || '#000000';
         errors.value = {};
     }
 };
@@ -312,6 +332,7 @@ const cancelEdit = () => {
     editingId.value = null;
     valueNew.value = '';
     valueColor.value = '#22c55e';
+    valueTextColor.value = '#000000';
     errors.value = {};
 };
 
@@ -338,8 +359,9 @@ const saveField = async () => {
         const endpoint = `/catalogs/${catalogName}`;
 
         const payload = { name: valueNew.value.trim() };
-        if (catalogName === 'conditions' && valueColor.value) {
-            payload.color = valueColor.value.trim();
+        if (catalogName === 'conditions') {
+            if (valueColor.value) payload.color = valueColor.value.trim();
+            if (valueTextColor.value) payload.text_color = valueTextColor.value.trim();
         }
         if (editingId.value) {
             await api.put(`${endpoint}/${editingId.value}`, payload);
@@ -409,6 +431,7 @@ const deleteItem = async (id) => {
 const resetForm = () => {
     valueNew.value = '';
     valueColor.value = '#22c55e';
+    valueTextColor.value = '#000000';
     editingId.value = null;
     search.value = '';
     errors.value = {};

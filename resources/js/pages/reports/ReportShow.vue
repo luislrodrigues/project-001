@@ -245,7 +245,7 @@
                             <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
                                 <span
                                     :class="!report.condition?.color ? getConditionClass() : ''"
-                                    :style="report.condition?.color ? { backgroundColor: report.condition.color, color: '#000', borderColor: report.condition.color } : {}"
+                                    :style="report.condition ? (report.condition.color ? { backgroundColor: report.condition.color, color: report.condition.text_color || '#000', borderColor: report.condition.color } : (report.condition.text_color ? { color: report.condition.text_color } : {})) : {}"
                                     class="px-3 py-1 inline-flex text-xs font-semibold rounded-full border"
                                 >
                                     {{ report.condition?.name }}

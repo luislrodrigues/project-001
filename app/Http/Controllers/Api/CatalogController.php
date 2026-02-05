@@ -43,6 +43,7 @@ class CatalogController extends Controller
         $rules = ['name' => $uniqueRule];
         if ($catalog === 'conditions') {
             $rules['color'] = 'nullable|string|max:50';
+            $rules['text_color'] = 'nullable|string|max:50';
         }
         $validator = Validator::make($request->all(), $rules);
 
@@ -53,8 +54,9 @@ class CatalogController extends Controller
         try {
             $modelClass = $this->modelMap[$catalog];
             $data = ['name' => ucfirst(trim($request->name))];
-            if ($catalog === 'conditions' && $request->has('color')) {
+            if ($catalog === 'conditions') {
                 $data['color'] = $request->color ? trim($request->color) : null;
+                $data['text_color'] = $request->text_color ? trim($request->text_color) : null;
             }
             if (in_array('status', (new $modelClass)->getFillable())) {
                 $data['status'] = 'active';
@@ -82,6 +84,7 @@ class CatalogController extends Controller
         $rules = ['name' => $uniqueRule];
         if ($catalog === 'conditions') {
             $rules['color'] = 'nullable|string|max:50';
+            $rules['text_color'] = 'nullable|string|max:50';
         }
         $validator = Validator::make($request->all(), $rules);
 
@@ -95,6 +98,7 @@ class CatalogController extends Controller
             $updateData = ['name' => ucfirst(trim($request->name))];
             if ($catalog === 'conditions') {
                 $updateData['color'] = $request->color ? trim($request->color) : null;
+                $updateData['text_color'] = $request->text_color ? trim($request->text_color) : null;
             }
             $item->update($updateData);
 
