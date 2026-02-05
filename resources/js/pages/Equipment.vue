@@ -52,22 +52,6 @@
                         </div>
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-cog mr-2 text-gray-400"></i>
-                                Tipo
-                            </label>
-                            <select
-                                v-model="filters.equipment_type_id"
-                                @change="fetchEquipment"
-                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="type in equipmentTypes" :key="type.id" :value="type.id">
-                                    {{ type.name }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="flex-1 min-w-[200px]">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-project-diagram mr-2 text-gray-400"></i>
                                 Proceso
                             </label>
@@ -79,6 +63,22 @@
                                 <option value="">Todos</option>
                                 <option v-for="proc in processes" :key="proc.id" :value="proc.id">
                                     {{ proc.name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-cog mr-2 text-gray-400"></i>
+                                Tipo
+                            </label>
+                            <select
+                                v-model="filters.equipment_type_id"
+                                @change="fetchEquipment"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            >
+                                <option value="">Todos</option>
+                                <option v-for="type in equipmentTypes" :key="type.id" :value="type.id">
+                                    {{ type.name }}
                                 </option>
                             </select>
                         </div>
@@ -149,14 +149,14 @@
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
-                                        <i class="fas fa-cog mr-2"></i>
-                                        Tipo
+                                        <i class="fas fa-project-diagram mr-2"></i>
+                                        Proceso
                                     </div>
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
-                                        <i class="fas fa-project-diagram mr-2"></i>
-                                        Proceso
+                                        <i class="fas fa-cog mr-2"></i>
+                                        Tipo
                                     </div>
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
@@ -185,10 +185,10 @@
                                     <div class="text-sm font-medium text-gray-900">{{ equipment.name }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ equipment.equipment_type && equipment.equipment_type.name ? equipment.equipment_type.name : 'N/A' }}</div>
+                                    <div class="text-sm text-gray-500">{{ equipment.process && equipment.process.name ? equipment.process.name : '—' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ equipment.process && equipment.process.name ? equipment.process.name : '—' }}</div>
+                                    <div class="text-sm text-gray-500">{{ equipment.equipment_type && equipment.equipment_type.name ? equipment.equipment_type.name : 'N/A' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ equipment.ubication && equipment.ubication.name ? equipment.ubication.name : 'N/A' }}</div>
