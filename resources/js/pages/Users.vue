@@ -231,27 +231,12 @@
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="pagination && pagination.last_page > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
-                        Mostrando {{ pagination.from }} a {{ pagination.to }} de {{ pagination.total }} resultados
-                    </div>
-                    <div class="flex space-x-2">
-                        <button
-                            @click="changePage(pagination.current_page - 1)"
-                            :disabled="pagination.current_page === 1"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Anterior
-                        </button>
-                        <button
-                            @click="changePage(pagination.current_page + 1)"
-                            :disabled="pagination.current_page === pagination.last_page"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Siguiente
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    v-if="pagination && users.length > 0"
+                    :pagination="pagination"
+                    @page-change="changePage"
+                    class="px-6 py-4 border-t border-gray-200"
+                />
             </div>
         </div>
     </div>
@@ -263,6 +248,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
+import Pagination from '../components/Pagination.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();

@@ -236,31 +236,11 @@
             </div>
 
             <!-- Paginación -->
-            <div v-if="pagination && reports.length > 0" class="mt-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
-                    <div class="text-sm text-gray-700">
-                        Mostrando <span class="font-semibold">{{ pagination.from }}</span> a <span class="font-semibold">{{ pagination.to }}</span> de <span class="font-semibold">{{ pagination.total }}</span> resultados
-                    </div>
-                    <div class="flex space-x-2">
-                        <button
-                            v-if="pagination.prev_page_url"
-                            @click="changePage(pagination.current_page - 1)"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            <i class="fas fa-chevron-left mr-1"></i>
-                            Anterior
-                        </button>
-                        <button
-                            v-if="pagination.next_page_url"
-                            @click="changePage(pagination.current_page + 1)"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            Siguiente
-                            <i class="fas fa-chevron-right ml-1"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <Pagination
+                v-if="pagination && reports.length > 0"
+                :pagination="pagination"
+                @page-change="changePage"
+            />
         </div>
     </div>
 </template>
@@ -271,6 +251,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
+import Pagination from '../components/Pagination.vue';
 
 const STORAGE_KEY = 'reports-list-filters';
 
