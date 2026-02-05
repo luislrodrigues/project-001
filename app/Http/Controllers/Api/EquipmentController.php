@@ -79,15 +79,17 @@ class EquipmentController extends Controller
                 $componentsInput = json_decode($componentsInput, true);
             }
             if (is_array($componentsInput)) {
-                foreach ($componentsInput as $item) {
+                foreach ($componentsInput as $index => $item) {
                     $typeId = isset($item['component_type_id']) ? (int) $item['component_type_id'] : 0;
                     $brandId = isset($item['brand_id']) ? (int) $item['brand_id'] : 0;
                     if ($typeId <= 0 || $brandId <= 0) {
                         continue;
                     }
+                    $displayOrder = isset($item['display_order']) ? (int) $item['display_order'] : $index;
                     $component = $equipment->components()->create([
                         'component_type_id' => $typeId,
                         'brand_id' => $brandId,
+                        'display_order' => $displayOrder,
                         'status' => 'active',
                     ]);
                     $fieldValues = $item['field_values'] ?? [];
@@ -178,15 +180,17 @@ class EquipmentController extends Controller
                     ComponentTypeValue::where('component_id', $oldComponent->id)->delete();
                 }
                 $equipment->components()->delete();
-                foreach ($componentsInput as $item) {
+                foreach ($componentsInput as $index => $item) {
                     $typeId = isset($item['component_type_id']) ? (int) $item['component_type_id'] : 0;
                     $brandId = isset($item['brand_id']) ? (int) $item['brand_id'] : 0;
                     if ($typeId <= 0 || $brandId <= 0) {
                         continue;
                     }
+                    $displayOrder = isset($item['display_order']) ? (int) $item['display_order'] : $index;
                     $component = $equipment->components()->create([
                         'component_type_id' => $typeId,
                         'brand_id' => $brandId,
+                        'display_order' => $displayOrder,
                         'status' => 'active',
                     ]);
                     $fieldValues = $item['field_values'] ?? [];

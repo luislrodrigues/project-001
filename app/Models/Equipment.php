@@ -10,11 +10,11 @@ class Equipment extends Model
 {
     use HasFactory;
     use SoftDeletes;
-    
+
     protected $guard = 'web';
 
     protected $table = 'equipment';
-    
+
     Protected $fillable = [
         'id',
         'company_id',
@@ -52,6 +52,6 @@ class Equipment extends Model
     }
     public function components()
     {
-        return $this->hasMany(Component::class);
+        return $this->hasMany(Component::class)->orderBy('display_order');
     }
 }

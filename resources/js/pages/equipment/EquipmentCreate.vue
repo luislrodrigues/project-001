@@ -300,14 +300,34 @@
                             >
                                 <div class="flex items-center justify-between mb-4">
                                     <span class="font-medium text-gray-800">Componente #{{ compIndex + 1 }}</span>
-                                    <button
-                                        type="button"
-                                        @click="removeComponent(compIndex)"
-                                        class="text-red-600 hover:text-red-800 p-1 rounded"
-                                        title="Quitar componente"
-                                    >
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <div class="flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            @click="moveComponent(compIndex, -1)"
+                                            :disabled="compIndex === 0"
+                                            class="p-2 rounded text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            title="Subir"
+                                        >
+                                            <i class="fas fa-arrow-up"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="moveComponent(compIndex, 1)"
+                                            :disabled="compIndex === form.components.length - 1"
+                                            class="p-2 rounded text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            title="Bajar"
+                                        >
+                                            <i class="fas fa-arrow-down"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="removeComponent(compIndex)"
+                                            class="p-2 rounded text-red-600 hover:bg-red-50 transition-colors"
+                                            title="Quitar componente"
+                                        >
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
@@ -620,6 +640,13 @@ const removeComponent = (index) => {
     form.components.splice(index, 1);
 };
 
+const moveComponent = (index, direction) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= form.components.length) return;
+    const arr = form.components;
+    [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
+};
+
 const loadComponentTypeFieldsForRow = async (index) => {
     const comp = form.components[index];
     if (!comp || !comp.component_type_id) {
@@ -728,9 +755,10 @@ const saveEquipment = async () => {
         }
         const componentsPayload = form.components
             .filter((c) => c.component_type_id && c.brand_id)
-            .map((c) => ({
+            .map((c, index) => ({
                 component_type_id: c.component_type_id,
                 brand_id: c.brand_id,
+                display_order: index,
                 field_values: c.field_values || {},
             }));
         formData.append('components', JSON.stringify(componentsPayload));

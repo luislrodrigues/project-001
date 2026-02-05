@@ -16,6 +16,7 @@ class Component extends Model
         'equipment_id',
         'brand_id',
         'component_type_id',
+        'display_order',
         'status',
     ];
     public function equipment()
