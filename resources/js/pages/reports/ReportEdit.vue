@@ -42,6 +42,24 @@
                             <h4 class="text-lg font-semibold text-gray-800">Información General</h4>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Empresa (filtro) -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-building mr-2 text-blue-600"></i>
+                                    Empresa
+                                </label>
+                                <select
+                                    v-model="filterCompanyId"
+                                    @change="onCompanyFilterChange"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                >
+                                    <option value="">Seleccione empresa</option>
+                                    <option v-for="c in companies" :key="c.id" :value="c.id">
+                                        {{ c.name }}
+                                    </option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">Filtra los equipos por empresa</p>
+                            </div>
                             <!-- Equipo -->
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -56,8 +74,8 @@
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                                 >
                                     <option value="">Seleccione</option>
-                                    <option v-for="eq in equipments" :key="eq.id" :value="eq.id">
-                                        {{ eq.name }}
+                                    <option v-for="eq in filteredEquipments" :key="eq.id" :value="eq.id">
+                                        {{ eq.name }}{{ eq.company?.name ? ` (${eq.company.name})` : '' }}
                                     </option>
                                 </select>
                                 <p v-if="errors.equipment_id" class="mt-1 text-sm text-red-600">{{ errors.equipment_id }}</p>
@@ -485,7 +503,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
@@ -521,6 +539,8 @@ const equipmentData = reactive({
 
 
 const equipments = ref([]);
+const companies = ref([]);
+const filterCompanyId = ref('');
 const conditions = ref([]);
 const mechanismFails = ref([]);
 const componentFails = ref([]);
@@ -546,8 +566,9 @@ onMounted(async () => {
 
 const loadCatalogs = async () => {
     try {
-        const [equipmentsRes, conditionsRes, mechanismFailsRes, componentFailsRes, usersRes] = await Promise.all([
+        const [equipmentsRes, companiesRes, conditionsRes, mechanismFailsRes, componentFailsRes, usersRes] = await Promise.all([
             api.get('/catalogs/equipment'),
+            api.get('/catalogs/companies'),
             api.get('/catalogs/conditions'),
             api.get('/catalogs/mechanism-fails'),
             api.get('/catalogs/component-fails'),
@@ -555,6 +576,7 @@ const loadCatalogs = async () => {
         ]);
 
         equipments.value = equipmentsRes.data?.data ?? equipmentsRes.data ?? [];
+        companies.value = companiesRes.data?.data ?? companiesRes.data ?? [];
         conditions.value = conditionsRes.data?.data ?? conditionsRes.data ?? [];
         mechanismFails.value = mechanismFailsRes.data?.data ?? mechanismFailsRes.data ?? [];
         componentFails.value = componentFailsRes.data?.data ?? componentFailsRes.data ?? [];
@@ -593,6 +615,31 @@ const loadComponentFails = async () => {
     }
 };
 
+const filteredEquipments = computed(() => {
+    if (!filterCompanyId.value) return [];
+    const cid = Number(filterCompanyId.value);
+    return equipments.value.filter(
+        (eq) => Number(eq.company_id ?? eq.company?.id) === cid
+    );
+});
+
+const onCompanyFilterChange = () => {
+    if (!form.equipment_id) return;
+    const cid = filterCompanyId.value ? Number(filterCompanyId.value) : null;
+    const selected = equipments.value.find((e) => Number(e.id) === Number(form.equipment_id));
+    const mustClear = !cid || (selected && Number(selected.company_id ?? selected.company?.id) !== cid);
+    if (mustClear) {
+        form.equipment_id = '';
+        equipmentData.equipment_type = '';
+        equipmentData.location = '';
+        equipmentData.process = '';
+        components.value = [];
+        form.diagnosis = {};
+        form.recommendations = {};
+        form.component_images = {};
+    }
+};
+
 const handleItemSaved = (data) => {
     // Seleccionar automáticamente el nuevo registro creado
     if (data.field === 'condition' && data.id) {
@@ -610,6 +657,7 @@ const loadReport = async () => {
         report.value = response.data.data;
         const reportData = response.data.data;
 
+        filterCompanyId.value = reportData.equipment?.company?.id || '';
         form.equipment_id = reportData.equipment_id;
         form.measurement_date = reportData.measurement_date;
         form.condition_id = reportData.condition?.id || '';
