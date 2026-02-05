@@ -56,6 +56,7 @@
                             {{ downloadingPdf ? 'Generando...' : 'PDF' }}
                         </button>
                         <button
+                            v-if="!authStore.hasRole('Cliente')"
                             type="button"
                             @click.prevent="openSendEmailModal"
                             :disabled="sendingEmail"
