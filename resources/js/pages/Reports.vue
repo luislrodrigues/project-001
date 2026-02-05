@@ -206,6 +206,9 @@
                                     <div class="text-sm font-medium text-gray-900">{{ report.equipment && report.equipment.name ? report.equipment.name : '' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">{{ report.equipment && report.equipment.process ? report.equipment.process : '—' }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ formatDate(report.measurement_date) }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
