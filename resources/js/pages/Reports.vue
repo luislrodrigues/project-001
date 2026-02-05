@@ -34,7 +34,7 @@
                 <!-- Search Section -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
+                        <div v-if="!authStore.hasRole('Cliente')">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Empresa
@@ -133,7 +133,7 @@
                                         <i v-else class="fas fa-sort-up text-sm"></i>
                                     </div>
                                 </th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="!authStore.hasRole('Cliente')" class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
                                         <i class="fas fa-building mr-2"></i>
                                         Empresa
@@ -176,7 +176,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                     {{ report.id }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td v-if="!authStore.hasRole('Cliente')" class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-700">{{ report.equipment && report.equipment.company && report.equipment.company.name ? report.equipment.company.name : '—' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">

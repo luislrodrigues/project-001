@@ -96,28 +96,28 @@ const routes = [
                 component: () => import('../pages/reports/ReportShow.vue'),
                 props: true
             },
-            {
-                path: 'components',
-                name: 'components',
-                component: () => import('../pages/Components.vue')
-            },
-            {
-                path: 'components/create',
-                name: 'components.create',
-                component: () => import('../pages/components/ComponentCreate.vue')
-            },
-            {
-                path: 'components/:id/edit',
-                name: 'components.edit',
-                component: () => import('../pages/components/ComponentEdit.vue'),
-                props: true
-            },
-            {
-                path: 'components/:id',
-                name: 'components.show',
-                component: () => import('../pages/components/ComponentShow.vue'),
-                props: true
-            },
+            // {
+            //     path: 'components',
+            //     name: 'components',
+            //     component: () => import('../pages/Components.vue')
+            // },
+            // {
+            //     path: 'components/create',
+            //     name: 'components.create',
+            //     component: () => import('../pages/components/ComponentCreate.vue')
+            // },
+            // {
+            //     path: 'components/:id/edit',
+            //     name: 'components.edit',
+            //     component: () => import('../pages/components/ComponentEdit.vue'),
+            //     props: true
+            // },
+            // {
+            //     path: 'components/:id',
+            //     name: 'components.show',
+            //     component: () => import('../pages/components/ComponentShow.vue'),
+            //     props: true
+            // },
             {
                 path: 'component-types',
                 name: 'component-types',
@@ -166,6 +166,11 @@ const routes = [
                 path: 'profile',
                 name: 'profile',
                 component: () => import('../pages/Profile.vue')
+            },
+            {
+                path: '/:pathMatch(.*)*',
+                name: 'not-found',
+                component: () => import('../pages/NotFound.vue')
             }
         ]
     }

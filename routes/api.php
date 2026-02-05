@@ -60,9 +60,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/send-email', [ReportController::class, 'sendEmail'])->middleware('permission:consult report');
     });
 
-    // Componentes (POST para update evita problemas de parsing PUT)
-    Route::post('components/{component}', [ComponentController::class, 'update'])->middleware('permission:consult equipment');
-    Route::apiResource('components', ComponentController::class)->middleware('permission:consult equipment');
+    // Componentes (comentado - sin página de listado)
+    // Route::post('components/{component}', [ComponentController::class, 'update'])->middleware('permission:consult equipment');
+    // Route::apiResource('components', ComponentController::class)->middleware('permission:consult equipment');
     Route::get('/components/type/{componentTypeId}/fields', [ComponentController::class, 'getComponentTypeFields']);
 
     // Tipos de Componentes (POST para update evita problemas de parsing PUT)

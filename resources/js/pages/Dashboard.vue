@@ -14,7 +14,7 @@
             <!-- Estadísticas -->
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
                 <!-- Card Empresas -->
-                <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
+                <div v-if="!authStore.hasRole('Cliente')" class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
                     <div class="p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
@@ -133,7 +133,7 @@
 
                 <!-- Tipo Componente Card -->
                 <router-link
-                    v-if="authStore.hasPermission('consult component type')"
+                    v-if="!authStore.hasRole('Cliente') && authStore.hasPermission('consult component type')"
                     :to="{ name: 'component-types' }"
                     class="group"
                 >
@@ -181,7 +181,7 @@
 
                 <!-- Empresa Card -->
                 <router-link
-                    v-if="authStore.hasPermission('consult company')"
+                    v-if="!authStore.hasRole('Cliente') && authStore.hasPermission('consult company')"
                     :to="{ name: 'companies' }"
                     class="group"
                 >

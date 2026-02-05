@@ -315,6 +315,7 @@ const pageTitles = {
     'users.edit': 'Editar Usuario',
     'users.show': 'Detalles del Usuario',
     profile: 'Mi Perfil',
+    'not-found': 'Página no encontrada',
 };
 
 const pageDescriptions = {
@@ -332,6 +333,7 @@ const pageDescriptions = {
     'users.edit': 'Modifica la información del usuario',
     'users.show': 'Información completa del usuario',
     profile: 'Administra tu información personal',
+    'not-found': 'La ruta solicitada no existe',
 };
 
 const pageTitle = computed(() => {
