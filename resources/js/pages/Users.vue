@@ -132,6 +132,12 @@
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
+                                        <i class="fas fa-id-badge mr-2"></i>
+                                        Cargo
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                    <div class="flex items-center">
                                         <i class="fas fa-briefcase mr-2"></i>
                                         Rol
                                     </div>
@@ -173,6 +179,9 @@
                                             {{ user.name }}
                                         </div>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ user.workstation || '—' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span v-if="user.role" class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
