@@ -186,6 +186,7 @@
                                 <input
                                     v-else
                                     :type="getInputType(field.type)"
+                                    :step="field.type === 'numeric' ? 'any' : undefined"
                                     :id="`field_${field.id}`"
                                     v-model="form.field_values[field.id]"
                                     :required="field.is_required"

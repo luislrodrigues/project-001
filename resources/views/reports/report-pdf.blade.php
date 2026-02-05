@@ -127,9 +127,10 @@
             object-fit: contain;
         }
 
-        .condition-alarma {
+        .condition-alarma,
+        .condition-value {
+            color: #000;
             background: #fef3c7;
-            color: #92400e;
             font-weight: bold;
             padding: 3px 8px;
             font-size: 12pt;
@@ -295,6 +296,12 @@
             text-align: justify;
         }
 
+        .elaboro-line {
+            margin-top: 28px;
+            font-size: 12pt;
+            color: #1a1a1a;
+        }
+
         /* Firmas */
         .signature-block {
             margin-top: 32px;
@@ -394,13 +401,13 @@
                             @if ($esAlarma)
                                 <span class="condition-alarma">{{ $condicion }}</span>
                             @else
-                                {{ $condicion }}
+                                <span class="condition-value">{{ $condicion }}</span>
                             @endif
                         </div>
                         <div class="data-line"><strong>MECANISMO FALLA:</strong> {{ $reportData->mechanismFail->name ?? '—' }}</div>
                         <div class="data-line"><strong>COMPONENTE EN FALLA:</strong> {{ $reportData->componentFail->name ?? '—' }}</div>
                         <div class="data-line"><strong>PRIORIDAD ATENCIÓN:</strong> {{ $reportData->priority ?? '—' }}</div>
-                        <div class="data-line"><strong>FECHA MEDICIÓN:</strong> {{ $reportData->measurement_date ? \Carbon\Carbon::parse($reportData->measurement_date)->format('d/m/Y') : '—' }}</div>
+                        <div class="data-line"><strong>FECHA MEDICIÓN:</strong> {{ $reportData->measurement_date?->format('d/m/Y') ?? '—' }}</div>
                     </div>
                 </td>
                 <td class="equipment-image-cell">
@@ -481,6 +488,8 @@
                 <p class="recommendation-general-text">{{ $reportData->verification_recommendation }}</p>
             </div>
         @endif
+
+        <p class="elaboro-line"><strong>Elaboró:</strong> {{ $reportData->analist?->name ?? '—' }}</p>
     </div>
 </body>
 

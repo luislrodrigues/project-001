@@ -348,6 +348,7 @@
                                             <input
                                                 v-else
                                                 :type="field.type === 'numeric' ? 'number' : 'text'"
+                                                :step="field.type === 'numeric' ? 'any' : undefined"
                                                 v-model="comp.field_values[field.id]"
                                                 class="block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-3 py-2"
                                             />

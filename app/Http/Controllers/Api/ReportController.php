@@ -618,6 +618,7 @@ class ReportController extends Controller
 <p><strong>Álvaro Sánchez Maldonado</strong><br>
 Ingeniero de Mantenimiento & Confiabilidad<br>
 Analista de Vibraciones CAT II<br>
+Andrés Martínez Durán<br>
 SYNERGY SMART S.A.S.<br>
 Móvil: +57 (316) 4048830<br>
 Fundación, Magdalena.</p>' .

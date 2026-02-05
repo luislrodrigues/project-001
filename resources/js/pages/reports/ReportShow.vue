@@ -244,8 +244,8 @@
                             </label>
                             <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
                                 <span
-                                    :class="!report.condition?.color ? getConditionClass(report.condition?.name) : ''"
-                                    :style="report.condition?.color ? { backgroundColor: report.condition.color, color: '#fff', borderColor: report.condition.color } : {}"
+                                    :class="!report.condition?.color ? getConditionClass() : ''"
+                                    :style="report.condition?.color ? { backgroundColor: report.condition.color, color: '#000', borderColor: report.condition.color } : {}"
                                     class="px-3 py-1 inline-flex text-xs font-semibold rounded-full border"
                                 >
                                     {{ report.condition?.name }}
@@ -552,16 +552,16 @@ const loadReport = async () => {
 
 const formatDate = (date) => {
     if (!date) return 'N/A';
+    const str = String(date).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString('es-ES');
+    }
     return new Date(date).toLocaleDateString('es-ES');
 };
 
-const getConditionClass = (conditionName) => {
-    const classes = {
-        'Alarma': 'bg-yellow-100 text-yellow-800 border border-yellow-300',
-        'Critico': 'bg-red-100 text-red-800 border border-red-300',
-        'Peligro': 'bg-orange-100 text-orange-800 border border-orange-300',
-    };
-    return classes[conditionName] || 'bg-blue-100 text-blue-800 border border-blue-300';
+const getConditionClass = () => {
+    return 'bg-gray-100 text-gray-900 border border-gray-300';
 };
 
 const downloadPdf = async (event) => {
