@@ -86,6 +86,12 @@ class ReportController extends Controller
             });
         }
 
+        if ($request->filled('process_id')) {
+            $query->whereHas('equipment', function ($q) use ($request) {
+                $q->where('process_id', (int) $request->process_id);
+            });
+        }
+
         $sortByRaw = $request->get('sort_by', 'id');
         $allowedSort = ['id', 'created_at', 'measurement_date'];
         $sortBy = (is_string($sortByRaw) && $sortByRaw !== '' && in_array($sortByRaw, $allowedSort, true))

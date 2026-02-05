@@ -85,6 +85,22 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
+                                Proceso
+                            </label>
+                            <select
+                                v-model="filters.process_id"
+                                @change="fetchReports"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            >
+                                <option value="">Todos</option>
+                                <option v-for="proc in processes" :key="proc.id" :value="proc.id">
+                                    {{ proc.name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Prioridad
                             </label>
                             <select
@@ -144,6 +160,12 @@
                                     <div class="flex items-center">
                                         <i class="fas fa-cog mr-2"></i>
                                         Equipo
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-project-diagram mr-2"></i>
+                                        Proceso
                                     </div>
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
@@ -266,12 +288,14 @@ const pagination = ref(null);
 const equipments = ref([]);
 const conditions = ref([]);
 const companies = ref([]);
+const processes = ref([]);
 
 const filters = reactive({
     equipment_id: route.query.equipment_id ?? '',
     condition_id: route.query.condition_id ?? '',
     priority: route.query.priority ?? '',
     company_id: route.query.company_id ?? '',
+    process_id: route.query.process_id ?? '',
 });
 
 const sortBy = ref('id');
@@ -285,7 +309,8 @@ const syncQueryToUrl = (page = 1) => {
         equipment_id: filters.equipment_id,
         condition_id: filters.condition_id,
         priority: filters.priority,
-        company_id: filters.company_id
+        company_id: filters.company_id,
+        process_id: filters.process_id
     };
     Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
     router.replace({ name: 'reports', query: q });
@@ -301,6 +326,7 @@ const applyQueryToFilters = () => {
         filters.condition_id = route.query.condition_id ?? '';
         filters.priority = route.query.priority ?? '';
         filters.company_id = route.query.company_id ?? '';
+        filters.process_id = route.query.process_id ?? '';
         sortOrder.value = normalizeSortOrder(route.query.sort_order ?? 'desc');
     } else {
         try {
@@ -312,6 +338,7 @@ const applyQueryToFilters = () => {
                     filters.condition_id = query.condition_id ?? '';
                     filters.priority = query.priority ?? '';
                     filters.company_id = query.company_id ?? '';
+                    filters.process_id = query.process_id ?? '';
                     sortOrder.value = normalizeSortOrder(query.sort_order ?? 'desc');
                 }
             }
@@ -333,15 +360,17 @@ onMounted(async () => {
 
 const loadCatalogs = async () => {
     try {
-        const [equipmentsRes, conditionsRes, companiesRes] = await Promise.all([
+        const [equipmentsRes, conditionsRes, companiesRes, processesRes] = await Promise.all([
             api.get('/equipment'),
             api.get('/catalogs/conditions'),
             api.get('/catalogs/companies'),
+            api.get('/catalogs/processes'),
         ]);
 
         equipments.value = equipmentsRes.data.data;
         conditions.value = conditionsRes.data.data;
         companies.value = companiesRes.data.data;
+        processes.value = processesRes.data.data ?? processesRes.data ?? [];
     } catch (error) {
         console.error('Error al cargar catálogos:', error);
     }
@@ -356,6 +385,7 @@ const fetchReports = async (page = 1) => {
         if (filters.condition_id) params.condition_id = filters.condition_id;
         if (filters.priority) params.priority = filters.priority;
         if (filters.company_id) params.company_id = filters.company_id;
+        if (filters.process_id) params.process_id = filters.process_id;
 
         const response = await api.get('/reports', { params });
         reports.value = response.data.data;

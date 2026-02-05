@@ -41,6 +41,10 @@ class EquipmentController extends Controller
             $query->where('equipment_type_id', $request->equipment_type_id);
         }
 
+        if ($request->filled('process_id')) {
+            $query->where('process_id', (int) $request->process_id);
+        }
+
         $sortByRaw = $request->get('sort_by', 'id');
         $allowedSort = ['id', 'name', 'created_at'];
         $sortBy = (is_string($sortByRaw) && $sortByRaw !== '' && in_array($sortByRaw, $allowedSort, true))

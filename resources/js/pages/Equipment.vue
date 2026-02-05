@@ -68,6 +68,22 @@
                         </div>
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-project-diagram mr-2 text-gray-400"></i>
+                                Proceso
+                            </label>
+                            <select
+                                v-model="filters.process_id"
+                                @change="fetchEquipment"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            >
+                                <option value="">Todos</option>
+                                <option v-for="proc in processes" :key="proc.id" :value="proc.id">
+                                    {{ proc.name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-search mr-2 text-gray-400"></i>
                                 Buscar equipo
                             </label>
@@ -139,6 +155,12 @@
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
+                                        <i class="fas fa-project-diagram mr-2"></i>
+                                        Proceso
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                    <div class="flex items-center">
                                         <i class="fas fa-map-marker-alt mr-2"></i>
                                         Ubicación
                                     </div>
@@ -164,6 +186,9 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ equipment.equipment_type && equipment.equipment_type.name ? equipment.equipment_type.name : 'N/A' }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">{{ equipment.process && equipment.process.name ? equipment.process.name : '—' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ equipment.ubication && equipment.ubication.name ? equipment.ubication.name : 'N/A' }}</div>
@@ -228,11 +253,13 @@ const authStore = useAuthStore();
 const equipments = ref([]);
 const companies = ref([]);
 const equipmentTypes = ref([]);
+const processes = ref([]);
 const loading = ref(false);
 const search = ref(route.query.search ?? '');
 const filters = ref({
     company_id: route.query.company_id ?? '',
-    equipment_type_id: route.query.equipment_type_id ?? ''
+    equipment_type_id: route.query.equipment_type_id ?? '',
+    process_id: route.query.process_id ?? ''
 });
 const pagination = ref(null);
 const sortBy = ref('id');
@@ -245,7 +272,8 @@ const syncQueryToUrl = (page = 1) => {
         sort_order: sortOrder.value,
         search: search.value,
         company_id: filters.value.company_id,
-        equipment_type_id: filters.value.equipment_type_id
+        equipment_type_id: filters.value.equipment_type_id,
+        process_id: filters.value.process_id
     };
     Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
     router.replace({ name: 'equipment', query: q });
@@ -260,6 +288,7 @@ const applyQueryToFilters = () => {
         search.value = route.query.search ?? '';
         filters.value.company_id = route.query.company_id ?? '';
         filters.value.equipment_type_id = route.query.equipment_type_id ?? '';
+        filters.value.process_id = route.query.process_id ?? '';
         sortOrder.value = route.query.sort_order ?? 'desc';
     } else {
         try {
@@ -284,7 +313,7 @@ const toggleSortId = () => {
 
 onMounted(async () => {
     applyQueryToFilters();
-    await Promise.all([loadCompanies(), loadEquipmentTypes()]);
+    await Promise.all([loadCompanies(), loadEquipmentTypes(), loadProcesses()]);
     const page = Number(route.query.page) || 1;
     await fetchEquipment(page);
 });
@@ -307,6 +336,15 @@ const loadEquipmentTypes = async () => {
     }
 };
 
+const loadProcesses = async () => {
+    try {
+        const response = await api.get('/catalogs/processes');
+        processes.value = response.data.data ?? response.data ?? [];
+    } catch (error) {
+        console.error('Error al cargar procesos:', error);
+    }
+};
+
 const fetchEquipment = async (page = 1) => {
     loading.value = true;
     try {
@@ -314,6 +352,7 @@ const fetchEquipment = async (page = 1) => {
         if (search.value) params.search = search.value;
         if (filters.value.company_id) params.company_id = filters.value.company_id;
         if (filters.value.equipment_type_id) params.equipment_type_id = filters.value.equipment_type_id;
+        if (filters.value.process_id) params.process_id = filters.value.process_id;
         const response = await api.get('/equipment', { params });
         equipments.value = response.data.data;
         pagination.value = {
