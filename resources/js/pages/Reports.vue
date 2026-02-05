@@ -53,6 +53,22 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
+                                Proceso
+                            </label>
+                            <select
+                                v-model="filters.process_id"
+                                @change="fetchReports"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            >
+                                <option value="">Todos</option>
+                                <option v-for="proc in processes" :key="proc.id" :value="proc.id">
+                                    {{ proc.name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Equipo
                             </label>
                             <select
@@ -79,22 +95,6 @@
                                 <option value="">Todas</option>
                                 <option v-for="condition in conditions" :key="condition.id" :value="condition.id">
                                     {{ condition.name }}
-                                </option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-filter mr-2 text-gray-400"></i>
-                                Proceso
-                            </label>
-                            <select
-                                v-model="filters.process_id"
-                                @change="fetchReports"
-                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="proc in processes" :key="proc.id" :value="proc.id">
-                                    {{ proc.name }}
                                 </option>
                             </select>
                         </div>
