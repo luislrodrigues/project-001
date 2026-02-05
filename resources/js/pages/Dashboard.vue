@@ -82,7 +82,7 @@
                 </div>
             </div>
 
-            <!-- Módulos del Sistema - Orden: Informes, Equipos, Componentes, Tipo Componente, Usuario, Empresa -->
+            <!-- Módulos del Sistema - Orden: Informes, Equipos, Tipo Componente, Usuario, Empresa -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Informes Card -->
                 <router-link
@@ -125,30 +125,6 @@
                             <h3 class="text-xl font-bold text-gray-800 mb-2">Equipos</h3>
                             <p class="text-gray-600 text-sm mb-4">Gestiona el inventario completo de equipos y sus características</p>
                             <div class="flex items-center text-sm text-green-600 font-semibold">
-                                <span>Acceder</span>
-                            </div>
-                        </div>
-                    </div>
-                </router-link>
-
-                <!-- Componentes Card -->
-                <router-link
-                    v-if="authStore.hasPermission('consult equipment')"
-                    :to="{ name: 'components' }"
-                    class="group"
-                >
-                    <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden">
-                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-2"></div>
-                        <div class="p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-500 transition-colors duration-300">
-                                    <i class="fas fa-weight text-2xl text-purple-600 group-hover:text-white transition-colors duration-300"></i>
-                                </div>
-                                <i class="fas fa-arrow-right text-gray-400 group-hover:text-purple-500 transform group-hover:translate-x-2 transition-all duration-300"></i>
-                            </div>
-                            <h3 class="text-xl font-bold text-gray-800 mb-2">Componentes</h3>
-                            <p class="text-gray-600 text-sm mb-4">Administra los componentes de los equipos del inventario</p>
-                            <div class="flex items-center text-sm text-purple-600 font-semibold">
                                 <span>Acceder</span>
                             </div>
                         </div>
