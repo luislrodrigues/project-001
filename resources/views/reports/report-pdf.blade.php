@@ -297,7 +297,7 @@
         }
 
         .elaboro-line {
-            margin-top: 28px;
+            margin: 0;
             font-size: 12pt;
             color: #1a1a1a;
         }
