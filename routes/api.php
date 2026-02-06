@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ComponentController;
 use App\Http\Controllers\Api\ComponentTypeController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\IndicadoresController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Indicadores estadísticos (datos existentes)
+    Route::get('/indicadores', [IndicadoresController::class, 'index']);
 
     // Empresas (POST para update evita problemas de parsing PUT)
     Route::post('companies/{company}', [CompanyController::class, 'update'])->middleware('permission:consult company');

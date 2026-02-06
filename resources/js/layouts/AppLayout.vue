@@ -167,6 +167,22 @@
                 </router-link>
 
                 <router-link
+                    :to="{ name: 'indicadores' }"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
+                    :class="isActive('indicadores') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Indicadores"
+                >
+                    <i class="fas fa-chart-bar text-lg w-5"></i>
+                    <span
+                        v-show="!sidebarCollapsed || !isDesktop"
+                        class="font-medium transition-opacity duration-300"
+                    >
+                        Indicadores
+                    </span>
+                </router-link>
+
+                <router-link
                     v-if="authStore.hasPermission('consult company')"
                     :to="{ name: 'companies' }"
                     @click="mobileMenuOpen = false"
@@ -317,6 +333,7 @@ const pageTitles = {
     'component-types.edit': 'Editar Tipo de Componente',
     'component-types.show': 'Detalles del Tipo de Componente',
     companies: 'Empresas',
+    indicadores: 'Indicadores',
     users: 'Usuarios',
     'users.create': 'Crear Usuario',
     'users.edit': 'Editar Usuario',
@@ -335,6 +352,7 @@ const pageDescriptions = {
     'component-types.edit': 'Modifica la información del tipo de componente',
     'component-types.show': 'Información completa del tipo de componente',
     companies: 'Administra las empresas registradas',
+    indicadores: 'Estadísticas e indicadores a partir de los datos del sistema',
     users: 'Gestiona los usuarios del sistema',
     'users.create': 'Completa el formulario para crear un nuevo usuario',
     'users.edit': 'Modifica la información del usuario',
@@ -369,6 +387,9 @@ const isActive = (routeName) => {
     }
     if (routeName === 'component-types') {
         return route.name === 'component-types' || route.name === 'component-types.create' || route.name === 'component-types.edit' || route.name === 'component-types.show';
+    }
+    if (routeName === 'indicadores') {
+        return route.name === 'indicadores';
     }
     return route.name === routeName;
 };

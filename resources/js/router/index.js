@@ -163,6 +163,11 @@ const routes = [
                 props: true
             },
             {
+                path: 'indicadores',
+                name: 'indicadores',
+                component: () => import('../pages/Indicadores.vue')
+            },
+            {
                 path: 'profile',
                 name: 'profile',
                 component: () => import('../pages/Profile.vue')
