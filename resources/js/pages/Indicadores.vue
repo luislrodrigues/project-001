@@ -19,7 +19,7 @@
                     </h2>
                     <p class="text-gray-500 text-sm mt-1">Estadísticas a partir de los datos del sistema</p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div v-if="!authStore.hasRole('Cliente')" class="flex items-center gap-2">
                     <label for="empresa-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Ver detalle por empresa:</label>
                     <select
                         id="empresa-select"
@@ -496,7 +496,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import api from '../services/api';
+import { useAuthStore } from '../stores/auth';
 
+const authStore = useAuthStore();
 const loading = ref(true);
 const data = ref({});
 const companies = ref([]);
@@ -676,10 +678,15 @@ async function loadDetail() {
 watch(selectedCompanyId, loadDetail);
 
 onMounted(async () => {
+    // Cliente solo ve indicadores de su empresa: fijar empresa y ocultar selector
+    if (authStore.hasRole('Cliente') && authStore.user?.company?.id) {
+        selectedCompanyId.value = authStore.user.company.id;
+    }
+    const params = selectedCompanyId.value ? { company_id: selectedCompanyId.value } : {};
     try {
         const [resIndicadores, resCompanies] = await Promise.all([
-            api.get('/indicadores'),
-            api.get('/catalogs/companies').catch(() => ({ data: { data: [] } })),
+            api.get('/indicadores', { params }),
+            authStore.hasRole('Cliente') ? Promise.resolve({ data: { data: authStore.user?.company ? [authStore.user.company] : [] } }) : api.get('/catalogs/companies').catch(() => ({ data: { data: [] } })),
         ]);
         data.value = resIndicadores.data.data ?? {};
         companies.value = resCompanies.data?.data ?? resCompanies.data ?? [];

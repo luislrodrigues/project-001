@@ -82,7 +82,7 @@
             </div>
 
             <!-- Navigation -->
-            <!-- Orden: Inicio, Informes, Equipos, Componentes, Tipo Componente, Usuario, Empresa -->
+            <!-- Orden: Inicio, Informes, Equipos, Componentes, Tipo Componente, Usuario, Empresa, Indicadores -->
             <nav class="px-4 py-4 space-y-1 overflow-y-auto overscroll-contain" style="max-height: calc(100vh - 220px);">
                 <router-link
                     :to="{ name: 'dashboard' }"
@@ -167,22 +167,6 @@
                 </router-link>
 
                 <router-link
-                    :to="{ name: 'indicadores' }"
-                    @click="mobileMenuOpen = false"
-                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
-                    :class="isActive('indicadores') ? 'nav-item-active' : 'nav-item-hover'"
-                    title="Indicadores"
-                >
-                    <i class="fas fa-chart-bar text-lg w-5"></i>
-                    <span
-                        v-show="!sidebarCollapsed || !isDesktop"
-                        class="font-medium transition-opacity duration-300"
-                    >
-                        Indicadores
-                    </span>
-                </router-link>
-
-                <router-link
                     v-if="authStore.hasPermission('consult company')"
                     :to="{ name: 'companies' }"
                     @click="mobileMenuOpen = false"
@@ -196,6 +180,22 @@
                         class="font-medium transition-opacity duration-300"
                     >
                         Empresa
+                    </span>
+                </router-link>
+
+                <router-link
+                    :to="{ name: 'indicadores' }"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
+                    :class="isActive('indicadores') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Indicadores"
+                >
+                    <i class="fas fa-chart-bar text-lg w-5"></i>
+                    <span
+                        v-show="!sidebarCollapsed || !isDesktop"
+                        class="font-medium transition-opacity duration-300"
+                    >
+                        Indicadores
                     </span>
                 </router-link>
             </nav>

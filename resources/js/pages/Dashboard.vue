@@ -82,7 +82,7 @@
                 </div>
             </div>
 
-            <!-- Módulos del Sistema - Orden: Informes, Equipos, Tipo Componente, Usuario, Empresa -->
+            <!-- Módulos del Sistema - Orden: Informes, Equipos, Tipo Componente, Usuario, Empresa, Indicadores -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Informes Card -->
                 <router-link
@@ -197,6 +197,29 @@
                             <h3 class="text-xl font-bold text-gray-800 mb-2">Empresa</h3>
                             <p class="text-gray-600 text-sm mb-4">Administra las empresas y plantas registradas en el sistema</p>
                             <div class="flex items-center text-sm text-orange-600 font-semibold">
+                                <span>Acceder</span>
+                            </div>
+                        </div>
+                    </div>
+                </router-link>
+
+                <!-- Indicadores Card -->
+                <router-link
+                    :to="{ name: 'indicadores' }"
+                    class="group"
+                >
+                    <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-teal-500 to-teal-600 h-2"></div>
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-14 h-14 bg-teal-100 rounded-xl flex items-center justify-center group-hover:bg-teal-500 transition-colors duration-300">
+                                    <i class="fas fa-chart-bar text-2xl text-teal-600 group-hover:text-white transition-colors duration-300"></i>
+                                </div>
+                                <i class="fas fa-arrow-right text-gray-400 group-hover:text-teal-500 transform group-hover:translate-x-2 transition-all duration-300"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Indicadores</h3>
+                            <p class="text-gray-600 text-sm mb-4">Estadísticas y gráficos por empresa, condición, proceso y más</p>
+                            <div class="flex items-center text-sm text-teal-600 font-semibold">
                                 <span>Acceder</span>
                             </div>
                         </div>

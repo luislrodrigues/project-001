@@ -20,6 +20,11 @@ class IndicadoresController extends Controller
     {
         $companyId = $request->filled('company_id') ? $request->integer('company_id') : null;
 
+        // Si el usuario es Cliente, solo puede ver indicadores de su empresa
+        if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
+            $companyId = auth()->user()->company_id;
+        }
+
         $reportsBase = Report::whereNull('reports.deleted_at');
         if ($companyId) {
             $reportsBase->whereHas('equipment', fn ($q) => $q->whereNull('deleted_at')->where('company_id', $companyId));
