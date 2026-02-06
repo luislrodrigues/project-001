@@ -49,14 +49,14 @@
                                 <select
                                     v-model="filterCompanyId"
                                     @change="onCompanyFilterChange"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                    :disabled="isEquipmentFixed"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 >
                                     <option value="">Seleccione empresa</option>
                                     <option v-for="c in companies" :key="c.id" :value="c.id">
                                         {{ c.name }}
                                     </option>
                                 </select>
-                                <p class="mt-1 text-xs text-gray-500">Filtra los equipos por empresa</p>
                             </div>
                             <!-- Equipo -->
                             <div class="bg-gray-50 rounded-lg p-4">
@@ -65,7 +65,15 @@
                                     Equipo
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
+                                <input
+                                    v-if="isEquipmentFixed"
+                                    :value="selectedEquipmentName"
+                                    type="text"
+                                    disabled
+                                    class="block w-full bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2.5 cursor-not-allowed"
+                                />
                                 <select
+                                    v-else
                                     v-model="form.equipment_id"
                                     @change="loadEquipmentData"
                                     required
@@ -73,7 +81,7 @@
                                 >
                                     <option value="">Seleccione</option>
                                     <option v-for="eq in filteredEquipments" :key="eq.id" :value="eq.id">
-                                        {{ eq.name }}{{ eq.company?.name ? ` (${eq.company.name})` : '' }}
+                                        {{ eq.name }}{{ eq.company && eq.company.name ? ` (${eq.company.name})` : '' }}
                                     </option>
                                 </select>
                                 <p v-if="errors.equipment_id" class="mt-1 text-sm text-red-600">{{ errors.equipment_id }}</p>
@@ -501,13 +509,14 @@
 
 <script setup>
 import { ref, onMounted, reactive, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import CreateSelectModal from '../../components/CreateSelectModal.vue';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const form = reactive({
@@ -551,6 +560,19 @@ const showComponentFailModal = ref(false);
 
 onMounted(async () => {
     await loadCatalogs();
+    const equipmentIdFromQuery = route.query.equipment_id;
+    if (equipmentIdFromQuery) {
+        const id = Number(equipmentIdFromQuery);
+        const equipment = equipments.value.find((e) => Number(e.id) === id);
+        if (equipment) {
+            const companyId = equipment.company_id ?? equipment.company?.id;
+            if (companyId) {
+                filterCompanyId.value = companyId;
+            }
+            form.equipment_id = id;
+            await loadEquipmentData();
+        }
+    }
 });
 
 const loadCatalogs = async () => {
@@ -606,6 +628,14 @@ const loadComponentFails = async () => {
         console.error('Error al cargar componentes de falla:', error);
     }
 };
+
+const isEquipmentFixed = computed(() => !!route.query.equipment_id);
+
+const selectedEquipmentName = computed(() => {
+    if (!form.equipment_id) return '';
+    const eq = equipments.value.find((e) => Number(e.id) === Number(form.equipment_id));
+    return eq ? (eq.name + (eq.company?.name ? ` (${eq.company.name})` : '')) : '';
+});
 
 const filteredEquipments = computed(() => {
     if (!filterCompanyId.value) return [];

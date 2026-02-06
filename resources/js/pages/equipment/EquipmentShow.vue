@@ -23,6 +23,14 @@
                     </div>
                     <div class="flex items-center space-x-3">
                         <router-link
+                            v-if="authStore.hasPermission('save report')"
+                            :to="{ name: 'reports.create', query: { equipment_id: equipment.id } }"
+                            class="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                        >
+                            <i class="fas fa-file-alt mr-2"></i>
+                            Crear reporte
+                        </router-link>
+                        <router-link
                             v-if="authStore.hasPermission('edit equipment')"
                             :to="{ name: 'equipment.edit', params: { id: equipment.id } }"
                             class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
