@@ -92,6 +92,10 @@ class ReportController extends Controller
             });
         }
 
+        if ($request->filled('analist_id')) {
+            $query->where('analist_id', (int) $request->analist_id);
+        }
+
         $sortByRaw = $request->get('sort_by', 'id');
         $allowedSort = ['id', 'created_at', 'measurement_date'];
         $sortBy = (is_string($sortByRaw) && $sortByRaw !== '' && in_array($sortByRaw, $allowedSort, true))
@@ -624,16 +628,16 @@ class ReportController extends Controller
                     : null;
 
                 $htmlBody = '<p>Buen día Estimado Ingeniero, Cordial saludo,</p>
-<p>Adjunto envío informe de análisis vibraciones ' . e($equipmentName) . '.</p>
-<p>Posterior medición y análisis de vibraciones mecánicas, se realizan las recomendaciones más apropiadas en función de los hallazgos encontrados.</p>
-<p>Cualquier duda e inquietud estaré atento.</p>
-<p>Saludos!</p>
-<p><strong>' . e($analistName) . '</strong><br>
-' . e($analistWorkstation) . '<br>
-SYNERGY SMART S.A.S.<br>
-Móvil: +57 (316) 4048830<br>
-Fundación, Magdalena.</p>' .
-                    ($firmaCid ? '<p style="text-align: left;"><img src="' . $firmaCid . '" alt="Firma" style="width: 100%; max-width: 100%; height: 150px; object-fit: contain; object-position: left; display: block;"></p>' : '');
+                    <p>Adjunto envío informe de análisis vibraciones ' . e($equipmentName) . '.</p>
+                    <p>Posterior medición y análisis de vibraciones mecánicas, se realizan las recomendaciones más apropiadas en función de los hallazgos encontrados.</p>
+                    <p>Cualquier duda e inquietud estaré atento.</p>
+                    <p>Saludos!</p>
+                    <p><strong>' . e($analistName) . '</strong><br>
+                    ' . e($analistWorkstation) . '<br>
+                    SYNERGY SMART S.A.S.<br>
+                    Móvil: +57 (316) 4048830<br>
+                    Fundación, Magdalena.</p>' .
+                                        ($firmaCid ? '<p style="text-align: left;"><img src="' . $firmaCid . '" alt="Firma" style="width: 100%; max-width: 100%; height: 150px; object-fit: contain; object-position: left; display: block;"></p>' : '');
 
                 $message->to($recipients)
                     ->subject($subject)

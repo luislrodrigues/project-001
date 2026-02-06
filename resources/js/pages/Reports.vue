@@ -115,6 +115,22 @@
                                 <option value="Normal">Normal</option>
                             </select>
                         </div>
+                        <div v-if="!authStore.hasRole('Cliente')">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-user-tie mr-2 text-gray-400"></i>
+                                Analista
+                            </label>
+                            <select
+                                v-model="filters.analist_id"
+                                @change="fetchReports"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            >
+                                <option value="">Todos</option>
+                                <option v-for="analist in analists" :key="analist.id" :value="analist.id">
+                                    {{ analist.name }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mt-3 flex justify-end">
                         <button
@@ -292,6 +308,7 @@ const equipments = ref([]);
 const conditions = ref([]);
 const companies = ref([]);
 const processes = ref([]);
+const analists = ref([]);
 
 const filters = reactive({
     equipment_id: route.query.equipment_id ?? '',
@@ -299,6 +316,7 @@ const filters = reactive({
     priority: route.query.priority ?? '',
     company_id: route.query.company_id ?? '',
     process_id: route.query.process_id ?? '',
+    analist_id: route.query.analist_id ?? '',
 });
 
 const sortBy = ref('id');
@@ -313,7 +331,8 @@ const syncQueryToUrl = (page = 1) => {
         condition_id: filters.condition_id,
         priority: filters.priority,
         company_id: filters.company_id,
-        process_id: filters.process_id
+        process_id: filters.process_id,
+        analist_id: filters.analist_id
     };
     Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
     router.replace({ name: 'reports', query: q });
@@ -330,6 +349,7 @@ const applyQueryToFilters = () => {
         filters.priority = route.query.priority ?? '';
         filters.company_id = route.query.company_id ?? '';
         filters.process_id = route.query.process_id ?? '';
+        filters.analist_id = route.query.analist_id ?? '';
         sortOrder.value = normalizeSortOrder(route.query.sort_order ?? 'desc');
     } else {
         try {
@@ -342,6 +362,7 @@ const applyQueryToFilters = () => {
                     filters.priority = query.priority ?? '';
                     filters.company_id = query.company_id ?? '';
                     filters.process_id = query.process_id ?? '';
+                    filters.analist_id = query.analist_id ?? '';
                     sortOrder.value = normalizeSortOrder(query.sort_order ?? 'desc');
                 }
             }
@@ -363,17 +384,19 @@ onMounted(async () => {
 
 const loadCatalogs = async () => {
     try {
-        const [equipmentsRes, conditionsRes, companiesRes, processesRes] = await Promise.all([
+        const [equipmentsRes, conditionsRes, companiesRes, processesRes, analistsRes] = await Promise.all([
             api.get('/equipment'),
             api.get('/catalogs/conditions'),
             api.get('/catalogs/companies'),
             api.get('/catalogs/processes'),
+            api.get('/catalogs/analists'),
         ]);
 
         equipments.value = equipmentsRes.data.data;
         conditions.value = conditionsRes.data.data;
         companies.value = companiesRes.data.data;
         processes.value = processesRes.data.data ?? processesRes.data ?? [];
+        analists.value = analistsRes.data.data ?? analistsRes.data ?? [];
     } catch (error) {
         console.error('Error al cargar catálogos:', error);
     }
@@ -389,6 +412,7 @@ const fetchReports = async (page = 1) => {
         if (filters.priority) params.priority = filters.priority;
         if (filters.company_id) params.company_id = filters.company_id;
         if (filters.process_id) params.process_id = filters.process_id;
+        if (filters.analist_id) params.analist_id = filters.analist_id;
 
         const response = await api.get('/reports', { params });
         reports.value = response.data.data;

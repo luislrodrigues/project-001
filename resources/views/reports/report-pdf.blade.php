@@ -491,9 +491,9 @@
             </div>
         @endif
 
-        <p class="elaboro-line"><strong>Elaboró:</strong> {{ $reportData->analist?->name ?? '—' }}</p>
+        <p class="elaboro-line">Elaboró:</p>
+        <p class="elaboro-line"><strong> {{ $reportData->analist?->name ?? '—' }}</strong></p>
         <p class="elaboro-line">{{ $reportData->analist?->workstation ?? '—' }}</p>
     </div>
 </body>
-
 </html>
