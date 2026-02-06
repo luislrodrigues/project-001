@@ -13,12 +13,14 @@ use Illuminate\Http\Request;
 /**
  * Indicadores estadísticos a partir de los datos existentes (reportes, equipos, empresas, etc.)
  * Opcional: ?company_id=X para indicadores filtrados por empresa.
+ * Opcional: ?process_id=X para indicadores filtrados por proceso (equipos del proceso).
  */
 class IndicadoresController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $companyId = $request->filled('company_id') ? $request->integer('company_id') : null;
+        $processId = $request->filled('process_id') ? $request->integer('process_id') : null;
 
         // Si el usuario es Cliente, solo puede ver indicadores de su empresa
         if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
@@ -26,13 +28,24 @@ class IndicadoresController extends Controller
         }
 
         $reportsBase = Report::whereNull('reports.deleted_at');
-        if ($companyId) {
-            $reportsBase->whereHas('equipment', fn ($q) => $q->whereNull('deleted_at')->where('company_id', $companyId));
+        if ($companyId || $processId) {
+            $reportsBase->whereHas('equipment', function ($q) use ($companyId, $processId) {
+                $q->whereNull('deleted_at');
+                if ($companyId) {
+                    $q->where('company_id', $companyId);
+                }
+                if ($processId) {
+                    $q->where('process_id', $processId);
+                }
+            });
         }
 
         $equipmentBase = Equipment::whereNull('equipment.deleted_at')->where('equipment.status', 'active');
         if ($companyId) {
             $equipmentBase->where('company_id', $companyId);
+        }
+        if ($processId) {
+            $equipmentBase->where('process_id', $processId);
         }
 
         // Totales

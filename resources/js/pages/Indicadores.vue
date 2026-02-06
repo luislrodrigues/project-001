@@ -19,16 +19,29 @@
                     </h2>
                     <p class="text-gray-500 text-sm mt-1">Estadísticas a partir de los datos del sistema</p>
                 </div>
-                <div v-if="!authStore.hasRole('Cliente')" class="flex items-center gap-2">
-                    <label for="empresa-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Ver detalle por empresa:</label>
-                    <select
-                        id="empresa-select"
-                        v-model="selectedCompanyId"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 min-w-[200px]"
-                    >
-                        <option :value="null">Todas las empresas</option>
-                        <option v-for="c in companies" :key="c.id" :value="c.id">{{ c.name }}</option>
-                    </select>
+                <div class="flex flex-wrap items-center gap-4">
+                    <div v-if="!authStore.hasRole('Cliente')" class="flex items-center gap-2">
+                        <label for="empresa-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Ver detalle por empresa:</label>
+                        <select
+                            id="empresa-select"
+                            v-model="selectedCompanyId"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 min-w-[200px]"
+                        >
+                            <option :value="null">Todas las empresas</option>
+                            <option v-for="c in companies" :key="c.id" :value="c.id">{{ c.name }}</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="process-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Proceso:</label>
+                        <select
+                            id="process-select"
+                            v-model="selectedProcessId"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 min-w-[200px]"
+                        >
+                            <option :value="null">Todos los procesos</option>
+                            <option v-for="p in processes" :key="p.id" :value="p.id">{{ p.name }}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -502,7 +515,9 @@ const authStore = useAuthStore();
 const loading = ref(true);
 const data = ref({});
 const companies = ref([]);
+const processes = ref([]);
 const selectedCompanyId = ref(null);
+const selectedProcessId = ref(null);
 const detailData = ref(null);
 const loadingDetail = ref(false);
 
@@ -658,6 +673,22 @@ const detailDonaSlices = computed(() => {
     });
 });
 
+function buildParams() {
+    const p = {};
+    if (selectedCompanyId.value) p.company_id = selectedCompanyId.value;
+    if (selectedProcessId.value) p.process_id = selectedProcessId.value;
+    return p;
+}
+
+async function loadIndicadores() {
+    try {
+        const response = await api.get('/indicadores', { params: buildParams() });
+        data.value = response.data.data ?? {};
+    } catch (error) {
+        console.error('Error al cargar indicadores:', error);
+    }
+}
+
 async function loadDetail() {
     if (!selectedCompanyId.value) {
         detailData.value = null;
@@ -665,7 +696,7 @@ async function loadDetail() {
     }
     loadingDetail.value = true;
     try {
-        const response = await api.get('/indicadores', { params: { company_id: selectedCompanyId.value } });
+        const response = await api.get('/indicadores', { params: buildParams() });
         detailData.value = response.data.data ?? {};
     } catch (error) {
         console.error('Error al cargar detalle por empresa:', error);
@@ -675,21 +706,29 @@ async function loadDetail() {
     }
 }
 
-watch(selectedCompanyId, loadDetail);
+watch(selectedCompanyId, () => {
+    loadDetail();
+    if (!selectedCompanyId.value) loadIndicadores();
+});
+watch(selectedProcessId, () => {
+    loadIndicadores();
+    if (selectedCompanyId.value) loadDetail();
+});
 
 onMounted(async () => {
     // Cliente solo ve indicadores de su empresa: fijar empresa y ocultar selector
     if (authStore.hasRole('Cliente') && authStore.user?.company?.id) {
         selectedCompanyId.value = authStore.user.company.id;
     }
-    const params = selectedCompanyId.value ? { company_id: selectedCompanyId.value } : {};
     try {
-        const [resIndicadores, resCompanies] = await Promise.all([
-            api.get('/indicadores', { params }),
+        const [resIndicadores, resCompanies, resProcesses] = await Promise.all([
+            api.get('/indicadores', { params: buildParams() }),
             authStore.hasRole('Cliente') ? Promise.resolve({ data: { data: authStore.user?.company ? [authStore.user.company] : [] } }) : api.get('/catalogs/companies').catch(() => ({ data: { data: [] } })),
+            api.get('/catalogs/processes').catch(() => ({ data: { data: [] } })),
         ]);
         data.value = resIndicadores.data.data ?? {};
         companies.value = resCompanies.data?.data ?? resCompanies.data ?? [];
+        processes.value = resProcesses.data?.data ?? resProcesses.data ?? [];
     } catch (error) {
         console.error('Error al cargar indicadores:', error);
     } finally {
