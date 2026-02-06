@@ -24,6 +24,13 @@ class StoreReportRequest extends FormRequest
                 'recommendations' => json_decode($this->recommendations, true) ?? []
             ]);
         }
+
+        if ($this->has('general_recommendations') && is_string($this->general_recommendations)) {
+            $decoded = json_decode($this->general_recommendations, true);
+            $this->merge([
+                'general_recommendations' => is_array($decoded) ? $decoded : []
+            ]);
+        }
     }
 
     public function rules(): array
@@ -39,7 +46,8 @@ class StoreReportRequest extends FormRequest
             'ot_created' => 'nullable|string|max:255',
             'status_ot' => 'nullable|string|max:255',
             'execution_date' => 'nullable|date',
-            'verification_recommendation' => 'nullable|string',
+            'general_recommendations' => 'nullable|array',
+            'general_recommendations.*' => 'nullable|string|max:65535',
             'diagnosis' => 'nullable|array',
             'recommendations' => 'nullable|array',
         ];

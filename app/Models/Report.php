@@ -27,7 +27,7 @@ class Report extends Model
         'ot_created',
         'status_ot',
         'execution_date',
-        'verification_recommendation',
+        'general_recommendations',
         'analist_id',
         'status',
     ];
@@ -35,6 +35,7 @@ class Report extends Model
     protected $casts = [
         'diagnosis' => 'array',
         'recommendations' => 'array',
+        'general_recommendations' => 'array',
         'measurement_date' => 'date',
         'execution_date' => 'date',
     ];

@@ -324,10 +324,15 @@
                         <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-check-double mr-2 text-blue-600"></i>
-                                Recomendación general
+                                Recomendaciones generales
                             </label>
                             <div class="text-sm text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 min-h-[60px]">
-                                {{ report.verification_recommendation || 'N/A' }}
+                                <template v-if="(report.general_recommendations || []).length">
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li v-for="(rec, idx) in report.general_recommendations" :key="idx">{{ rec }}</li>
+                                    </ul>
+                                </template>
+                                <span v-else>N/A</span>
                             </div>
                         </div>
                     </div>
@@ -618,7 +623,7 @@ const openSendEmailModal = async () => {
         const response = await api.get(`/reports/${route.params.id}/email-recipients`);
         const users = response.data?.data ?? response.data ?? [];
         emailRecipients.value = users;
-        selectedUserIds.value = users.map(u => u.id);
+        selectedUserIds.value = [];
     } catch (error) {
         Swal.fire('Error', 'No se pudieron cargar los destinatarios', 'error');
         closeSendEmailModal();

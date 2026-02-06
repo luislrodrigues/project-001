@@ -48,7 +48,7 @@ class ReportResource extends JsonResource
             'ot_created' => $this->ot_created,
             'status_ot' => $this->status_ot,
             'execution_date' => $this->execution_date?->format('Y-m-d'),
-            'verification_recommendation' => $this->verification_recommendation,
+            'general_recommendations' => $this->general_recommendations ?? [],
             'diagnosis' => $this->formatDiagnosis($this->diagnosis),
             'recommendations' => $this->formatRecommendations($this->recommendations),
             'components' => $this->equipment ? ($this->equipment->components ?? []) : [],

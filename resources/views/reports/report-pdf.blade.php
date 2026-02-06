@@ -484,10 +484,18 @@
             </div>
         @endforeach
 
-        @if (!empty($reportData->verification_recommendation))
+        @php
+            $generalRecs = $reportData->general_recommendations ?? [];
+            $generalRecs = is_array($generalRecs) ? array_values(array_filter($generalRecs, fn($r) => trim((string)$r) !== '')) : [];
+        @endphp
+        @if (!empty($generalRecs))
             <div class="recommendation-general">
-                <h3>RECOMENDACIÓN GENERAL:</h3>
-                <p class="recommendation-general-text">{{ $reportData->verification_recommendation }}</p>
+                <h3>RECOMENDACIONES GENERALES:</h3>
+                <ul class="recommendations-list">
+                    @foreach ($generalRecs as $rec)
+                        <li>{{ $rec }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 

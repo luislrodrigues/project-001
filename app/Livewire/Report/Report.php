@@ -26,7 +26,7 @@ class Report extends Component
     use WithFileUploads,WithPagination;
 
     public $equipment_search,$condition_search,$priority_search,$company_search,$reportIdToUpdate;
-    public $equipment,$equipment_name,$location,$process,$diagnosis,$measurement_date,$image_1,$image_2,$condition,$failure_mechanism,$component_failure,$priority,$ot_created,$status_ot,$execution_date,$verification_recommendation,$analist,$equipmentType,$condition_name,$failure_mechanism_name,$component_failure_name;
+    public $equipment,$equipment_name,$location,$process,$diagnosis,$measurement_date,$image_1,$image_2,$condition,$failure_mechanism,$component_failure,$priority,$ot_created,$status_ot,$execution_date,$general_recommendations = [],$analist,$equipmentType,$condition_name,$failure_mechanism_name,$component_failure_name;
 
     public $reportData;
     public $recommendations = [];
@@ -129,7 +129,7 @@ class Report extends Component
                     'ot_created'                  => $this->ot_created,
                     'status_ot'                   => $this->status_ot,
                     'execution_date'              => $this->execution_date,
-                    'verification_recommendation' => $this->verification_recommendation,
+                    'general_recommendations' => is_array($this->general_recommendations) ? array_values(array_filter($this->general_recommendations, fn($s) => trim((string)$s) !== '')) : [],
                     'analist_id'                  => $this->analist,
                 ];
                 if (!empty($this->diagnostics)) {
@@ -190,7 +190,7 @@ class Report extends Component
         $this->ot_created = $report->ot_created;
         $this->status_ot = $report->status_ot;
         $this->execution_date = $report->execution_date;
-        $this->verification_recommendation = $report->verification_recommendation;
+        $this->general_recommendations = $report->general_recommendations ?? [];
         $this->analist = $report->analist_id;
         $this->reportIdToUpdate = $reportId;
         $this->reportIdToUpdate = $reportId;
@@ -236,7 +236,7 @@ class Report extends Component
                     'ot_created'                  => $this->ot_created,
                     'status_ot'                   => $this->status_ot,
                     'execution_date'              => $this->execution_date,
-                    'verification_recommendation' => $this->verification_recommendation,
+                    'general_recommendations' => is_array($this->general_recommendations) ? array_values(array_filter($this->general_recommendations, fn($s) => trim((string)$s) !== '')) : [],
                     'analist_id'                  => $this->analist,
                 ];
                 if (!empty($this->diagnostics)) {
@@ -259,7 +259,7 @@ class Report extends Component
         }
     }
     public function resetForm(){
-        $this->reset(['reportIdToUpdate','equipment','location','process','measurement_date','equipment_name','image_1','image_2','condition','failure_mechanism','component_failure','priority','ot_created','status_ot','execution_date','verification_recommendation','analist','equipmentType','condition_name','failure_mechanism_name','component_failure_name']);
+        $this->reset(['reportIdToUpdate','equipment','location','process','measurement_date','equipment_name','image_1','image_2','condition','failure_mechanism','component_failure','priority','ot_created','status_ot','execution_date','general_recommendations','analist','equipmentType','condition_name','failure_mechanism_name','component_failure_name']);
         $this->diagnostics = [];
         $this->components = [];
         $this->recommendations = [];
@@ -533,7 +533,7 @@ class Report extends Component
                             $sheet->getStyle('AB' . $row)->getNumberFormat()->setFormatCode('dd/mm/yyyy');
                         }
 
-                        $sheet->setCellValue('AC' . $row, $report->verification_recommendation ?? '');
+                        $sheet->setCellValue('AC' . $row, is_array($report->general_recommendations) ? implode("\n", $report->general_recommendations) : '');
                         $sheet->setCellValue('AD' . $row, $report->analist->name ?? '');
                         $sheet->setCellValue('AE' . $row, $month ?: '');
                         $sheet->setCellValue('AF' . $row, $year ?: '');

@@ -442,13 +442,38 @@
                             <div class="bg-gray-50 rounded-lg p-4 md:col-span-3">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                     <i class="fas fa-check-double mr-2 text-blue-600"></i>
-                                    Recomendación general
+                                    Recomendaciones generales
                                 </label>
-                                <textarea
-                                    v-model="form.verification_recommendation"
-                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
-                                    placeholder="Ingresar recomendación general"
-                                ></textarea>
+                                <div class="space-y-3">
+                                    <div
+                                        v-for="(item, index) in form.general_recommendations"
+                                        :key="index"
+                                        class="flex gap-2 items-start"
+                                    >
+                                        <textarea
+                                            v-model="form.general_recommendations[index]"
+                                            class="flex-1 min-h-[80px] bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
+                                            placeholder="Recomendación general"
+                                            rows="2"
+                                        />
+                                        <button
+                                            type="button"
+                                            @click="removeGeneralRecommendation(index)"
+                                            class="p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                                            title="Quitar"
+                                        >
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="addGeneralRecommendation"
+                                        class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-dashed border-blue-300"
+                                    >
+                                        <i class="fas fa-plus"></i>
+                                        Agregar recomendación general
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -526,7 +551,7 @@ const form = reactive({
     ot_created: '',
     status_ot: '',
     execution_date: '',
-    verification_recommendation: '',
+    general_recommendations: [],
     diagnosis: {},
     recommendations: {},
     component_images: {},
@@ -641,6 +666,13 @@ const onCompanyFilterChange = () => {
     }
 };
 
+const addGeneralRecommendation = () => {
+    form.general_recommendations.push('');
+};
+const removeGeneralRecommendation = (index) => {
+    form.general_recommendations.splice(index, 1);
+};
+
 const handleItemSaved = (data) => {
     // Seleccionar automáticamente el nuevo registro creado
     if (data.field === 'condition' && data.id) {
@@ -669,7 +701,9 @@ const loadReport = async () => {
         form.ot_created = reportData.ot_created || '';
         form.status_ot = reportData.status_ot || '';
         form.execution_date = reportData.execution_date || '';
-        form.verification_recommendation = reportData.verification_recommendation || '';
+        form.general_recommendations = Array.isArray(reportData.general_recommendations)
+            ? [...reportData.general_recommendations]
+            : [];
         // Procesar diagnosis para separar texto e imágenes
         // Primero cargar componentes si están disponibles
         let componentsList = [];
@@ -980,7 +1014,7 @@ const updateReport = async () => {
                 if (Object.keys(form.imagesToDelete).length > 0) {
                     formData.append('images_to_delete', JSON.stringify(form.imagesToDelete));
                 }
-            } else if (key === 'diagnosis' || key === 'recommendations') {
+            } else if (key === 'diagnosis' || key === 'recommendations' || key === 'general_recommendations') {
                 formData.append(key, JSON.stringify(form[key]));
             } else if (form[key] !== null && form[key] !== '') {
                 formData.append(key, form[key]);

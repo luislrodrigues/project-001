@@ -123,7 +123,7 @@ class ReportController extends Controller
                 'ot_created' => $request->ot_created,
                 'status_ot' => $request->status_ot,
                 'execution_date' => $request->execution_date,
-                'verification_recommendation' => $request->verification_recommendation,
+                'general_recommendations' => self::normalizeGeneralRecommendations($request->general_recommendations ?? []),
                 'analist_id' => $request->analist_id,
             ];
 
@@ -226,7 +226,7 @@ class ReportController extends Controller
                 'ot_created' => $request->ot_created,
                 'status_ot' => $request->status_ot,
                 'execution_date' => $request->execution_date,
-                'verification_recommendation' => $request->verification_recommendation,
+                'general_recommendations' => self::normalizeGeneralRecommendations($request->general_recommendations ?? []),
                 'analist_id' => $request->analist_id,
             ];
 
@@ -760,6 +760,19 @@ class ReportController extends Controller
             'margin_header' => 0,
             'margin_footer' => 10,
         ]);
+    }
+
+    /**
+     * Normaliza general_recommendations a array de strings no vacíos.
+     */
+    private static function normalizeGeneralRecommendations($value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+        return array_values(array_filter(array_map(function ($item) {
+            return trim((string) $item);
+        }, $value), fn ($s) => $s !== ''));
     }
 
     /**
