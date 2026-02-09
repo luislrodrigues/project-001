@@ -232,6 +232,7 @@
         .section .diagnosis-text {
             white-space: pre-line;
             margin: 0 0 10px 0;
+            text-align: justify;
         }
 
         .section .rec-label {
