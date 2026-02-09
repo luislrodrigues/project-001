@@ -186,7 +186,7 @@
                                     <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
                                     Diagnóstico
                                 </label>
-                                <div class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full px-4 py-3 min-h-[100px]">
+                                <div class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full px-4 py-3 min-h-[100px] whitespace-pre-line">
                                     {{ getDiagnosisText(component.id) || 'Sin diagnóstico' }}
                                 </div>
                             </div>

@@ -229,6 +229,11 @@
             color: #1a1a1a;
         }
 
+        .section .diagnosis-text {
+            white-space: pre-line;
+            margin: 0 0 10px 0;
+        }
+
         .section .rec-label {
             font-weight: bold;
             margin: 12px 0 8px 0;
@@ -445,7 +450,7 @@
                 @endphp
                 @if (!empty(trim($diagnosisText)))
                     <p class="diagnosis-label">Diagnóstico:</p>
-                    <p class="diagnosis-text">{{ $diagnosisText }}</p>
+                    <div class="diagnosis-text">{!! nl2br(e($diagnosisText)) !!}</div>
                 @endif
 
                 @php
