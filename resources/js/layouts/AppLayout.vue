@@ -184,10 +184,10 @@
                 </router-link>
 
                 <router-link
-                    :to="{ name: 'indicadores' }"
+                    :to="{ name: 'indicators' }"
                     @click="mobileMenuOpen = false"
                     class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
-                    :class="isActive('indicadores') ? 'nav-item-active' : 'nav-item-hover'"
+                    :class="isActive('indicators') ? 'nav-item-active' : 'nav-item-hover'"
                     title="Indicadores"
                 >
                     <i class="fas fa-chart-bar text-lg w-5"></i>
@@ -342,7 +342,7 @@ const pageTitles = {
     'companies.create': 'Crear Empresa',
     'companies.edit': 'Editar Empresa',
     'companies.show': 'Detalle de la Empresa',
-    indicadores: 'Indicadores',
+    indicators: 'Indicadores',
     users: 'Usuarios',
     'users.create': 'Crear Usuario',
     'users.edit': 'Editar Usuario',
@@ -370,7 +370,7 @@ const pageDescriptions = {
     'companies.create': 'Completa el formulario para crear una nueva empresa',
     'companies.edit': 'Modifica la información de la empresa',
     'companies.show': 'Información completa de la empresa',
-    indicadores: 'Estadísticas e indicadores a partir de los datos del sistema',
+    indicators: 'Estadísticas e indicadores a partir de los datos del sistema',
     users: 'Gestiona los usuarios del sistema',
     'users.create': 'Completa el formulario para crear un nuevo usuario',
     'users.edit': 'Modifica la información del usuario',
@@ -406,8 +406,8 @@ const isActive = (routeName) => {
     if (routeName === 'component-types') {
         return route.name === 'component-types' || route.name === 'component-types.create' || route.name === 'component-types.edit' || route.name === 'component-types.show';
     }
-    if (routeName === 'indicadores') {
-        return route.name === 'indicadores';
+    if (routeName === 'indicators') {
+        return route.name === 'indicators';
     }
     return route.name === routeName;
 };

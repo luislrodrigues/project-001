@@ -163,9 +163,9 @@ const routes = [
                 props: true
             },
             {
-                path: 'indicadores',
-                name: 'indicadores',
-                component: () => import('../pages/Indicadores.vue')
+                path: 'indicators',
+                name: 'indicators',
+                component: () => import('../pages/Indicators.vue')
             },
             {
                 path: 'profile',

@@ -478,7 +478,7 @@
                             </div>
                         </div>
                         <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/80"><h4 class="font-semibold text-gray-800 text-base">Componente de falla</h4></div>
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/80"><h4 class="font-semibold text-gray-800 text-base">Componente en Falla</h4></div>
                             <div class="p-5 space-y-3 max-h-64 overflow-y-auto pr-1">
                                 <div v-for="row in detailReportesPorComponenteFalla" :key="row.component_fail_id || 'sin'" class="flex items-center gap-3">
                                     <span class="text-sm truncate min-w-0 flex-1 max-w-[200px]" :title="row.nombre">{{ row.nombre }}</span>
@@ -727,7 +727,6 @@ watch(selectedProcessId, () => {
 });
 
 onMounted(async () => {
-    // Cliente solo ve indicadores de su empresa: fijar empresa y ocultar selector
     if (authStore.hasRole('Cliente') && authStore.user?.company?.id) {
         selectedCompanyId.value = authStore.user.company.id;
     }
