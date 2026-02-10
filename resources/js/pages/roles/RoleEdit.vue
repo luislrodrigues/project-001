@@ -16,7 +16,7 @@
                     <div>
                         <h2 class="text-3xl font-bold text-gray-800 flex items-center">
                             <i class="fas fa-key text-blue-600 mr-3"></i>
-                            Permisos del rol: {{ roleName }}
+                            Editar rol
                         </h2>
                         <p class="text-gray-500 text-sm mt-1">Marca los permisos que tendrá este rol</p>
                     </div>
@@ -31,6 +31,21 @@
             </div>
 
             <form @submit.prevent="savePermissions" class="space-y-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-tag text-blue-600 mr-2"></i>
+                        Nombre del rol <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        v-model="roleName"
+                        type="text"
+                        required
+                        maxlength="255"
+                        class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Ej: Supervisor"
+                    />
+                    <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
+                </div>
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div
                         v-for="(perms, resourceKey) in groupedPermissions"
@@ -69,7 +84,7 @@
                     >
                         <i v-if="saving" class="fas fa-spinner fa-spin mr-2"></i>
                         <i v-else class="fas fa-save mr-2"></i>
-                        {{ saving ? 'Guardando...' : 'Guardar permisos' }}
+                        {{ saving ? 'Guardando...' : 'Guardar' }}
                     </button>
                     <router-link
                         :to="{ name: 'roles' }"
@@ -85,16 +100,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 
 const route = useRoute();
+const router = useRouter();
 const roleId = computed(() => Number(route.params.id));
 
 const loading = ref(true);
 const saving = ref(false);
 const roleName = ref('');
+const errors = ref({});
 const allPermissions = ref([]);
 const selectedPermissions = ref([]);
 
@@ -165,13 +182,20 @@ async function loadPermissions() {
 }
 
 async function savePermissions() {
+    errors.value = {};
     saving.value = true;
     try {
-        await api.put(`/roles/${roleId.value}`, { permissions: selectedPermissions.value });
-        await Swal.fire('Guardado', 'Los permisos del rol se actualizaron correctamente.', 'success');
-        await loadRole();
+        await api.put(`/roles/${roleId.value}`, {
+            name: roleName.value.trim(),
+            permissions: selectedPermissions.value,
+        });
+        await Swal.fire('Guardado', 'El rol se actualizó correctamente.', 'success');
+        router.push({ name: 'roles' });
     } catch (error) {
-        const msg = error.response?.data?.message || 'Error al guardar los permisos.';
+        if (error.response?.data?.errors) {
+            errors.value = error.response.data.errors;
+        }
+        const msg = error.response?.data?.message || 'Error al guardar el rol.';
         Swal.fire('Error', msg, 'error');
     } finally {
         saving.value = false;

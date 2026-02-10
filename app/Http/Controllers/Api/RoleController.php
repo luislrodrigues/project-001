@@ -113,7 +113,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Actualizar los permisos de un rol.
+     * Actualizar nombre y permisos de un rol.
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -127,12 +127,21 @@ class RoleController extends Controller
         }
 
         $request->validate([
+            'name' => 'required|string|max:255',
             'permissions' => 'array',
             'permissions.*' => 'string|exists:permissions,name',
         ], [
+            'name.required' => 'El nombre del rol es obligatorio.',
+            'name.max' => 'El nombre no puede superar los 255 caracteres.',
             'permissions.*.exists' => 'Uno o más permisos no son válidos.',
         ]);
 
+        $name = trim($request->input('name'));
+        if (Role::where('guard_name', 'web')->where('name', $name)->where('id', '!=', $id)->exists()) {
+            return ApiResponse::error('Ya existe un rol con ese nombre.', 422);
+        }
+
+        $role->update(['name' => $name]);
         $role->syncPermissions($request->input('permissions', []));
 
         $role->load('permissions');
@@ -142,6 +151,6 @@ class RoleController extends Controller
             'id' => $role->id,
             'name' => $role->name,
             'permissions' => $permissions,
-        ], 'Permisos del rol actualizados correctamente.');
+        ], 'Rol actualizado correctamente.');
     }
 }
