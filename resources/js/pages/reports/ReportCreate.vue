@@ -1,5 +1,29 @@
 <template>
-    <div class="container mx-auto px-4 sm:px-8">
+    <div class="container mx-auto px-4 sm:px-8 relative">
+        <!-- Modal para ampliar imagen -->
+        <Transition name="fade">
+            <div
+                v-if="imageModalUrl"
+                class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 p-4"
+                style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;"
+                @click.self="closeImageModal"
+            >
+                <button
+                    class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white text-xl"
+                    @click="closeImageModal"
+                    aria-label="Cerrar"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+                <img
+                    v-if="imageModalUrl"
+                    :src="imageModalUrl"
+                    alt="Imagen ampliada"
+                    class="max-w-[95vw] max-h-[90vh] w-auto h-auto object-contain"
+                    @click.stop
+                />
+            </div>
+        </Transition>
         <div v-if="catalogsLoading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -242,8 +266,9 @@
                                                         accept="image/*"
                                                         class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
                                                     />
-                                                    <div v-if="image.preview" class="mt-2">
-                                                        <img :src="image.preview" alt="Preview" class="max-w-full h-32 object-cover rounded-lg border border-gray-200" />
+                                                    <div v-if="image.preview" class="mt-2 cursor-pointer" @click="openImageModal(image.preview)">
+                                                        <img :src="image.preview" alt="Preview" class="max-w-full h-32 object-contain rounded-lg border border-gray-200 pointer-events-none" />
+                                                        <p class="text-xs text-gray-500 mt-1">Clic para ampliar</p>
                                                     </div>
                                                 </div>
                                                 <button
@@ -553,6 +578,7 @@ const components = ref([]);
 const catalogsLoading = ref(true);
 const saving = ref(false);
 const errors = ref({});
+const imageModalUrl = ref(null);
 
 const showConditionModal = ref(false);
 const showMechanismFailModal = ref(false);
@@ -750,6 +776,14 @@ const removeComponentImage = (componentId, imgIndex) => {
     }
 };
 
+const openImageModal = (url) => {
+    imageModalUrl.value = url;
+};
+
+const closeImageModal = () => {
+    imageModalUrl.value = null;
+};
+
 const addRecommendation = (componentId) => {
     if (!form.recommendations[componentId]) {
         form.recommendations[componentId] = [];
@@ -818,3 +852,14 @@ const saveReport = async () => {
     }
 };
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>

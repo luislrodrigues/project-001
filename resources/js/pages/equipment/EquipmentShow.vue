@@ -1,5 +1,29 @@
 <template>
     <div class="container mx-auto px-4 sm:px-8">
+        <!-- Modal para ampliar imagen -->
+        <Teleport to="body">
+            <Transition name="fade">
+                <div
+                    v-if="imageModalUrl"
+                    class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4"
+                    @click.self="closeImageModal"
+                >
+                    <button
+                        class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white text-xl"
+                        @click="closeImageModal"
+                        aria-label="Cerrar"
+                    >
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <img
+                        :src="imageModalUrl"
+                        alt="Imagen ampliada"
+                        class="max-w-[95vw] max-h-[90vh] w-auto h-auto object-contain"
+                        @click.stop
+                    />
+                </div>
+            </Transition>
+        </Teleport>
         <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -57,11 +81,17 @@
                         <i class="fas fa-image mr-2 text-blue-600"></i>
                         Imagen del equipo
                     </label>
-                    <img
-                        :src="equipment.image_url"
-                        alt="Equipo"
-                        class="max-h-64 rounded-lg object-contain border border-gray-200 bg-gray-50"
-                    />
+                    <div class="relative group cursor-pointer inline-block" @click="openImageModal(equipment.image_url)">
+                        <img
+                            :src="equipment.image_url"
+                            alt="Equipo"
+                            class="max-h-64 rounded-lg object-contain border border-gray-200 bg-gray-50 hover:border-blue-500 transition-all"
+                        />
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg flex items-center justify-center transition-all pointer-events-none">
+                            <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 text-2xl transition-opacity"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Clic para ampliar</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -205,6 +235,15 @@ const authStore = useAuthStore();
 
 const equipment = ref(null);
 const loading = ref(true);
+const imageModalUrl = ref(null);
+
+const openImageModal = (url) => {
+    imageModalUrl.value = url;
+};
+
+const closeImageModal = () => {
+    imageModalUrl.value = null;
+};
 
 onMounted(async () => {
     await loadEquipment();
@@ -222,4 +261,16 @@ const loadEquipment = async () => {
         loading.value = false;
     }
 };
+
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>

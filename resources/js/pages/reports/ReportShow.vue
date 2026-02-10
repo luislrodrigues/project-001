@@ -1,5 +1,29 @@
 <template>
-    <div class="container mx-auto px-4 sm:px-8">
+    <div class="container mx-auto px-4 sm:px-8 relative">
+        <!-- Modal para ampliar imagen (sin Teleport para evitar problemas en reportes) -->
+        <Transition name="fade">
+            <div
+                v-if="imageModalUrl"
+                class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 p-4"
+                style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;"
+                @click.self="closeImageModal"
+            >
+                <button
+                    class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white text-xl"
+                    @click="closeImageModal"
+                    aria-label="Cerrar"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+                <img
+                    v-if="imageModalUrl"
+                    :src="imageModalUrl"
+                    alt="Imagen ampliada"
+                    class="max-w-[95vw] max-h-[90vh] w-auto h-auto object-contain"
+                    @click.stop
+                />
+            </div>
+        </Transition>
         <!-- Loading overlay para carga inicial -->
         <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
@@ -201,13 +225,16 @@
                                     <div
                                         v-for="(imageUrl, imgIndex) in getComponentImages(component.id)"
                                         :key="imgIndex"
-                                        class="relative group"
+                                        class="relative group cursor-pointer"
+                                        role="button"
+                                        tabindex="0"
+                                        @click="openImageModal(imageUrl)"
+                                        @keydown.enter="openImageModal(imageUrl)"
                                     >
                                         <img
                                             :src="imageUrl"
                                             :alt="`Imagen ${imgIndex + 1}`"
-                                            class="w-full h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-purple-500 transition-all cursor-pointer"
-                                            @click="openImageModal(imageUrl)"
+                                            class="w-full h-32 object-contain rounded-lg border-2 border-gray-200 hover:border-purple-500 transition-all bg-gray-100 pointer-events-none"
                                         />
                                         <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
                                             <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 text-xl"></i>
@@ -471,6 +498,7 @@ const authStore = useAuthStore();
 
 const report = ref(null);
 const loading = ref(true);
+const imageModalUrl = ref(null);
 const downloadingPdf = ref(false);
 const sendingEmail = ref(false);
 const diagnosisByComponent = ref({});
@@ -703,16 +731,23 @@ const getRecommendations = (componentId) => {
     return Array.isArray(recs) ? recs : [];
 };
 
-const openImageModal = (imageUrl) => {
-    Swal.fire({
-        imageUrl: imageUrl,
-        imageAlt: 'Imagen del componente',
-        showCloseButton: true,
-        showConfirmButton: false,
-        width: '90%',
-        padding: '0',
-        background: 'transparent',
-        backdrop: 'rgba(0,0,0,0.8)'
-    });
+const openImageModal = (url) => {
+    imageModalUrl.value = url;
 };
+
+const closeImageModal = () => {
+    imageModalUrl.value = null;
+};
+
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>

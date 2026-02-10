@@ -1,5 +1,29 @@
 <template>
-    <div class="container mx-auto px-4 sm:px-8">
+    <div class="container mx-auto px-4 sm:px-8 relative">
+        <!-- Modal para ampliar imagen -->
+        <Transition name="fade">
+            <div
+                v-if="imageModalUrl"
+                class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 p-4"
+                style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;"
+                @click.self="closeImageModal"
+            >
+                <button
+                    class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white text-xl"
+                    @click="closeImageModal"
+                    aria-label="Cerrar"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+                <img
+                    v-if="imageModalUrl"
+                    :src="imageModalUrl"
+                    alt="Imagen ampliada"
+                    class="max-w-[95vw] max-h-[90vh] w-auto h-auto object-contain"
+                    @click.stop
+                />
+            </div>
+        </Transition>
         <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -206,12 +230,14 @@
                                     <i class="fas fa-image mr-2 text-blue-600"></i>
                                     Imagen del equipo
                                 </label>
-                                <img
-                                    v-if="imageUrl"
-                                    :src="imageUrl"
-                                    alt="Equipo"
-                                    class="mb-3 max-h-40 rounded-lg object-contain border border-gray-200"
-                                />
+                                <div v-if="imageUrl" class="mb-3 cursor-pointer inline-block" @click="openImageModal(imageUrl)">
+                                    <img
+                                        :src="imageUrl"
+                                        alt="Equipo"
+                                        class="max-h-40 rounded-lg object-contain border border-gray-200 hover:border-blue-500 transition-all"
+                                    />
+                                    <p class="text-xs text-gray-500 mt-1">Clic para ampliar</p>
+                                </div>
                                 <input
                                     type="file"
                                     accept="image/jpeg,image/jpg,image/png"
@@ -480,6 +506,7 @@ const showBrandModal = ref(false);
 const currentComponentIndexForBrand = ref(null);
 const imageUrl = ref(null);
 const imageFile = ref(null);
+const imageModalUrl = ref(null);
 
 onMounted(async () => {
     loading.value = true;
@@ -659,6 +686,14 @@ const onImageChange = (event) => {
     }
 };
 
+const openImageModal = (url) => {
+    imageModalUrl.value = url;
+};
+
+const closeImageModal = () => {
+    imageModalUrl.value = null;
+};
+
 const updateEquipment = async () => {
     saving.value = true;
     errors.value = {};
@@ -705,3 +740,14 @@ const updateEquipment = async () => {
     }
 };
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>

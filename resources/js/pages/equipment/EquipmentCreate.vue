@@ -1,5 +1,29 @@
 <template>
-    <div class="container mx-auto px-4 sm:px-8">
+    <div class="container mx-auto px-4 sm:px-8 relative">
+        <!-- Modal para ampliar imagen -->
+        <Transition name="fade">
+            <div
+                v-if="imageModalUrl"
+                class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 p-4"
+                style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;"
+                @click.self="closeImageModal"
+            >
+                <button
+                    class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white text-xl"
+                    @click="closeImageModal"
+                    aria-label="Cerrar"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+                <img
+                    v-if="imageModalUrl"
+                    :src="imageModalUrl"
+                    alt="Imagen ampliada"
+                    class="max-w-[95vw] max-h-[90vh] w-auto h-auto object-contain"
+                    @click.stop
+                />
+            </div>
+        </Transition>
         <div v-if="catalogsLoading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -263,6 +287,10 @@
                                     @change="onImageChange"
                                     class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                 />
+                                <div v-if="imagePreview" class="mt-3 cursor-pointer inline-block" @click="openImageModal(imagePreview)">
+                                    <img :src="imagePreview" alt="Vista previa" class="max-h-40 rounded-lg object-contain border border-gray-200 hover:border-blue-500 transition-all" />
+                                    <p class="text-xs text-gray-500 mt-1">Clic para ampliar</p>
+                                </div>
                                 <p class="mt-1 text-xs text-gray-500">JPG o PNG. Máx. 2 MB. Se mostrará en el reporte PDF.</p>
                                 <p v-if="errors.image" class="mt-1 text-sm text-red-600">{{ errors.image }}</p>
                             </div>
@@ -505,6 +533,8 @@ const form = reactive({
     components: [],
 });
 const imageFile = ref(null);
+const imagePreview = ref(null);
+const imageModalUrl = ref(null);
 
 const catalogsLoading = ref(true);
 const equipmentTypes = ref([]);
@@ -622,6 +652,10 @@ const clearCopiedData = () => {
     form.description = '';
     form.components = [];
     imageFile.value = null;
+    if (imagePreview.value) {
+        URL.revokeObjectURL(imagePreview.value);
+        imagePreview.value = null;
+    }
     errors.value = {};
     copyFromEquipmentId.value = '';
     Swal.fire('Listo', 'Formulario vaciado.', 'success');
@@ -733,7 +767,19 @@ const loadBrands = async () => {
 
 const onImageChange = (event) => {
     const file = event.target.files?.[0];
+    if (imagePreview.value) {
+        URL.revokeObjectURL(imagePreview.value);
+    }
     imageFile.value = file || null;
+    imagePreview.value = file ? URL.createObjectURL(file) : null;
+};
+
+const openImageModal = (url) => {
+    imageModalUrl.value = url;
+};
+
+const closeImageModal = () => {
+    imageModalUrl.value = null;
 };
 
 const saveEquipment = async () => {
@@ -781,3 +827,14 @@ const saveEquipment = async () => {
     }
 };
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>
