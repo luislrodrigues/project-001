@@ -142,8 +142,8 @@
                             <div class="relative w-52 h-52 flex-shrink-0">
                                 <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
                                     <circle
-                                        v-for="(slice, i) in donaCondicionSlices"
-                                        :key="i"
+                                        v-for="slice in donaCondicionSlices"
+                                        :key="slice.key"
                                         cx="50"
                                         cy="50"
                                         r="40"
@@ -408,7 +408,7 @@
                                 <template v-else>
                                     <div class="relative w-40 h-40 flex-shrink-0">
                                         <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
-                                            <circle v-for="(slice, i) in detailDonaSlices" :key="i" cx="50" cy="50" r="40" fill="none" :stroke="slice.color" stroke-width="20" :stroke-dasharray="slice.dash" :stroke-dashoffset="slice.offset" />
+                                            <circle v-for="slice in detailDonaSlices" :key="slice.key" cx="50" cy="50" r="40" fill="none" :stroke="slice.color" stroke-width="20" :stroke-dasharray="slice.dash" :stroke-dashoffset="slice.offset" />
                                         </svg>
                                         <div class="absolute inset-0 flex items-center justify-center"><span class="text-2xl font-bold text-gray-700">{{ detailTotalCondicion }}</span></div>
                                     </div>
@@ -562,15 +562,20 @@ const donaCondicionSlices = computed(() => {
     let accumulated = 0;
     return rows.map((row, idx) => {
         const isLast = idx === rows.length - 1;
-        // Último segmento: usar el resto para cerrar exactamente el 100% (evita huecos por redondeo)
         const length = isLast
             ? Math.max(0, circumference - accumulated)
             : (row.total / total) * circumference;
         accumulated += length;
         const dash = `${length} ${circumference}`;
-        const slice = { color: row.color || colors[idx % colors.length], dash, offset };
+        const color = row.color || colors[idx % colors.length];
+        const currentOffset = offset;
         offset -= length;
-        return { ...slice, offset };
+        return {
+            key: `cond-${row.condition_id ?? 'sin'}-${idx}`,
+            color,
+            dash,
+            offset: currentOffset,
+        };
     });
 });
 
@@ -667,9 +672,15 @@ const detailDonaSlices = computed(() => {
         const length = isLast ? Math.max(0, circumference - accumulated) : (row.total / total) * circumference;
         accumulated += length;
         const dash = `${length} ${circumference}`;
-        const slice = { color: row.color || colors[idx % colors.length], dash, offset };
+        const color = row.color || colors[idx % colors.length];
+        const currentOffset = offset;
         offset -= length;
-        return { ...slice, offset };
+        return {
+            key: `detail-cond-${row.condition_id ?? 'sin'}-${idx}`,
+            color,
+            dash,
+            offset: currentOffset,
+        };
     });
 });
 
