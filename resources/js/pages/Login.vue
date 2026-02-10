@@ -34,12 +34,20 @@
                                         id="password"
                                         v-model="form.password"
                                         name="password"
-                                        type="password"
+                                        :type="showPassword ? 'text' : 'password'"
                                         autocomplete="current-password"
                                         required
-                                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                        class="appearance-none rounded-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                                         placeholder="Contraseña"
                                     />
+                                    <button
+                                        type="button"
+                                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                        :title="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                                        @click="showPassword = !showPassword"
+                                    >
+                                        <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'" class="text-sm"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -88,6 +96,7 @@ const form = ref({
 
 const loading = ref(false);
 const error = ref('');
+const showPassword = ref(false);
 
 const handleLogin = async () => {
     loading.value = true;

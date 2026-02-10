@@ -326,13 +326,22 @@ const currentYear = computed(() => new Date().getFullYear());
 const pageTitles = {
     dashboard: 'Dashboard',
     reports: 'Informes',
+    'reports.create': 'Crear Reporte',
+    'reports.edit': 'Editar Reporte',
+    'reports.show': 'Detalle del Reporte',
     equipment: 'Equipos',
+    'equipment.create': 'Crear Equipo',
+    'equipment.edit': 'Editar Equipo',
+    'equipment.show': 'Detalle del Equipo',
     components: 'Componentes',
     'component-types': 'Tipos de Componentes',
     'component-types.create': 'Crear Tipo de Componente',
     'component-types.edit': 'Editar Tipo de Componente',
     'component-types.show': 'Detalles del Tipo de Componente',
     companies: 'Empresas',
+    'companies.create': 'Crear Empresa',
+    'companies.edit': 'Editar Empresa',
+    'companies.show': 'Detalle de la Empresa',
     indicadores: 'Indicadores',
     users: 'Usuarios',
     'users.create': 'Crear Usuario',
@@ -345,13 +354,22 @@ const pageTitles = {
 const pageDescriptions = {
     dashboard: 'Panel principal del sistema',
     reports: 'Gestiona y visualiza los informes del sistema',
+    'reports.create': 'Completa el formulario para crear un nuevo reporte',
+    'reports.edit': 'Modifica la información del reporte',
+    'reports.show': 'Información completa del reporte',
     equipment: 'Gestiona el inventario de equipos',
+    'equipment.create': 'Completa el formulario para registrar un nuevo equipo',
+    'equipment.edit': 'Modifica la información del equipo',
+    'equipment.show': 'Información completa del equipo',
     components: 'Gestiona los componentes del sistema',
     'component-types': 'Gestiona los tipos de componentes del sistema',
     'component-types.create': 'Completa el formulario para crear un nuevo tipo de componente',
     'component-types.edit': 'Modifica la información del tipo de componente',
     'component-types.show': 'Información completa del tipo de componente',
     companies: 'Administra las empresas registradas',
+    'companies.create': 'Completa el formulario para crear una nueva empresa',
+    'companies.edit': 'Modifica la información de la empresa',
+    'companies.show': 'Información completa de la empresa',
     indicadores: 'Estadísticas e indicadores a partir de los datos del sistema',
     users: 'Gestiona los usuarios del sistema',
     'users.create': 'Completa el formulario para crear un nuevo usuario',
@@ -362,11 +380,11 @@ const pageDescriptions = {
 };
 
 const pageTitle = computed(() => {
-    return pageTitles[route.name] || 'Dashboard';
+    return pageTitles[route.name] || route.name;
 });
 
 const pageDescription = computed(() => {
-    return pageDescriptions[route.name] || 'Bienvenido de vuelta';
+    return pageDescriptions[route.name] || '';
 });
 
 const isActive = (routeName) => {
