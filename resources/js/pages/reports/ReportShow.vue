@@ -315,8 +315,8 @@
                             </label>
                             <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
                                 <span
-                                    :class="report.priority?.color ? '' : (report.priority?.name === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')"
-                                    :style="report.priority?.color ? { backgroundColor: report.priority.color, color: report.priority.text_color || '#000' } : {}"
+                                    :class="priorityBadgeClass(report.priority)"
+                                    :style="priorityBadgeStyle(report.priority)"
                                     class="px-3 py-1 inline-flex text-xs font-semibold rounded-full"
                                 >
                                     {{ report.priority?.name ?? report.priority }}
@@ -611,6 +611,24 @@ const formatDate = (date) => {
 
 const getConditionClass = () => {
     return 'bg-gray-100 text-gray-900 border border-gray-300';
+};
+
+// Usar colores registrados en la tabla priorities
+const hasValidColor = (color) => color != null && String(color).trim() !== '';
+const priorityBadgeClass = (priority) => {
+    if (!priority) return 'bg-gray-100 text-gray-800';
+    if (hasValidColor(priority.color)) return '';
+    return priority.name === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+};
+const priorityBadgeStyle = (priority) => {
+    if (!priority) return {};
+    const bg = priority.color != null ? String(priority.color).trim() : '';
+    const fg = priority.text_color != null ? String(priority.text_color).trim() : '';
+    if (bg === '' && fg === '') return {};
+    return {
+        backgroundColor: bg || 'transparent',
+        color: fg || '#000000'
+    };
 };
 
 const sanitizeFilename = (name) => (name || '').replace(/[\\/:*?"<>|]/g, '_').trim();
