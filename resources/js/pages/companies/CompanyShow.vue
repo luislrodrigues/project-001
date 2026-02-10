@@ -99,6 +99,10 @@ const company = ref(null);
 const loading = ref(true);
 
 onMounted(async () => {
+    if (!authStore.hasPermission('detalle company')) {
+        router.push({ name: 'companies' });
+        return;
+    }
     await loadCompany();
 });
 

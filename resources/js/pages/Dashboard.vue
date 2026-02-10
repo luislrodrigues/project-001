@@ -31,7 +31,7 @@
                 </div>
 
                 <!-- Card Equipos -->
-                <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200 h-full flex flex-col">
+                <div class="bg-white rounelded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200 h-full flex flex-col">
                     <div class="p-6 flex-1">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
@@ -110,6 +110,7 @@
 
                 <!-- Equipos Card -->
                 <router-link
+                    v-if="authStore.hasPermission('consult equipment')"
                     :to="{ name: 'equipment' }"
                     class="group h-full flex flex-col"
                 >
@@ -205,6 +206,7 @@
 
                 <!-- Indicadores Card -->
                 <router-link
+                    v-if="authStore.hasPermission('consult indicators')"
                     :to="{ name: 'indicators' }"
                     class="group h-full flex flex-col"
                 >
@@ -220,6 +222,30 @@
                             <h3 class="text-xl font-bold text-gray-800 mb-2">Indicadores</h3>
                             <p class="text-gray-600 text-sm mb-4 flex-1">Estadísticas y gráficos por empresa, condición, proceso y más</p>
                             <div class="flex items-center text-sm text-teal-600 font-semibold">
+                                <span>Acceder</span>
+                            </div>
+                        </div>
+                    </div>
+                </router-link>
+
+                <!-- Roles y permisos Card -->
+                <router-link
+                    v-if="authStore.hasPermission('consult role')"
+                    :to="{ name: 'roles' }"
+                    class="group h-full flex flex-col"
+                >
+                    <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden h-full flex flex-col">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2"></div>
+                        <div class="p-6 flex-1 flex flex-col">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-500 transition-colors duration-300">
+                                    <i class="fas fa-user-shield text-2xl text-blue-600 group-hover:text-white transition-colors duration-300"></i>
+                                </div>
+                                <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-500 transform group-hover:translate-x-2 transition-all duration-300"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Roles y permisos</h3>
+                            <p class="text-gray-600 text-sm mb-4 flex-1">Gestiona los permisos asignados a cada rol del sistema</p>
+                            <div class="flex items-center text-sm text-blue-600 font-semibold">
                                 <span>Acceder</span>
                             </div>
                         </div>

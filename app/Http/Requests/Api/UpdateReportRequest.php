@@ -41,7 +41,7 @@ class UpdateReportRequest extends FormRequest
             'condition_id' => 'required|integer|exists:conditions,id',
             'mechanism_fail_id' => 'required|integer|exists:mechanism_fails,id',
             'component_fail_id' => 'required|integer|exists:component_fails,id',
-            'priority' => 'required|in:Alta,Media,Baja,Normal',
+            'priority_id' => 'required|integer|exists:priorities,id',
             'analist_id' => 'required|integer|exists:users,id',
             'ot_created' => 'nullable|string|max:255',
             'status_ot' => 'nullable|string|max:255',

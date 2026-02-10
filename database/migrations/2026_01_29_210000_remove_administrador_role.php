@@ -23,10 +23,10 @@ return new class extends Migration
     public function down(): void
     {
         $allPermissions = [
-            'save user', 'edit user', 'actions user', 'inactive user', 'consult user', 'delete user',
-            'save company', 'edit company', 'actions company', 'delete company', 'consult company',
-            'save equipment', 'edit equipment', 'actions equipment', 'delete equipment', 'consult equipment',
-            'save report', 'edit report', 'actions report', 'delete report', 'consult report',
+            'save user', 'edit user', 'detalle user', 'inactive user', 'consult user', 'delete user',
+            'save company', 'edit company', 'detalle company', 'delete company', 'consult company',
+            'save equipment', 'edit equipment', 'detalle equipment', 'delete equipment', 'consult equipment',
+            'save report', 'edit report', 'detalle report', 'delete report', 'consult report',
         ];
         $adminRole = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
         $adminRole->syncPermissions($allPermissions);

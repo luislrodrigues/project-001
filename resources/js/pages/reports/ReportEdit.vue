@@ -426,14 +426,14 @@
                                     <i class="fas fa-flag mr-2 text-blue-600"></i>
                                     Prioridad <span class="text-red-500 ml-1">*</span>
                                 </label>
-                                <select v-model="form.priority" required class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
-                                    <option value="">Seleccione</option>
-                                    <option value="Alta">Alta</option>
-                                    <option value="Media">Media</option>
-                                    <option value="Baja">Baja</option>
-                                    <option value="Normal">Normal</option>
-                                </select>
-                                <p v-if="errors.priority" class="mt-1 text-sm text-red-600">{{ errors.priority }}</p>
+                                <div class="flex space-x-2 items-stretch">
+                                    <select v-model="form.priority_id" required class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
+                                        <option value="">Seleccione</option>
+                                        <option v-for="p in priorities" :key="p.id" :value="p.id">{{ p.name }}</option>
+                                    </select>
+                                    <button type="button" @click="showPriorityModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar prioridades"><i class="fas fa-cog text-sm"></i></button>
+                                </div>
+                                <p v-if="errors.priority_id" class="mt-1 text-sm text-red-600">{{ errors.priority_id }}</p>
                             </div>
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -554,6 +554,14 @@
             @item-saved="handleItemSaved"
             @options-updated="loadComponentFails"
         />
+        <CreateSelectModal
+            v-model:show="showPriorityModal"
+            field="priority"
+            label="Prioridad"
+            api-endpoint="/catalogs/priorities"
+            @item-saved="handleItemSaved"
+            @options-updated="loadPriorities"
+        />
     </div>
 </template>
 
@@ -575,7 +583,7 @@ const form = reactive({
     condition_id: '',
     mechanism_fail_id: '',
     component_fail_id: '',
-    priority: '',
+    priority_id: '',
     analist_id: '',
     ot_created: '',
     status_ot: '',
@@ -597,6 +605,7 @@ const equipments = ref([]);
 const companies = ref([]);
 const filterCompanyId = ref('');
 const conditions = ref([]);
+const priorities = ref([]);
 const mechanismFails = ref([]);
 const componentFails = ref([]);
 const users = ref([]);
@@ -605,6 +614,7 @@ const loading = ref(true);
 const saving = ref(false);
 const errors = ref({});
 const showConditionModal = ref(false);
+const showPriorityModal = ref(false);
 const showMechanismFailModal = ref(false);
 const showComponentFailModal = ref(false);
 const report = ref(null);
@@ -622,10 +632,11 @@ onMounted(async () => {
 
 const loadCatalogs = async () => {
     try {
-        const [equipmentsRes, companiesRes, conditionsRes, mechanismFailsRes, componentFailsRes, usersRes] = await Promise.all([
+        const [equipmentsRes, companiesRes, conditionsRes, prioritiesRes, mechanismFailsRes, componentFailsRes, usersRes] = await Promise.all([
             api.get('/catalogs/equipment'),
             api.get('/catalogs/companies'),
             api.get('/catalogs/conditions'),
+            api.get('/catalogs/priorities'),
             api.get('/catalogs/mechanism-fails'),
             api.get('/catalogs/component-fails'),
             api.get('/catalogs/analists'),
@@ -634,6 +645,7 @@ const loadCatalogs = async () => {
         equipments.value = equipmentsRes.data?.data ?? equipmentsRes.data ?? [];
         companies.value = companiesRes.data?.data ?? companiesRes.data ?? [];
         conditions.value = conditionsRes.data?.data ?? conditionsRes.data ?? [];
+        priorities.value = prioritiesRes.data?.data ?? prioritiesRes.data ?? [];
         mechanismFails.value = mechanismFailsRes.data?.data ?? mechanismFailsRes.data ?? [];
         componentFails.value = componentFailsRes.data?.data ?? componentFailsRes.data ?? [];
         users.value = usersRes.data?.data ?? usersRes.data ?? [];
@@ -650,6 +662,15 @@ const loadConditions = async () => {
         conditions.value = response.data.data;
     } catch (error) {
         console.error('Error al cargar condiciones:', error);
+    }
+};
+
+const loadPriorities = async () => {
+    try {
+        const response = await api.get('/catalogs/priorities');
+        priorities.value = response.data.data;
+    } catch (error) {
+        console.error('Error al cargar prioridades:', error);
     }
 };
 
@@ -707,6 +728,8 @@ const handleItemSaved = (data) => {
     // Seleccionar automáticamente el nuevo registro creado
     if (data.field === 'condition' && data.id) {
         form.condition_id = data.id;
+    } else if (data.field === 'priority' && data.id) {
+        form.priority_id = data.id;
     } else if (data.field === 'failure_mechanism' && data.id) {
         form.mechanism_fail_id = data.id;
     } else if (data.field === 'component_failure' && data.id) {
@@ -726,7 +749,7 @@ const loadReport = async () => {
         form.condition_id = reportData.condition?.id || '';
         form.mechanism_fail_id = reportData.mechanism_fail?.id || '';
         form.component_fail_id = reportData.component_fail?.id || '';
-        form.priority = reportData.priority;
+        form.priority_id = reportData.priority?.id ?? reportData.priority_id ?? '';
         form.analist_id = reportData.analist?.id || '';
         form.ot_created = reportData.ot_created || '';
         form.status_ot = reportData.status_ot || '';

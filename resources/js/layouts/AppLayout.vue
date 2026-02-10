@@ -101,6 +101,7 @@
                 </router-link>
 
                 <router-link
+                    v-if="authStore.hasPermission('consult report')"
                     :to="{ name: 'reports' }"
                     @click="mobileMenuOpen = false"
                     class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
@@ -117,6 +118,7 @@
                 </router-link>
 
                 <router-link
+                    v-if="authStore.hasPermission('consult equipment')"
                     :to="{ name: 'equipment' }"
                     @click="mobileMenuOpen = false"
                     class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
@@ -184,6 +186,7 @@
                 </router-link>
 
                 <router-link
+                    v-if="authStore.hasPermission('consult indicators')"
                     :to="{ name: 'indicators' }"
                     @click="mobileMenuOpen = false"
                     class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
@@ -196,6 +199,23 @@
                         class="font-medium transition-opacity duration-300"
                     >
                         Indicadores
+                    </span>
+                </router-link>
+
+                <router-link
+                    v-if="authStore.hasPermission('consult role')"
+                    :to="{ name: 'roles' }"
+                    @click="mobileMenuOpen = false"
+                    class="nav-item flex items-center space-x-3 px-4 py-3.5 lg:py-3 min-h-[48px] lg:min-h-0 text-white rounded-xl transition-all duration-200 active:bg-white/20"
+                    :class="isActive('roles') ? 'nav-item-active' : 'nav-item-hover'"
+                    title="Roles y permisos"
+                >
+                    <i class="fas fa-user-shield text-lg w-5"></i>
+                    <span
+                        v-show="!sidebarCollapsed || !isDesktop"
+                        class="font-medium transition-opacity duration-300"
+                    >
+                        Roles y permisos
                     </span>
                 </router-link>
             </nav>
@@ -347,6 +367,9 @@ const pageTitles = {
     'users.create': 'Crear Usuario',
     'users.edit': 'Editar Usuario',
     'users.show': 'Detalles del Usuario',
+    roles: 'Roles y permisos',
+    'roles.create': 'Crear rol',
+    'roles.edit': 'Editar permisos del rol',
     profile: 'Mi Perfil',
     'not-found': 'Página no encontrada',
 };
@@ -375,6 +398,9 @@ const pageDescriptions = {
     'users.create': 'Completa el formulario para crear un nuevo usuario',
     'users.edit': 'Modifica la información del usuario',
     'users.show': 'Información completa del usuario',
+    roles: 'Gestiona los permisos de cada rol',
+    'roles.create': 'Define un nuevo rol y sus permisos',
+    'roles.edit': 'Asigna o modifica los permisos del rol',
     profile: 'Administra tu información personal',
     'not-found': 'La ruta solicitada no existe',
 };
@@ -402,6 +428,9 @@ const isActive = (routeName) => {
     }
     if (routeName === 'users') {
         return route.name === 'users' || route.name === 'users.create' || route.name === 'users.edit' || route.name === 'users.show';
+    }
+    if (routeName === 'roles') {
+        return route.name === 'roles' || route.name === 'roles.create' || route.name === 'roles.edit';
     }
     if (routeName === 'component-types') {
         return route.name === 'component-types' || route.name === 'component-types.create' || route.name === 'component-types.edit' || route.name === 'component-types.show';

@@ -162,6 +162,10 @@ const formatDate = (dateString) => {
 };
 
 onMounted(() => {
+    if (!authStore.hasPermission('detalle user')) {
+        router.push({ name: 'users' });
+        return;
+    }
     loadUser();
 });
 </script>

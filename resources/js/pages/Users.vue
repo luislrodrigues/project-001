@@ -83,10 +83,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-end">
+                        <div class="flex items-end gap-2">
+                            <button
+                                type="button"
+                                @click="clearFilters"
+                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                            >
+                                <i class="fas fa-times mr-2"></i>
+                                Limpiar
+                            </button>
                             <button
                                 @click="fetchUsers"
-                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                                class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
                             >
                                 <i class="fas fa-redo mr-2"></i>
                                 Actualizar
@@ -154,7 +162,7 @@
                                         Estado
                                     </div>
                                 </th>
-                                <th v-if="authStore.hasPermission('edit user') || authStore.hasPermission('delete user') || authStore.hasPermission('inactive user')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="authStore.hasPermission('detalle user') || authStore.hasPermission('edit user') || authStore.hasPermission('delete user') || authStore.hasPermission('inactive user')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center justify-end">
                                         <i class="fas fa-cog mr-2"></i>
                                         Acciones
@@ -198,9 +206,10 @@
                                         {{ user.status === 'active' ? 'Activo' : 'Inactivo' }}
                                     </span>
                                 </td>
-                                <td v-if="authStore.hasPermission('edit user') || authStore.hasPermission('delete user') || authStore.hasPermission('inactive user')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td v-if="authStore.hasPermission('detalle user') || authStore.hasPermission('edit user') || authStore.hasPermission('delete user') || authStore.hasPermission('inactive user')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
+                                            v-if="authStore.hasPermission('detalle user')"
                                             :to="{ name: 'users.show', params: { id: user.id } }"
                                             class="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-100 rounded-lg transition-colors"
                                             title="Ver"
@@ -348,6 +357,13 @@ const debounceSearch = () => {
     searchTimeout = setTimeout(() => {
         fetchUsers(1);
     }, 300);
+};
+
+const clearFilters = () => {
+    filters.value.search = '';
+    filters.value.status = '';
+    filters.value.company_id = '';
+    fetchUsers(1);
 };
 
 const changePage = (page) => {

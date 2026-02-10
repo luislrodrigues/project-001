@@ -9,6 +9,7 @@ use App\Http\Requests\Api\UpdateReportRequest;
 use App\Http\Resources\ReportResource;
 use App\Models\Condition;
 use App\Models\ComponentFail;
+use App\Models\Priority;
 use App\Models\Equipment;
 use App\Models\MechanismFail;
 use App\Models\Report;
@@ -30,6 +31,17 @@ class ReportController extends Controller
             ->get();
 
         return ApiResponse::success($conditions);
+    }
+
+    public function getPriorities(): JsonResponse
+    {
+        $priorities = Priority::where('status', 'active')
+            ->whereNull('deleted_at')
+            ->select('id', 'name', 'color', 'text_color')
+            ->orderBy('name')
+            ->get();
+
+        return ApiResponse::success($priorities);
     }
 
     public function getMechanismFails(): JsonResponse
@@ -58,7 +70,7 @@ class ReportController extends Controller
             abort(403, 'No tienes los permisos requeridos.');
         }
 
-        $query = Report::with(['equipment.company', 'equipment.equipmentType', 'equipment.ubication', 'equipment.process', 'equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist'])
+        $query = Report::with(['equipment.company', 'equipment.equipmentType', 'equipment.ubication', 'equipment.process', 'equipment.components', 'condition', 'priority', 'mechanismFail', 'componentFail', 'analist'])
             ->whereNull('deleted_at');
 
         // Filtrar por empresa si el usuario es Cliente
@@ -76,8 +88,8 @@ class ReportController extends Controller
             $query->where('condition_id', $request->condition_id);
         }
 
-        if ($request->has('priority') && $request->priority !== '') {
-            $query->where('priority', $request->priority);
+        if ($request->has('priority_id') && $request->priority_id !== '') {
+            $query->where('priority_id', $request->priority_id);
         }
 
         if ($request->has('company_id') && $request->company_id !== '') {
@@ -117,7 +129,7 @@ class ReportController extends Controller
                 'equipment_id' => $request->equipment_id,
                 'measurement_date' => $request->measurement_date,
                 'condition_id' => $request->condition_id,
-                'priority' => $request->priority,
+                'priority_id' => $request->priority_id,
                 'mechanism_fail_id' => $request->mechanism_fail_id,
                 'component_fail_id' => $request->component_fail_id,
                 'ot_created' => $request->ot_created,
@@ -197,6 +209,7 @@ class ReportController extends Controller
             'equipment.ubication',
             'equipment.process',
             'condition',
+            'priority',
             'mechanismFail',
             'componentFail',
             'analist'
@@ -220,7 +233,7 @@ class ReportController extends Controller
                 'equipment_id' => $request->equipment_id,
                 'measurement_date' => $request->measurement_date,
                 'condition_id' => $request->condition_id,
-                'priority' => $request->priority,
+                'priority_id' => $request->priority_id,
                 'mechanism_fail_id' => $request->mechanism_fail_id,
                 'component_fail_id' => $request->component_fail_id,
                 'ot_created' => $request->ot_created,
@@ -391,6 +404,7 @@ class ReportController extends Controller
                 'equipment.ubication',
                 'equipment.process',
                 'condition',
+                'priority',
                 'mechanismFail',
                 'componentFail',
                 'analist'
@@ -560,6 +574,7 @@ class ReportController extends Controller
                 'equipment.ubication',
                 'equipment.process',
                 'condition',
+                'priority',
                 'mechanismFail',
                 'componentFail',
                 'analist',

@@ -31,7 +31,7 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <router-link
-                            v-if="authStore.hasPermission('edit equipment')"
+                            v-if="authStore.hasPermission('edit component type')"
                             :to="{ name: 'component-types.edit', params: { id: componentType.id } }"
                             class="text-yellow-600 hover:text-yellow-900 p-2 hover:bg-yellow-100 rounded-lg transition-colors"
                             title="Editar"
@@ -246,5 +246,11 @@ const fetchComponentType = async () => {
     }
 };
 
-onMounted(fetchComponentType);
+onMounted(() => {
+    if (!authStore.hasPermission('detalle component type')) {
+        router.push({ name: 'component-types' });
+        return;
+    }
+    fetchComponentType();
+});
 </script>

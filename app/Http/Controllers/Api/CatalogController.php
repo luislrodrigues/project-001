@@ -10,6 +10,7 @@ use App\Models\ComponentFail;
 use App\Models\Condition;
 use App\Models\EquipmentType;
 use App\Models\MechanismFail;
+use App\Models\Priority;
 use App\Models\Process;
 use App\Models\Ubication;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ class CatalogController extends Controller
         'processes' => Process::class,
         'ubications' => Ubication::class,
         'conditions' => Condition::class,
+        'priorities' => Priority::class,
         'component-fails' => ComponentFail::class,
         'mechanism-fails' => MechanismFail::class,
     ];
@@ -41,7 +43,7 @@ class CatalogController extends Controller
         }
 
         $rules = ['name' => $uniqueRule];
-        if ($catalog === 'conditions') {
+        if ($catalog === 'conditions' || $catalog === 'priorities') {
             $rules['color'] = 'nullable|string|max:50';
             $rules['text_color'] = 'nullable|string|max:50';
         }
@@ -54,7 +56,7 @@ class CatalogController extends Controller
         try {
             $modelClass = $this->modelMap[$catalog];
             $data = ['name' => ucfirst(trim($request->name))];
-            if ($catalog === 'conditions') {
+            if ($catalog === 'conditions' || $catalog === 'priorities') {
                 $data['color'] = $request->color ? trim($request->color) : null;
                 $data['text_color'] = $request->text_color ? trim($request->text_color) : null;
             }
@@ -82,7 +84,7 @@ class CatalogController extends Controller
         }
 
         $rules = ['name' => $uniqueRule];
-        if ($catalog === 'conditions') {
+        if ($catalog === 'conditions' || $catalog === 'priorities') {
             $rules['color'] = 'nullable|string|max:50';
             $rules['text_color'] = 'nullable|string|max:50';
         }
@@ -96,7 +98,7 @@ class CatalogController extends Controller
             $modelClass = $this->modelMap[$catalog];
             $item = $modelClass::findOrFail($id);
             $updateData = ['name' => ucfirst(trim($request->name))];
-            if ($catalog === 'conditions') {
+            if ($catalog === 'conditions' || $catalog === 'priorities') {
                 $updateData['color'] = $request->color ? trim($request->color) : null;
                 $updateData['text_color'] = $request->text_color ? trim($request->text_color) : null;
             }
@@ -148,6 +150,7 @@ class CatalogController extends Controller
             'processes' => 'processes',
             'ubications' => 'ubications',
             'conditions' => 'conditions',
+            'priorities' => 'priorities',
             'component-fails' => 'component_fails',
             'mechanism-fails' => 'mechanism_fails',
         ];

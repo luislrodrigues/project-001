@@ -100,10 +100,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-end">
+                        <div class="flex items-end gap-2">
+                            <button
+                                type="button"
+                                @click="clearFilters"
+                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                            >
+                                <i class="fas fa-times mr-2"></i>
+                                Limpiar
+                            </button>
                             <button
                                 @click="fetchEquipment"
-                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                                class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
                             >
                                 <i class="fas fa-redo mr-2"></i>
                                 Actualizar
@@ -165,7 +173,7 @@
                                         Ubicación
                                     </div>
                                 </th>
-                                <th class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="authStore.hasPermission('detalle equipment') || authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center justify-end">
                                         <i class="fas fa-cog mr-2"></i>
                                         Acciones
@@ -193,9 +201,10 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ equipment.ubication && equipment.ubication.name ? equipment.ubication.name : 'N/A' }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td v-if="authStore.hasPermission('detalle equipment') || authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
+                                            v-if="authStore.hasPermission('detalle equipment')"
                                             :to="{ name: 'equipment.show', params: { id: equipment.id } }"
                                             class="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors"
                                             title="Ver detalles"
@@ -343,6 +352,14 @@ const loadProcesses = async () => {
     } catch (error) {
         console.error('Error al cargar procesos:', error);
     }
+};
+
+const clearFilters = () => {
+    search.value = '';
+    filters.value.company_id = '';
+    filters.value.equipment_type_id = '';
+    filters.value.process_id = '';
+    fetchEquipment(1);
 };
 
 const fetchEquipment = async (page = 1) => {

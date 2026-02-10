@@ -104,15 +104,12 @@
                                 Prioridad
                             </label>
                             <select
-                                v-model="filters.priority"
+                                v-model="filters.priority_id"
                                 @change="fetchReports"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             >
                                 <option value="">Todas</option>
-                                <option value="Alta">Alta</option>
-                                <option value="Media">Media</option>
-                                <option value="Baja">Baja</option>
-                                <option value="Normal">Normal</option>
+                                <option v-for="p in priorities" :key="p.id" :value="p.id">{{ p.name }}</option>
                             </select>
                         </div>
                         <div v-if="!authStore.hasRole('Cliente')">
@@ -132,10 +129,18 @@
                             </select>
                         </div>
                     </div>
-                    <div class="mt-3 flex justify-end">
+                    <div class="mt-3 flex justify-end gap-2">
+                        <button
+                            type="button"
+                            @click="clearFilters"
+                            class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                        >
+                            <i class="fas fa-times mr-2"></i>
+                            Limpiar
+                        </button>
                         <button
                             @click="fetchReports"
-                            class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                            class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
                         >
                             <i class="fas fa-redo mr-2"></i>
                             Actualizar
@@ -202,7 +207,7 @@
                                         Prioridad
                                     </div>
                                 </th>
-                                <th class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center justify-end">
                                         <i class="fas fa-cog mr-2"></i>
                                         Acciones
@@ -238,15 +243,17 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
-                                        :class="report.priority === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'"
+                                        :class="report.priority?.color ? '' : (report.priority?.name === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')"
+                                    :style="report.priority?.color ? { backgroundColor: report.priority.color, color: report.priority.text_color || '#000' } : {}"
                                         class="px-3 py-1 inline-flex text-xs font-semibold rounded-full"
                                     >
-                                        {{ report.priority }}
+                                        {{ report.priority?.name ?? report.priority }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
+                                            v-if="authStore.hasPermission('detalle report')"
                                             :to="{ name: 'reports.show', params: { id: report.id } }"
                                             class="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors"
                                             title="Ver detalles"
@@ -306,6 +313,7 @@ const loading = ref(false);
 const pagination = ref(null);
 const equipments = ref([]);
 const conditions = ref([]);
+const priorities = ref([]);
 const companies = ref([]);
 const processes = ref([]);
 const analists = ref([]);
@@ -313,7 +321,7 @@ const analists = ref([]);
 const filters = reactive({
     equipment_id: route.query.equipment_id ?? '',
     condition_id: route.query.condition_id ?? '',
-    priority: route.query.priority ?? '',
+    priority_id: route.query.priority_id ?? '',
     company_id: route.query.company_id ?? '',
     process_id: route.query.process_id ?? '',
     analist_id: route.query.analist_id ?? '',
@@ -329,7 +337,7 @@ const syncQueryToUrl = (page = 1) => {
         sort_order: sortOrder.value,
         equipment_id: filters.equipment_id,
         condition_id: filters.condition_id,
-        priority: filters.priority,
+        priority_id: filters.priority_id,
         company_id: filters.company_id,
         process_id: filters.process_id,
         analist_id: filters.analist_id
@@ -346,7 +354,7 @@ const applyQueryToFilters = () => {
     if (hasQuery) {
         filters.equipment_id = route.query.equipment_id ?? '';
         filters.condition_id = route.query.condition_id ?? '';
-        filters.priority = route.query.priority ?? '';
+        filters.priority_id = route.query.priority_id ?? '';
         filters.company_id = route.query.company_id ?? '';
         filters.process_id = route.query.process_id ?? '';
         filters.analist_id = route.query.analist_id ?? '';
@@ -359,7 +367,7 @@ const applyQueryToFilters = () => {
                 if (query) {
                     filters.equipment_id = query.equipment_id ?? '';
                     filters.condition_id = query.condition_id ?? '';
-                    filters.priority = query.priority ?? '';
+                    filters.priority_id = query.priority_id ?? '';
                     filters.company_id = query.company_id ?? '';
                     filters.process_id = query.process_id ?? '';
                     filters.analist_id = query.analist_id ?? '';
@@ -384,9 +392,10 @@ onMounted(async () => {
 
 const loadCatalogs = async () => {
     try {
-        const [equipmentsRes, conditionsRes, companiesRes, processesRes, analistsRes] = await Promise.all([
+        const [equipmentsRes, conditionsRes, prioritiesRes, companiesRes, processesRes, analistsRes] = await Promise.all([
             api.get('/equipment'),
             api.get('/catalogs/conditions'),
+            api.get('/catalogs/priorities'),
             api.get('/catalogs/companies'),
             api.get('/catalogs/processes'),
             api.get('/catalogs/analists'),
@@ -394,12 +403,23 @@ const loadCatalogs = async () => {
 
         equipments.value = equipmentsRes.data.data;
         conditions.value = conditionsRes.data.data;
+        priorities.value = prioritiesRes.data.data ?? prioritiesRes.data ?? [];
         companies.value = companiesRes.data.data;
         processes.value = processesRes.data.data ?? processesRes.data ?? [];
         analists.value = analistsRes.data.data ?? analistsRes.data ?? [];
     } catch (error) {
         console.error('Error al cargar catálogos:', error);
     }
+};
+
+const clearFilters = () => {
+    filters.equipment_id = '';
+    filters.condition_id = '';
+    filters.priority_id = '';
+    filters.company_id = '';
+    filters.process_id = '';
+    filters.analist_id = '';
+    fetchReports(1);
 };
 
 const fetchReports = async (page = 1) => {
@@ -409,7 +429,7 @@ const fetchReports = async (page = 1) => {
 
         if (filters.equipment_id) params.equipment_id = filters.equipment_id;
         if (filters.condition_id) params.condition_id = filters.condition_id;
-        if (filters.priority) params.priority = filters.priority;
+        if (filters.priority_id) params.priority_id = filters.priority_id;
         if (filters.company_id) params.company_id = filters.company_id;
         if (filters.process_id) params.process_id = filters.process_id;
         if (filters.analist_id) params.analist_id = filters.analist_id;

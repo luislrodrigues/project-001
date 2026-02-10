@@ -414,7 +414,7 @@
                         </div>
                         <div class="data-line"><strong>MECANISMO FALLA:</strong> {{ $reportData->mechanismFail->name ?? '—' }}</div>
                         <div class="data-line"><strong>COMPONENTE EN FALLA:</strong> {{ $reportData->componentFail->name ?? '—' }}</div>
-                        <div class="data-line"><strong>PRIORIDAD ATENCIÓN:</strong> {{ $reportData->priority ?? '—' }}</div>
+                        <div class="data-line"><strong>PRIORIDAD ATENCIÓN:</strong> {{ $reportData->priority?->name ?? '—' }}</div>
                         <div class="data-line"><strong>FECHA MEDICIÓN:</strong> {{ $reportData->measurement_date?->format('d/m/Y') ?? '—' }}</div>
                     </div>
                 </td>

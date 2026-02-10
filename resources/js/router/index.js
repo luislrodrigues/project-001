@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import api from '../services/api';
 
 const routes = [
     {
@@ -163,6 +164,22 @@ const routes = [
                 props: true
             },
             {
+                path: 'roles',
+                name: 'roles',
+                component: () => import('../pages/Roles.vue')
+            },
+            {
+                path: 'roles/create',
+                name: 'roles.create',
+                component: () => import('../pages/roles/RoleCreate.vue')
+            },
+            {
+                path: 'roles/:id/edit',
+                name: 'roles.edit',
+                component: () => import('../pages/roles/RoleEdit.vue'),
+                props: true
+            },
+            {
                 path: 'indicators',
                 name: 'indicators',
                 component: () => import('../pages/Indicators.vue')
@@ -197,6 +214,27 @@ router.beforeEach(async (to, from, next) => {
     if (to.meta.requiresGuest && authStore.isAuthenticated) {
         next({ name: 'dashboard' });
         return;
+    }
+
+    // Tras recargar la página el token está en localStorage pero user/permisos no; cargar usuario antes de entrar a la ruta
+    if (to.meta.requiresAuth && authStore.isAuthenticated && !authStore.user) {
+        const token = localStorage.getItem('token');
+        if (token) {
+            authStore.setToken(token);
+            try {
+                const response = await api.get('/user');
+                const payload = response.data.data ?? response.data;
+                authStore.setUser({
+                    ...payload,
+                    permissions: payload.permissions || [],
+                    roles: payload.roles || []
+                });
+            } catch (err) {
+                authStore.logout();
+                next({ name: 'login' });
+                return;
+            }
+        }
     }
 
     next();

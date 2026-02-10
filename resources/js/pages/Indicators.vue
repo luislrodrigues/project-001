@@ -508,9 +508,11 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '../services/api';
 import { useAuthStore } from '../stores/auth';
 
+const router = useRouter();
 const authStore = useAuthStore();
 const loading = ref(true);
 const data = ref({});
@@ -727,6 +729,10 @@ watch(selectedProcessId, () => {
 });
 
 onMounted(async () => {
+    if (!authStore.hasPermission('consult indicators')) {
+        router.push({ name: 'dashboard' });
+        return;
+    }
     if (authStore.hasRole('Cliente') && authStore.user?.company?.id) {
         selectedCompanyId.value = authStore.user.company.id;
     }

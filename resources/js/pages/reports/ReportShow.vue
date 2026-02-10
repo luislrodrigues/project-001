@@ -67,6 +67,7 @@
                             Editar
                         </router-link>
                         <button
+                            v-if="authStore.hasPermission('download pdf report')"
                             type="button"
                             @click.prevent="downloadPdf"
                             :disabled="downloadingPdf"
@@ -80,7 +81,7 @@
                             {{ downloadingPdf ? 'Generando...' : 'PDF' }}
                         </button>
                         <button
-                            v-if="!authStore.hasRole('Cliente')"
+                            v-if="authStore.hasPermission('send email report')"
                             type="button"
                             @click.prevent="openSendEmailModal"
                             :disabled="sendingEmail"
@@ -314,10 +315,11 @@
                             </label>
                             <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
                                 <span
-                                    :class="report.priority === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'"
+                                    :class="report.priority?.color ? '' : (report.priority?.name === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')"
+                                    :style="report.priority?.color ? { backgroundColor: report.priority.color, color: report.priority.text_color || '#000' } : {}"
                                     class="px-3 py-1 inline-flex text-xs font-semibold rounded-full"
                                 >
-                                    {{ report.priority }}
+                                    {{ report.priority?.name ?? report.priority }}
                                 </span>
                             </div>
                         </div>
@@ -512,6 +514,10 @@ const additionalEmailInput = ref('');
 const additionalEmailsList = ref([]);
 
 onMounted(async () => {
+    if (!authStore.hasPermission('detalle report')) {
+        router.push({ name: 'reports' });
+        return;
+    }
     await loadReport();
 });
 

@@ -52,10 +52,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-end">
+                        <div class="flex items-end gap-2">
+                            <button
+                                type="button"
+                                @click="clearFilters"
+                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                            >
+                                <i class="fas fa-times mr-2"></i>
+                                Limpiar
+                            </button>
                             <button
                                 @click="fetchCompanies"
-                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                                class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
                             >
                                 <i class="fas fa-redo mr-2"></i>
                                 Actualizar
@@ -105,7 +113,7 @@
                                         Estado
                                     </div>
                                 </th>
-                                <th v-if="authStore.hasPermission('edit company') || authStore.hasPermission('delete company')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="authStore.hasPermission('detalle company') || authStore.hasPermission('edit company') || authStore.hasPermission('delete company')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center justify-end">
                                         <i class="fas fa-cog mr-2"></i>
                                         Acciones
@@ -132,7 +140,7 @@
                                         {{ company.status === 'active' ? 'Activo' : 'Inactivo' }}
                                     </span>
                                 </td>
-                                <td v-if="authStore.hasPermission('edit company') || authStore.hasPermission('delete company')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td v-if="authStore.hasPermission('detalle company') || authStore.hasPermission('edit company') || authStore.hasPermission('delete company')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
                                             v-if="authStore.hasPermission('edit company')"
@@ -143,7 +151,7 @@
                                             <i class="fas fa-edit"></i>
                                         </router-link>
                                         <router-link
-                                            v-if="authStore.hasPermission('consult company')"
+                                            v-if="authStore.hasPermission('detalle company')"
                                             :to="{ name: 'companies.show', params: { id: company.id } }"
                                             class="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors"
                                             title="Ver detalles"
@@ -261,6 +269,11 @@ const fetchCompanies = async (page = 1) => {
     } finally {
         loading.value = false;
     }
+};
+
+const clearFilters = () => {
+    search.value = '';
+    fetchCompanies(1);
 };
 
 const changePage = (page) => {

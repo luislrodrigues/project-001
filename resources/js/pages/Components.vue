@@ -97,10 +97,18 @@
                                 </option>
                             </select>
                         </div>
-                        <div class="flex-shrink-0">
+                        <div class="flex-shrink-0 flex gap-2">
+                            <button
+                                type="button"
+                                @click="clearFilters"
+                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium whitespace-nowrap"
+                            >
+                                <i class="fas fa-times mr-2"></i>
+                                Limpiar
+                            </button>
                             <button
                                 @click="fetchComponents"
-                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium whitespace-nowrap"
+                                class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium whitespace-nowrap"
                             >
                                 <i class="fas fa-redo mr-2"></i>
                                 Actualizar
@@ -156,7 +164,7 @@
                                         Marca
                                     </div>
                                 </th>
-                                <th class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="authStore.hasPermission('detalle equipment') || authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center justify-end">
                                         <i class="fas fa-cog mr-2"></i>
                                         Acciones
@@ -181,9 +189,10 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ component.brand && component.brand.name ? component.brand.name : '' }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td v-if="authStore.hasPermission('detalle equipment') || authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
+                                            v-if="authStore.hasPermission('detalle equipment')"
                                             :to="{ name: 'components.show', params: { id: component.id } }"
                                             class="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors"
                                             title="Ver detalles"
@@ -367,6 +376,14 @@ const loadCatalogs = async () => {
     } catch (error) {
         console.error('Error al cargar catálogos:', error);
     }
+};
+
+const clearFilters = () => {
+    filters.company_id = '';
+    filters.equipment_id = '';
+    filters.component_type_id = '';
+    filters.brand_id = '';
+    fetchComponents(1);
 };
 
 const fetchComponents = async (page = 1) => {

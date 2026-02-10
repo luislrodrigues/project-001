@@ -81,7 +81,7 @@
                                     {{ errors.valueNew }}
                                 </p>
                             </div>
-                            <div v-if="field === 'condition'">
+                            <div v-if="field === 'condition' || field === 'priority'">
                                 <label class="flex items-center mb-1.5 text-xs font-medium text-gray-700">
                                     <i class="fas fa-palette mr-1.5 text-blue-600 text-xs"></i>
                                     Color de fondo
@@ -162,7 +162,7 @@
                                 >
                                     <div class="flex items-center space-x-2 flex-1">
                                         <div
-                                            v-if="field === 'condition' && item.color"
+                                            v-if="(field === 'condition' || field === 'priority') && item.color"
                                             class="rounded-full w-5 h-5 flex-shrink-0 border border-gray-300"
                                             :style="{ backgroundColor: item.color }"
                                         ></div>
@@ -273,6 +273,7 @@ const endpointMap = {
     'process': '/catalogs/processes',
     'ubication': '/catalogs/ubications',
     'condition': '/catalogs/conditions',
+    'priority': '/catalogs/priorities',
     'component_failure': '/catalogs/component-fails',
     'failure_mechanism': '/catalogs/mechanism-fails',
 };
@@ -284,6 +285,7 @@ const createEndpointMap = {
     'process': 'processes',
     'ubication': 'ubications',
     'condition': 'conditions',
+    'priority': 'priorities',
     'component_failure': 'component-fails',
     'failure_mechanism': 'mechanism-fails',
 };
@@ -359,7 +361,7 @@ const saveField = async () => {
         const endpoint = `/catalogs/${catalogName}`;
 
         const payload = { name: valueNew.value.trim() };
-        if (catalogName === 'conditions') {
+        if (catalogName === 'conditions' || catalogName === 'priorities') {
             if (valueColor.value) payload.color = valueColor.value.trim();
             if (valueTextColor.value) payload.text_color = valueTextColor.value.trim();
         }

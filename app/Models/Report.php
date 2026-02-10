@@ -21,6 +21,7 @@ class Report extends Model
         'measurement_date',
         'diagnosis',
         'condition_id',
+        'priority_id',
         'mechanism_fail_id',
         'component_fail_id',
         'recommendations',
@@ -60,5 +61,10 @@ class Report extends Model
     public function condition()
     {
         return $this->belongsTo(Condition::class);
+    }
+
+    public function priority()
+    {
+        return $this->belongsTo(Priority::class);
     }
 }

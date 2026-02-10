@@ -52,10 +52,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-end">
+                        <div class="flex items-end gap-2">
+                            <button
+                                type="button"
+                                @click="clearFilters"
+                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                            >
+                                <i class="fas fa-times mr-2"></i>
+                                Limpiar
+                            </button>
                             <button
                                 @click="fetchComponentTypes"
-                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                                class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
                             >
                                 <i class="fas fa-redo mr-2"></i>
                                 Actualizar
@@ -121,9 +129,10 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td v-if="authStore.hasPermission('consult equipment') || authStore.hasPermission('edit equipment') || authStore.hasPermission('delete equipment')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td v-if="authStore.hasPermission('detalle component type') || authStore.hasPermission('consult component type') || authStore.hasPermission('edit component type') || authStore.hasPermission('delete component type')" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
+                                            v-if="authStore.hasPermission('detalle component type')"
                                             :to="{ name: 'component-types.show', params: { id: type.id } }"
                                             class="inline-flex items-center px-3 py-2 bg-white border border-blue-100 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors duration-200"
                                             title="Ver detalles"
@@ -132,7 +141,7 @@
                                             <span class="ml-1.5 text-xs font-medium">Ver</span>
                                         </router-link>
                                         <router-link
-                                            v-if="authStore.hasPermission('edit equipment')"
+                                            v-if="authStore.hasPermission('edit component type')"
                                             :to="{ name: 'component-types.edit', params: { id: type.id } }"
                                             class="inline-flex items-center px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors duration-200"
                                             title="Editar"
@@ -141,7 +150,7 @@
                                             <span class="ml-1.5 text-xs font-medium">Editar</span>
                                         </router-link>
                                         <button
-                                            v-if="authStore.hasPermission('delete equipment')"
+                                            v-if="authStore.hasPermission('delete component type')"
                                             @click="deleteComponentType(type)"
                                             class="inline-flex items-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors duration-200"
                                             title="Eliminar"
@@ -261,6 +270,11 @@ const debounceSearch = () => {
     searchTimeout = setTimeout(() => {
         fetchComponentTypes(1);
     }, 300);
+};
+
+const clearFilters = () => {
+    search.value = '';
+    fetchComponentTypes(1);
 };
 
 const changePage = (page) => {

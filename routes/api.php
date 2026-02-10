@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ComponentController;
 use App\Http\Controllers\Api\ComponentTypeController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\IndicadoresController;
 use Illuminate\Http\Request;
@@ -40,28 +41,34 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // Indicadores estadísticos (datos existentes)
-    Route::get('/indicadores', [IndicadoresController::class, 'index']);
+    Route::get('/indicadores', [IndicadoresController::class, 'index'])->middleware('permission:consult indicators');
 
-    // Empresas (POST para update evita problemas de parsing PUT)
-    Route::post('companies/{company}', [CompanyController::class, 'update'])->middleware('permission:consult company');
-    Route::apiResource('companies', CompanyController::class)->middleware('permission:consult company');
+    // Empresas (POST para update evita problemas de parsing PUT; show requiere detalle company)
+    Route::get('companies', [CompanyController::class, 'index'])->middleware('permission:consult company');
+    Route::get('companies/{company}', [CompanyController::class, 'show'])->middleware('permission:detalle company');
+    Route::post('companies', [CompanyController::class, 'store'])->middleware('permission:save company');
+    Route::post('companies/{company}', [CompanyController::class, 'update'])->middleware('permission:edit company');
+    Route::delete('companies/{company}', [CompanyController::class, 'destroy'])->middleware('permission:delete company');
 
-    // Equipos (POST para update permite FormData con imagen; PUT no parsea multipart en PHP)
-    Route::post('equipment/{equipment}', [EquipmentController::class, 'update'])->middleware('permission:consult equipment');
-    Route::apiResource('equipment', EquipmentController::class)->middleware('permission:consult equipment');
+    // Equipos (POST para update permite FormData con imagen; show requiere detalle equipment)
+    Route::get('equipment', [EquipmentController::class, 'index'])->middleware('permission:consult equipment');
+    Route::get('equipment/{equipment}', [EquipmentController::class, 'show'])->middleware('permission:detalle equipment');
+    Route::post('equipment', [EquipmentController::class, 'store'])->middleware('permission:save equipment');
+    Route::post('equipment/{equipment}', [EquipmentController::class, 'update'])->middleware('permission:edit equipment');
+    Route::delete('equipment/{equipment}', [EquipmentController::class, 'destroy'])->middleware('permission:delete equipment');
 
-    // Reportes (POST para update permite FormData con imágenes; PUT no parsea multipart en PHP)
+    // Reportes (POST para update permite FormData con imágenes; show requiere detalle report)
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->middleware('permission:consult report');
         Route::post('/', [ReportController::class, 'store'])->middleware('permission:save report');
-        Route::get('/{id}', [ReportController::class, 'show'])->middleware('permission:consult report');
+        Route::get('/{id}', [ReportController::class, 'show'])->middleware('permission:detalle report');
         Route::post('/{id}', [ReportController::class, 'update'])->middleware('permission:edit report');
         Route::put('/{id}', [ReportController::class, 'update'])->middleware('permission:edit report');
         Route::delete('/{id}', [ReportController::class, 'destroy'])->middleware('permission:delete report');
-        Route::get('/{id}/pdf', [ReportController::class, 'downloadPdf'])->middleware('permission:consult report');
-        Route::get('/{id}/email-recipients', [ReportController::class, 'getEmailRecipients'])->middleware('permission:consult report');
+        Route::get('/{id}/pdf', [ReportController::class, 'downloadPdf'])->middleware('permission:download pdf report');
+        Route::get('/{id}/email-recipients', [ReportController::class, 'getEmailRecipients'])->middleware('permission:send email report');
         Route::post('/export', [ReportController::class, 'export'])->middleware('permission:consult report');
-        Route::post('/{id}/send-email', [ReportController::class, 'sendEmail'])->middleware('permission:consult report');
+        Route::post('/{id}/send-email', [ReportController::class, 'sendEmail'])->middleware('permission:send email report');
     });
 
     // Componentes (comentado - sin página de listado)
@@ -69,15 +76,29 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::apiResource('components', ComponentController::class)->middleware('permission:consult equipment');
     Route::get('/components/type/{componentTypeId}/fields', [ComponentController::class, 'getComponentTypeFields']);
 
-    // Tipos de Componentes (POST para update evita problemas de parsing PUT)
-    Route::post('component-types/{component_type}', [ComponentTypeController::class, 'update'])->middleware('permission:consult component type');
-    Route::apiResource('component-types', ComponentTypeController::class)->middleware('permission:consult component type');
+    // Tipos de Componentes (POST para update evita problemas de parsing PUT; show requiere detalle component type)
+    Route::get('component-types', [ComponentTypeController::class, 'index'])->middleware('permission:consult component type');
+    Route::get('component-types/{component_type}', [ComponentTypeController::class, 'show'])->middleware('permission:detalle component type');
+    Route::post('component-types', [ComponentTypeController::class, 'store'])->middleware('permission:save component type');
+    Route::post('component-types/{component_type}', [ComponentTypeController::class, 'update'])->middleware('permission:edit component type');
+    Route::delete('component-types/{component_type}', [ComponentTypeController::class, 'destroy'])->middleware('permission:delete component type');
 
-    // Usuarios (POST para update evita problemas de parsing PUT)
-    Route::post('users/{user}', [UserController::class, 'update'])->middleware('permission:consult user');
-    Route::apiResource('users', UserController::class)->middleware('permission:consult user');
+    // Usuarios (POST para update evita problemas de parsing PUT; show requiere detalle user)
+    Route::get('users', [UserController::class, 'index'])->middleware('permission:consult user');
+    Route::get('users/{user}', [UserController::class, 'show'])->middleware('permission:detalle user');
+    Route::post('users', [UserController::class, 'store'])->middleware('permission:save user');
+    Route::post('users/{user}', [UserController::class, 'update'])->middleware('permission:edit user');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:delete user');
     Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->middleware('permission:inactive user');
     Route::get('/catalogs/roles', [UserController::class, 'getRoles']);
+
+    // Roles y permisos
+    Route::get('/roles', [RoleController::class, 'index'])->middleware('permission:consult role');
+    Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:save role');
+    Route::get('/roles/{id}', [RoleController::class, 'show'])->middleware('permission:consult role');
+    Route::get('/permissions', [RoleController::class, 'permissions'])->middleware('permission:consult role');
+    Route::put('/roles/{id}', [RoleController::class, 'update'])->middleware('permission:edit role');
+    Route::post('/roles/{id}', [RoleController::class, 'update'])->middleware('permission:edit role');
 
     // Catálogos y opciones (algunos con permission.or para formularios de creación)
     Route::get('/catalogs/equipment', [EquipmentController::class, 'getEquipmentForSelect'])
@@ -85,6 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/catalogs/component-types', [ComponentTypeController::class, 'getComponentTypesForSelect'])
         ->middleware('permission.or:consult equipment,save equipment,consult component type,save component type');
     Route::get('/catalogs/conditions', [ReportController::class, 'getConditions']);
+    Route::get('/catalogs/priorities', [ReportController::class, 'getPriorities']);
     Route::get('/catalogs/mechanism-fails', [ReportController::class, 'getMechanismFails']);
     Route::get('/catalogs/component-fails', [ReportController::class, 'getComponentFails']);
     Route::get('/catalogs/equipment-types', [EquipmentController::class, 'getEquipmentTypes']);

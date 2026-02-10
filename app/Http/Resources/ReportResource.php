@@ -40,7 +40,12 @@ class ReportResource extends JsonResource
                 'id' => $this->componentFail->id ?? null,
                 'name' => $this->componentFail->name ?? null,
             ] : null,
-            'priority' => $this->priority,
+            'priority' => $this->priority ? [
+                'id' => $this->priority->id,
+                'name' => $this->priority->name,
+                'color' => $this->priority->color ?? null,
+                'text_color' => $this->priority->text_color ?? null,
+            ] : null,
             'analist' => $this->analist ? [
                 'id' => $this->analist->id ?? null,
                 'name' => $this->analist->name ?? null,

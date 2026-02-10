@@ -246,6 +246,10 @@ const closeImageModal = () => {
 };
 
 onMounted(async () => {
+    if (!authStore.hasPermission('detalle equipment')) {
+        router.push({ name: 'equipment' });
+        return;
+    }
     await loadEquipment();
 });
 
