@@ -322,7 +322,7 @@
 
                 <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/80">
-                        <h4 class="font-semibold text-gray-800 text-base"><i class="fas fa-puzzle-piece text-blue-500 mr-2"></i>Componente de falla</h4>
+                        <h4 class="font-semibold text-gray-800 text-base"><i class="fas fa-puzzle-piece text-blue-500 mr-2"></i>Componente en Falla</h4>
                     </div>
                     <div class="p-5">
                         <div v-if="reportesPorComponenteFalla.length === 0" class="py-10 text-center text-gray-500 text-sm">Sin datos</div>
