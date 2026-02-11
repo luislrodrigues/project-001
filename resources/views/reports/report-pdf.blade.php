@@ -150,12 +150,18 @@
             line-height: 1.5;
         }
 
-        .component-spec-paragraph {
-            font-size: 12pt;
+        /* Especificidad mayor que .section p para que los valores queden en 8pt */
+        .section p.component-spec-paragraph {
+            font-size: 8pt;
             color: #1a1a1a;
             margin: 0 0 12px 0;
             line-height: 1.5;
             text-align: justify;
+        }
+
+        .section p.component-spec-paragraph strong {
+            font-size: 9pt;
+            font-weight: bold;
         }
 
         .section .spec-list {
@@ -225,7 +231,7 @@
         .section .diagnosis-label {
             font-weight: bold;
             margin: 12px 0 6px 0;
-            font-size: 12pt;
+            font-size: 9pt;
             color: #1a1a1a;
         }
 
@@ -239,7 +245,7 @@
         .section .rec-label {
             font-weight: bold;
             margin: 12px 0 8px 0;
-            font-size: 12pt;
+            font-size: 9pt;
             color: #1a1a1a;
         }
 
