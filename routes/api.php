@@ -50,11 +50,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('companies/{company}', [CompanyController::class, 'update'])->middleware('permission:edit company');
     Route::delete('companies/{company}', [CompanyController::class, 'destroy'])->middleware('permission:delete company');
 
-    // Equipos (POST para update permite FormData con imagen; show requiere detalle equipment)
+    // Equipos (POST para update permite FormData con imagen; PUT para JSON; show requiere detalle equipment)
     Route::get('equipment', [EquipmentController::class, 'index'])->middleware('permission:consult equipment');
     Route::get('equipment/{equipment}', [EquipmentController::class, 'show'])->middleware('permission:detalle equipment');
     Route::post('equipment', [EquipmentController::class, 'store'])->middleware('permission:save equipment');
     Route::post('equipment/{equipment}', [EquipmentController::class, 'update'])->middleware('permission:edit equipment');
+    Route::put('equipment/{equipment}', [EquipmentController::class, 'update'])->middleware('permission:edit equipment');
     Route::delete('equipment/{equipment}', [EquipmentController::class, 'destroy'])->middleware('permission:delete equipment');
 
     // Reportes (POST para update permite FormData con imágenes; show requiere detalle report)
