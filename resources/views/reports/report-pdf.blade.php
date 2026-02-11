@@ -274,7 +274,7 @@
         }
 
         .recommendation-general h3 {
-            font-size: 12pt;
+            font-size: 9pt;
             font-weight: bold;
             color: #1a1a1a;
             margin: 0 0 14px 0;
@@ -507,7 +507,7 @@
         @endphp
         @if (!empty($generalRecs))
             <div class="recommendation-general">
-                <h3>RECOMENDACIONES GENERALES:</h3>
+                <h3 class="recommendation-general-title">RECOMENDACIONES GENERALES:</h3>
                 <ul class="recommendations-list">
                     @foreach ($generalRecs as $rec)
                         <li>{{ $rec }}</li>
