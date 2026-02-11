@@ -230,6 +230,7 @@
         }
 
         .section .diagnosis-text {
+            font-size: 8pt;
             white-space: pre-line;
             margin: 0 0 10px 0;
             text-align: justify;
@@ -242,11 +243,15 @@
             color: #1a1a1a;
         }
 
+        .section .rec-list {
+            font-size: 8pt;
+        }
+
         .recommendations-list {
             margin: 0;
             padding-left: 20px;
             list-style-type: disc;
-            font-size: 12pt;
+            font-size: 8pt;
         }
 
         .recommendations-list li {
@@ -271,7 +276,7 @@
 
         .recommendation-general-text {
             margin: 0;
-            font-size: 12pt;
+            font-size: 8pt;
             line-height: 1.5;
             color: #1a1a1a;
             text-align: justify;
@@ -292,7 +297,7 @@
             margin: 0 0 12px 0;
             padding-left: 24px;
             list-style-type: disc;
-            font-size: 12pt;
+            font-size: 8pt;
         }
 
         .recommendation-general .rec-list li {
