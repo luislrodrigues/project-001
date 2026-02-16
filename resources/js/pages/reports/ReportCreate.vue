@@ -57,6 +57,47 @@
             <!-- Form -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <form @submit.prevent="saveReport" class="space-y-6">
+                    <!-- Copiar desde informe del equipo -->
+                    <div v-if="form.equipment_id && components.length > 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center mb-3 pb-2 border-b border-blue-200">
+                            <i class="fas fa-copy text-blue-600 mr-2"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Copiar datos desde un informe del equipo</h4>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Selecciona un informe anterior de este equipo para copiar diagnóstico, recomendaciones y demás datos. La fecha de medición no se copia.</p>
+                        <div class="flex flex-wrap items-end gap-3">
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Informe a copiar (consecutivo)</label>
+                                <select
+                                    v-model="copyFromReportId"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
+                                >
+                                    <option value="">Ninguno (formulario vacío)</option>
+                                    <option v-for="r in reportsOfEquipment" :key="r.id" :value="r.id">
+                                        {{ r.consecutivo }} — {{ formatDateShort(r.measurement_date) }}
+                                    </option>
+                                </select>
+                            </div>
+                            <button
+                                type="button"
+                                :disabled="!copyFromReportId || copyReportLoading"
+                                @click="copyFromReport"
+                                class="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+                            >
+                                <i class="fas fa-copy text-sm"></i>
+                                {{ copyReportLoading ? 'Copiando...' : 'Copiar datos' }}
+                            </button>
+                            <button
+                                type="button"
+                                @click="clearCopiedReportData"
+                                class="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                title="Vaciar datos copiados (mantener equipo y componentes)"
+                            >
+                                <i class="fas fa-eraser text-sm"></i>
+                                Borrar lo copiado
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Información General -->
                     <div>
                         <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
@@ -594,6 +635,20 @@ const showPriorityModal = ref(false);
 const showMechanismFailModal = ref(false);
 const showComponentFailModal = ref(false);
 
+const reportsOfEquipment = ref([]);
+const copyFromReportId = ref('');
+const copyReportLoading = ref(false);
+
+const formatDateShort = (dateStr) => {
+    if (!dateStr) return '';
+    const str = String(dateStr).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    return new Date(dateStr).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
 onMounted(async () => {
     await loadCatalogs();
     const equipmentIdFromQuery = route.query.equipment_id;
@@ -706,6 +761,8 @@ const onCompanyFilterChange = () => {
         form.diagnosis = {};
         form.recommendations = {};
         form.component_images = {};
+        reportsOfEquipment.value = [];
+        copyFromReportId.value = '';
     }
 };
 
@@ -737,6 +794,8 @@ const loadEquipmentData = async () => {
         form.diagnosis = {};
         form.recommendations = {};
         form.component_images = {};
+        reportsOfEquipment.value = [];
+        copyFromReportId.value = '';
         return;
     }
 
@@ -764,9 +823,138 @@ const loadEquipmentData = async () => {
         } else {
             components.value = [];
         }
+        await loadReportsOfEquipment();
     } catch (error) {
         Swal.fire('Error', 'Error al cargar datos del equipo', 'error');
     }
+};
+
+const loadReportsOfEquipment = async () => {
+    if (!form.equipment_id) {
+        reportsOfEquipment.value = [];
+        copyFromReportId.value = '';
+        return;
+    }
+    try {
+        const response = await api.get('/reports', {
+            params: { equipment_id: form.equipment_id, per_page: 100, sort_by: 'id', sort_order: 'desc' }
+        });
+        reportsOfEquipment.value = response.data?.data ?? [];
+    } catch (error) {
+        console.error('Error al cargar informes del equipo:', error);
+        reportsOfEquipment.value = [];
+    }
+};
+
+const copyFromReport = async () => {
+    const id = copyFromReportId.value;
+    if (!id) return;
+    copyReportLoading.value = true;
+    try {
+        const response = await api.get(`/reports/${id}`);
+        const report = response.data?.data ?? response.data;
+        if (!report) {
+            Swal.fire('Error', 'No se pudo cargar el informe', 'error');
+            return;
+        }
+        form.condition_id = report.condition?.id ?? '';
+        form.priority_id = report.priority?.id ?? '';
+        form.mechanism_fail_id = report.mechanism_fail?.id ?? '';
+        form.component_fail_id = report.component_fail?.id ?? '';
+        form.analist_id = report.analist?.id ?? '';
+        form.ot_created = report.ot_created ?? '';
+        form.status_ot = report.status_ot ?? '';
+        form.execution_date = report.execution_date ? report.execution_date.split('T')[0] : '';
+        form.general_recommendations = Array.isArray(report.general_recommendations) ? [...report.general_recommendations] : [];
+
+        const diagnosis = report.diagnosis || {};
+        const recommendations = report.recommendations || {};
+        const reportComponents = Array.isArray(report.components) ? report.components : [];
+
+        const newDiagnosis = {};
+        const newRecommendations = {};
+        const newComponentImages = {};
+
+        for (let idx = 0; idx < components.value.length; idx++) {
+            const component = components.value[idx];
+            const cid = String(component.id);
+            const reportIdx = reportComponents.findIndex((c) => Number(c?.id) === Number(component.id));
+            const diagByKey = diagnosis[cid] ?? diagnosis[component.id];
+            const diagByIndex = reportIdx >= 0 && diagnosis[reportIdx] !== undefined ? diagnosis[reportIdx] : null;
+            const diag = diagByKey ?? diagByIndex;
+
+            const diagText = diag != null
+                ? (typeof diag === 'object' && diag.text !== undefined ? diag.text : String(diag))
+                : '';
+            newDiagnosis[component.id] = diagText;
+
+            const recsByKey = recommendations[cid] ?? recommendations[component.id];
+            const recsByIndex = reportIdx >= 0 && recommendations[reportIdx] !== undefined ? recommendations[reportIdx] : null;
+            const recs = recsByKey ?? recsByIndex;
+            newRecommendations[component.id] = Array.isArray(recs)
+                ? recs.map((r) => (typeof r === 'string' ? r : (r?.text ?? r?.name ?? String(r))))
+                : [];
+
+            const imageUrls = (diag != null && typeof diag === 'object' && Array.isArray(diag.images)) ? diag.images : [];
+            newComponentImages[component.id] = [];
+            for (let i = 0; i < imageUrls.length; i++) {
+                const url = imageUrls[i];
+                if (!url) continue;
+                try {
+                    const imgResponse = await fetch(url, { mode: 'cors', credentials: 'same-origin' });
+                    if (!imgResponse.ok) continue;
+                    const blob = await imgResponse.blob();
+                    const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
+                    const file = new File([blob], `imagen-${component.id}-${i}.${ext}`, { type: blob.type });
+                    newComponentImages[component.id].push({
+                        file,
+                        preview: url.startsWith('blob:') ? url : URL.createObjectURL(blob)
+                    });
+                } catch (imgErr) {
+                    console.warn('No se pudo copiar imagen:', url, imgErr);
+                }
+            }
+        }
+
+        form.diagnosis = { ...form.diagnosis, ...newDiagnosis };
+        form.recommendations = { ...form.recommendations, ...newRecommendations };
+        Object.keys(newComponentImages).forEach((compId) => {
+            form.component_images[compId] = newComponentImages[compId];
+        });
+
+        Swal.fire('Listo', 'Datos del informe copiados (diagnóstico, imágenes y recomendaciones). Revisa la fecha de medición y guarda.', 'success');
+    } catch (error) {
+        const msg = error.response?.data?.message || error.message || 'Error al copiar el informe';
+        Swal.fire('Error', msg, 'error');
+    } finally {
+        copyReportLoading.value = false;
+    }
+};
+
+const clearCopiedReportData = () => {
+    form.condition_id = '';
+    form.priority_id = '';
+    form.mechanism_fail_id = '';
+    form.component_fail_id = '';
+    form.analist_id = '';
+    form.ot_created = '';
+    form.status_ot = '';
+    form.execution_date = '';
+    form.general_recommendations = [];
+    components.value.forEach((component) => {
+        form.diagnosis[component.id] = '';
+        form.recommendations[component.id] = [];
+        if (form.component_images[component.id]?.length) {
+            form.component_images[component.id].forEach((img) => {
+                if (img.preview && img.preview.startsWith('blob:')) {
+                    URL.revokeObjectURL(img.preview);
+                }
+            });
+            form.component_images[component.id] = [];
+        }
+    });
+    copyFromReportId.value = '';
+    Swal.fire('Listo', 'Datos copiados del informe borrados.', 'success');
 };
 
 const addComponentImage = (componentId) => {

@@ -11,6 +11,7 @@ class ReportResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'consecutivo' => $this->consecutivo,
             'equipment_id' => $this->equipment_id,
             'equipment' => $this->equipment ? [
                 'id' => $this->equipment->id ?? null,

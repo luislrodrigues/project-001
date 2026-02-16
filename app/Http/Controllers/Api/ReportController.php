@@ -14,6 +14,7 @@ use App\Models\Equipment;
 use App\Models\MechanismFail;
 use App\Models\Report;
 use App\Models\User;
+use App\Support\ReportNumberConverter;
 use PDF;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -106,6 +107,13 @@ class ReportController extends Controller
 
         if ($request->filled('analist_id')) {
             $query->where('analist_id', (int) $request->analist_id);
+        }
+
+        if ($request->filled('consecutivo')) {
+            $reportId = ReportNumberConverter::parseToId($request->input('consecutivo', ''));
+            if ($reportId !== null) {
+                $query->where('id', $reportId);
+            }
         }
 
         $sortByRaw = $request->get('sort_by', 'id');

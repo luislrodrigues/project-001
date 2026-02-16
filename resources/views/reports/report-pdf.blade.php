@@ -219,13 +219,16 @@
             width: 50%;
             padding: 6px;
             vertical-align: top;
+            text-align: center;
         }
 
         .image-container img {
             max-width: 100%;
-            width: 100%;
+            width: auto;
             height: auto;
-            display: block;
+            display: inline-block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .section .diagnosis-label {
@@ -360,7 +363,7 @@
 
         .report-footer {
             text-align: center;
-            font-size: 12pt;
+            font-size: 8pt;
             color: #4b5563;
             font-style: italic;
         }
@@ -408,6 +411,7 @@
             <tr style="height: 260px;">
                 <td class="equipment-data-cell">
                     <div class="equipment-data-div">
+                        <div class="data-line"><strong>CONSECUTIVO:</strong> {{ $reportData->consecutivo ?? '—' }}</div>
                         <div class="data-line" ><strong>PLANTA:</strong> {{ $reportData->equipment?->company?->name ?? '—' }}</div>
                         <div class="data-line"><strong>EQUIPO:</strong> <span class="value-equipo">{{ $reportData->equipment?->name ?? '—' }}</span></div>
                         <div class="data-line"><strong>CONDICIÓN:</strong>

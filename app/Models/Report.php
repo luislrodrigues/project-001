@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Support\ReportNumberConverter;
 
 class Report extends Model
 {
@@ -66,5 +67,13 @@ class Report extends Model
     public function priority()
     {
         return $this->belongsTo(Priority::class);
+    }
+
+    /**
+     * Consecutivo (nomenclatura) derived from id via ReportNumberConverter.
+     */
+    public function getConsecutivoAttribute(): string
+    {
+        return ReportNumberConverter::fromId((int) $this->id);
     }
 }

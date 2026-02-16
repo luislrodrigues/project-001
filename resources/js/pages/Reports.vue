@@ -34,6 +34,19 @@
                 <!-- Search Section -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-search mr-2 text-gray-400"></i>
+                                Buscar por consecutivo
+                            </label>
+                            <input
+                                v-model="filters.consecutivo"
+                                type="text"
+                                placeholder="Ej: INF-00001 o 1"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                @keyup.enter="fetchReports(1)"
+                            />
+                        </div>
                         <div v-if="!authStore.hasRole('Cliente')">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
@@ -166,7 +179,8 @@
                                     title="Clic para cambiar orden"
                                 >
                                     <div class="flex items-center gap-1">
-                                        #
+                                        <i class="fas fa-hashtag mr-2"></i>
+                                        Consecutivo
                                         <i v-if="sortOrder === 'desc'" class="fas fa-sort-down text-sm"></i>
                                         <i v-else class="fas fa-sort-up text-sm"></i>
                                     </div>
@@ -218,7 +232,7 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             <tr v-for="report in reports" :key="report.id" class="hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ report.id }}
+                                    {{ report.consecutivo ?? '—' }}
                                 </td>
                                 <td v-if="!authStore.hasRole('Cliente')" class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-700">{{ report.equipment && report.equipment.company && report.equipment.company.name ? report.equipment.company.name : '—' }}</div>
@@ -319,6 +333,7 @@ const processes = ref([]);
 const analists = ref([]);
 
 const filters = reactive({
+    consecutivo: route.query.consecutivo ?? '',
     equipment_id: route.query.equipment_id ?? '',
     condition_id: route.query.condition_id ?? '',
     priority_id: route.query.priority_id ?? '',
@@ -335,6 +350,7 @@ const syncQueryToUrl = (page = 1) => {
     const q = {
         page: String(page),
         sort_order: sortOrder.value,
+        consecutivo: filters.consecutivo,
         equipment_id: filters.equipment_id,
         condition_id: filters.condition_id,
         priority_id: filters.priority_id,
@@ -352,6 +368,7 @@ const syncQueryToUrl = (page = 1) => {
 const applyQueryToFilters = () => {
     const hasQuery = Object.keys(route.query).length > 0;
     if (hasQuery) {
+        filters.consecutivo = route.query.consecutivo ?? '';
         filters.equipment_id = route.query.equipment_id ?? '';
         filters.condition_id = route.query.condition_id ?? '';
         filters.priority_id = route.query.priority_id ?? '';
@@ -365,6 +382,7 @@ const applyQueryToFilters = () => {
             if (saved) {
                 const { query } = JSON.parse(saved);
                 if (query) {
+                    filters.consecutivo = query.consecutivo ?? '';
                     filters.equipment_id = query.equipment_id ?? '';
                     filters.condition_id = query.condition_id ?? '';
                     filters.priority_id = query.priority_id ?? '';
@@ -413,6 +431,7 @@ const loadCatalogs = async () => {
 };
 
 const clearFilters = () => {
+    filters.consecutivo = '';
     filters.equipment_id = '';
     filters.condition_id = '';
     filters.priority_id = '';
@@ -447,6 +466,7 @@ const fetchReports = async (page = 1) => {
     try {
         const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
 
+        if (filters.consecutivo) params.consecutivo = filters.consecutivo.trim();
         if (filters.equipment_id) params.equipment_id = filters.equipment_id;
         if (filters.condition_id) params.condition_id = filters.condition_id;
         if (filters.priority_id) params.priority_id = filters.priority_id;
