@@ -87,7 +87,7 @@
                             <RangeDatePicker
                                 :start="filters.measurement_date_start"
                                 :end="filters.measurement_date_end"
-                                placeholder="YYYY-MM-DD - YYYY-MM-DD"
+                                placeholder="AAAA-MM-DD - AAAA-MM-DD"
                                 @update:start="val => { filters.measurement_date_start = val; }"
                                 @update:end="val => { filters.measurement_date_end = val; }"
                                 @apply="() => fetchReports(1)"

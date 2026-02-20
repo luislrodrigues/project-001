@@ -3,7 +3,7 @@
     <input
       type="text"
       :value="displayValue"
-      :placeholder="placeholder || 'YYYY-MM-DD - YYYY-MM-DD'"
+      :placeholder="placeholder || 'AAAA-MM-DD - AAAA-MM-DD'"
       readonly
       class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200 cursor-pointer"
       @click="toggle"
