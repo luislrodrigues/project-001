@@ -81,6 +81,20 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calendar-alt mr-2 text-gray-400"></i>
+                                Fecha medición (rango)
+                            </label>
+                            <RangeDatePicker
+                                :start="filters.measurement_date_start"
+                                :end="filters.measurement_date_end"
+                                placeholder="YYYY-MM-DD - YYYY-MM-DD"
+                                @update:start="val => { filters.measurement_date_start = val; }"
+                                @update:end="val => { filters.measurement_date_end = val; }"
+                                @apply="() => fetchReports(1)"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Equipo
                             </label>
@@ -315,6 +329,7 @@ import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
+import RangeDatePicker from '../components/RangeDatePicker.vue';
 
 const STORAGE_KEY = 'reports-list-filters';
 
@@ -340,6 +355,8 @@ const filters = reactive({
     company_id: route.query.company_id ?? '',
     process_id: route.query.process_id ?? '',
     analist_id: route.query.analist_id ?? '',
+    measurement_date_start: route.query.measurement_date_start ?? '',
+    measurement_date_end: route.query.measurement_date_end ?? ''
 });
 
 const sortBy = ref('id');
@@ -356,7 +373,9 @@ const syncQueryToUrl = (page = 1) => {
         priority_id: filters.priority_id,
         company_id: filters.company_id,
         process_id: filters.process_id,
-        analist_id: filters.analist_id
+        analist_id: filters.analist_id,
+        measurement_date_start: filters.measurement_date_start,
+        measurement_date_end: filters.measurement_date_end
     };
     Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
     router.replace({ name: 'reports', query: q });
@@ -375,6 +394,8 @@ const applyQueryToFilters = () => {
         filters.company_id = route.query.company_id ?? '';
         filters.process_id = route.query.process_id ?? '';
         filters.analist_id = route.query.analist_id ?? '';
+        filters.measurement_date_start = route.query.measurement_date_start ?? '';
+        filters.measurement_date_end = route.query.measurement_date_end ?? '';
         sortOrder.value = normalizeSortOrder(route.query.sort_order ?? 'desc');
     } else {
         try {
@@ -389,6 +410,8 @@ const applyQueryToFilters = () => {
                     filters.company_id = query.company_id ?? '';
                     filters.process_id = query.process_id ?? '';
                     filters.analist_id = query.analist_id ?? '';
+                    filters.measurement_date_start = query.measurement_date_start ?? '';
+                    filters.measurement_date_end = query.measurement_date_end ?? '';
                     sortOrder.value = normalizeSortOrder(query.sort_order ?? 'desc');
                 }
             }
@@ -438,6 +461,8 @@ const clearFilters = () => {
     filters.company_id = '';
     filters.process_id = '';
     filters.analist_id = '';
+    filters.measurement_date_start = '';
+    filters.measurement_date_end = '';
     fetchReports(1);
 };
 
@@ -473,6 +498,8 @@ const fetchReports = async (page = 1) => {
         if (filters.company_id) params.company_id = filters.company_id;
         if (filters.process_id) params.process_id = filters.process_id;
         if (filters.analist_id) params.analist_id = filters.analist_id;
+        if (filters.measurement_date_start) params.measurement_date_start = filters.measurement_date_start;
+        if (filters.measurement_date_end) params.measurement_date_end = filters.measurement_date_end;
 
         const response = await api.get('/reports', { params });
         reports.value = response.data.data;
@@ -512,6 +539,8 @@ const formatDate = (date) => {
 const getConditionClass = () => {
     return 'bg-gray-100 text-gray-900 border border-gray-300';
 };
+
+// Date range handled via two native date inputs (with calendar UI)
 
 const deleteReport = async (id) => {
     const result = await Swal.fire({

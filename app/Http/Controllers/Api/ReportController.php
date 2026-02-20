@@ -121,6 +121,27 @@ class ReportController extends Controller
             }
         }
 
+        // Filtro por rango de fecha de medición
+        if ($request->filled('measurement_date_start') || $request->filled('measurement_date_end')) {
+            $startRaw = (string) $request->input('measurement_date_start', '');
+            $endRaw = (string) $request->input('measurement_date_end', '');
+            $start = null;
+            $end = null;
+            if ($startRaw !== '' && strtotime($startRaw) !== false) {
+                $start = date('Y-m-d', strtotime($startRaw));
+            }
+            if ($endRaw !== '' && strtotime($endRaw) !== false) {
+                $end = date('Y-m-d', strtotime($endRaw));
+            }
+            if ($start && $end) {
+                $query->whereBetween('measurement_date', [$start, $end]);
+            } elseif ($start) {
+                $query->whereDate('measurement_date', '>=', $start);
+            } elseif ($end) {
+                $query->whereDate('measurement_date', '<=', $end);
+            }
+        }
+
         $sortByRaw = $request->get('sort_by', 'id');
         $allowedSort = ['id', 'created_at', 'measurement_date'];
         $sortBy = (is_string($sortByRaw) && $sortByRaw !== '' && in_array($sortByRaw, $allowedSort, true))
