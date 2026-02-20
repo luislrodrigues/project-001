@@ -110,9 +110,14 @@ class ReportController extends Controller
         }
 
         if ($request->filled('consecutivo')) {
-            $reportId = ReportNumberConverter::parseToId($request->input('consecutivo', ''));
-            if ($reportId !== null) {
-                $query->where('id', $reportId);
+            $raw = (string) $request->input('consecutivo', '');
+            $digitsOnly = preg_replace('/\D+/', '', $raw) ?? '';
+            if ($digitsOnly !== '') {
+                $numericId = (int) ltrim($digitsOnly, '0');
+                $query->where(function ($q) use ($digitsOnly, $numericId) {
+                    $q->where('id', $numericId)
+                      ->orWhereRaw('CAST(id AS CHAR) LIKE ?', ['%' . $digitsOnly . '%']);
+                });
             }
         }
 
