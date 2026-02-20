@@ -42,7 +42,7 @@
                             <input
                                 v-model="filters.consecutivo"
                                 type="text"
-                                placeholder="Ej: INF-00001 o 1"
+                                placeholder="Ej: No: SS-0001 o 1"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                                 @keyup.enter="fetchReports(1)"
                             />
