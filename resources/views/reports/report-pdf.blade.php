@@ -226,7 +226,7 @@
             max-width: 100%;
             width: auto;
             height: auto;
-            max-height: 100px;
+            max-height: 180px;
             display: inline-block;
             margin-left: auto;
             margin-right: auto;
@@ -503,7 +503,7 @@
                                 <tr>
                                     @foreach ($row as $imageUrl)
                                         <td @if (count($row) === 1) colspan="2" @endif>
-                                            <img src="{{ $imageUrl }}" alt="Espectro" height="100" style="max-height: 100px; width: auto;" />
+                                            <img src="{{ $imageUrl }}" alt="Espectro" height="180" style="max-height: 180px; width: auto;" />
                                         </td>
                                     @endforeach
                                 </tr>
