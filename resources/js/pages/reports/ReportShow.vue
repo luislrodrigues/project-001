@@ -220,9 +220,10 @@
                                     <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
                                     Diagnóstico
                                 </label>
-                                <div class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full px-4 py-3 min-h-[100px] whitespace-pre-line">
-                                    {{ getDiagnosisText(component.id) || 'Sin diagnóstico' }}
-                                </div>
+                                <div
+                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full px-4 py-3 min-h-[100px]"
+                                    v-html="getDiagnosisHtml(component.id) || 'Sin diagnóstico'"
+                                ></div>
                             </div>
 
                             <!-- Imágenes del Componente -->
@@ -268,7 +269,7 @@
                                             <span class="flex-shrink-0 bg-yellow-100 text-yellow-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mr-3 mt-0.5">
                                                 {{ recIndex + 1 }}
                                             </span>
-                                            <span class="text-gray-900 text-sm">{{ rec }}</span>
+                                            <div class="text-gray-900 text-sm" v-html="sanitizeHtml(rec)"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -367,7 +368,9 @@
                             <div class="text-sm text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 min-h-[60px]">
                                 <template v-if="(report.general_recommendations || []).length">
                                     <ul class="list-disc pl-5 space-y-1">
-                                        <li v-for="(rec, idx) in report.general_recommendations" :key="idx">{{ rec }}</li>
+                                        <li v-for="(rec, idx) in report.general_recommendations" :key="idx">
+                                            <span v-html="sanitizeHtml(rec)"></span>
+                                        </li>
                                     </ul>
                                 </template>
                                 <span v-else>N/A</span>
@@ -772,6 +775,33 @@ const closeImageModal = () => {
     imageModalUrl.value = null;
 };
 
+const allowedTags = ['b','strong','i','em','u','ul','ol','li','br','p'];
+const sanitizeHtml = (html) => {
+    if (!html) return '';
+    const temp = document.createElement('div');
+    temp.innerHTML = String(html);
+    const walker = (node) => {
+        for (let i = node.childNodes.length - 1; i >= 0; i--) {
+            const child = node.childNodes[i];
+            if (child.nodeType === 1) {
+                if (!allowedTags.includes(child.nodeName.toLowerCase())) {
+                    while (child.firstChild) node.insertBefore(child.firstChild, child);
+                    node.removeChild(child);
+                    continue;
+                }
+                walker(child);
+            } else if (child.nodeType === 8) {
+                node.removeChild(child);
+            }
+        }
+    };
+    walker(temp);
+    return temp.innerHTML;
+};
+const getDiagnosisHtml = (componentId) => {
+    const text = getDiagnosisText(componentId);
+    return sanitizeHtml(text || '');
+};
 </script>
 
 <style scoped>

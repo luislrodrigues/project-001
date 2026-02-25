@@ -411,7 +411,7 @@
             <tr style="height: 260px;">
                 <td class="equipment-data-cell">
                     <div class="equipment-data-div">
-                        <div class="data-line"><strong>CONSECUTIVO:</strong> {{ $reportData->consecutivo ?? '—' }}</div>
+                        <div class="data-line"><strong>INFORME:</strong> {{ $reportData->consecutivo ?? '—' }}</div>
                         <div class="data-line" ><strong>PLANTA:</strong> {{ $reportData->equipment?->company?->name ?? '—' }}</div>
                         <div class="data-line"><strong>EQUIPO:</strong> <span class="value-equipo">{{ $reportData->equipment?->name ?? '—' }}</span></div>
                         <div class="data-line"><strong>CONDICIÓN:</strong>
@@ -466,7 +466,10 @@
                 @endphp
                 @if (!empty(trim($diagnosisText)))
                     <p class="diagnosis-label">Diagnóstico:</p>
-                    <div class="diagnosis-text">{!! nl2br(e($diagnosisText)) !!}</div>
+                    @php
+                        $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p>');
+                    @endphp
+                    <div class="diagnosis-text">{!! $diagnosisHtml !!}</div>
                 @endif
 
                 @php
@@ -477,7 +480,10 @@
                     <p class="diagnosis-label">Recomendaciones:</p>
                     <ul class="rec-list">
                         @foreach ($recs as $rec)
-                            <li>{{ $rec }}</li>
+                            @php
+                                $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br>');
+                            @endphp
+                            <li>{!! $recHtml !!}</li>
                         @endforeach
                     </ul>
                 @endif
@@ -514,7 +520,10 @@
                 <h3 class="recommendation-general-title">RECOMENDACIONES GENERALES:</h3>
                 <ul class="recommendations-list">
                     @foreach ($generalRecs as $rec)
-                        <li>{{ $rec }}</li>
+                        @php
+                            $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br>');
+                        @endphp
+                        <li>{!! $recHtml !!}</li>
                     @endforeach
                 </ul>
             </div>

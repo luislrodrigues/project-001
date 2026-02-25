@@ -214,12 +214,11 @@
                                         <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
                                         Diagnóstico
                                     </label>
-                                    <textarea
-                                        :value="getDiagnosisText(component.id)"
-                                        @input="updateDiagnosisText(component.id, $event.target.value)"
-                                        class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
+                                    <RichTextEditor
+                                        :model-value="getDiagnosisText(component.id)"
+                                        @update:modelValue="val => updateDiagnosisText(component.id, val)"
                                         placeholder="Ingresar diagnóstico"
-                                    ></textarea>
+                                    />
                                 </div>
 
                                 <!-- Imágenes del Componente -->
@@ -345,12 +344,11 @@
                                                     </span>
                                                     <span class="text-xs text-gray-500">Recomendación {{ recIndex + 1 }}</span>
                                                 </div>
-                                                <input
-                                                    :value="getRecommendations(component.id)[recIndex]"
-                                                    @input="updateRecommendation(component.id, recIndex, $event.target.value)"
-                                                    type="text"
-                                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                                <RichTextEditor
+                                                    :model-value="getRecommendations(component.id)[recIndex]"
+                                                    @update:modelValue="val => updateRecommendation(component.id, recIndex, val)"
                                                     :placeholder="`Recomendación ${recIndex + 1}`"
+                                                    :compact="true"
                                                 />
                                             </div>
                                             <button
@@ -479,11 +477,11 @@
                                         :key="index"
                                         class="flex gap-2 items-start"
                                     >
-                                        <textarea
+                                        <RichTextEditor
                                             v-model="form.general_recommendations[index]"
-                                            class="flex-1 min-h-[80px] bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
                                             placeholder="Recomendación general"
-                                            rows="2"
+                                            :compact="true"
+                                            class="flex-1"
                                         />
                                         <button
                                             type="button"
@@ -572,6 +570,7 @@ import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import CreateSelectModal from '../../components/CreateSelectModal.vue';
+import RichTextEditor from '../../components/RichTextEditor.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -757,6 +756,9 @@ const loadReport = async () => {
         form.general_recommendations = Array.isArray(reportData.general_recommendations)
             ? [...reportData.general_recommendations]
             : [];
+        if (form.general_recommendations.length === 0) {
+            form.general_recommendations.push('');
+        }
         // Procesar diagnosis para separar texto e imágenes
         // Primero cargar componentes si están disponibles
         let componentsList = [];
@@ -851,6 +853,9 @@ const loadReport = async () => {
                 if (form.recommendations[componentId] === undefined) {
                     form.recommendations[componentId] = [];
                 }
+                if (form.recommendations[componentId].length === 0) {
+                    form.recommendations[componentId].push('');
+                }
                 if (form.component_images[componentId] === undefined) {
                     form.component_images[componentId] = [];
                 }
@@ -865,6 +870,9 @@ const loadReport = async () => {
                 }
                 if (form.recommendations[componentId] === undefined) {
                     form.recommendations[componentId] = [];
+                }
+                if (form.recommendations[componentId].length === 0) {
+                    form.recommendations[componentId].push('');
                 }
                 if (form.component_images[componentId] === undefined) {
                     form.component_images[componentId] = [];
@@ -1060,11 +1068,25 @@ const updateReport = async () => {
         const formData = new FormData();
         formData.append('_method', 'PUT');
 
-        Object.keys(form).forEach(key => {
+        // Limpiar arrays vacíos antes de enviar
+        const cleaned = {
+            ...form,
+            recommendations: Object.fromEntries(
+                Object.entries(form.recommendations).map(([cid, arr]) => [
+                    cid,
+                    (arr || []).map((s) => String(s).trim()).filter((s) => s !== '')
+                ])
+            ),
+            general_recommendations: (form.general_recommendations || [])
+                .map((s) => String(s).trim())
+                .filter((s) => s !== '')
+        };
+
+        Object.keys(cleaned).forEach(key => {
             if (key === 'component_images') {
                 // Enviar imágenes de componentes con formato simple
-                Object.keys(form.component_images).forEach(componentId => {
-                    form.component_images[componentId].forEach((imageObj, imgIndex) => {
+                Object.keys(cleaned.component_images).forEach(componentId => {
+                    cleaned.component_images[componentId].forEach((imageObj, imgIndex) => {
                         if (imageObj && imageObj.file) {
                             formData.append(`component_images_${componentId}_${imgIndex}`, imageObj.file);
                         }
@@ -1072,20 +1094,20 @@ const updateReport = async () => {
                 });
             } else if (key === 'imagesToDelete') {
                 // Enviar lista de imágenes a eliminar
-                if (Object.keys(form.imagesToDelete).length > 0) {
-                    formData.append('images_to_delete', JSON.stringify(form.imagesToDelete));
+                if (Object.keys(cleaned.imagesToDelete).length > 0) {
+                    formData.append('images_to_delete', JSON.stringify(cleaned.imagesToDelete));
                 }
             } else if (key === 'diagnosis' || key === 'recommendations' || key === 'general_recommendations') {
-                formData.append(key, JSON.stringify(form[key]));
-            } else if (form[key] !== null && form[key] !== '') {
-                formData.append(key, form[key]);
+                formData.append(key, JSON.stringify(cleaned[key]));
+            } else if (cleaned[key] !== null && cleaned[key] !== '') {
+                formData.append(key, cleaned[key]);
             }
         });
 
         // Enviar también un JSON con la estructura de imágenes para referencia
         const componentImagesStructure = {};
-        Object.keys(form.component_images).forEach(componentId => {
-            componentImagesStructure[componentId] = form.component_images[componentId]
+        Object.keys(cleaned.component_images).forEach(componentId => {
+            componentImagesStructure[componentId] = cleaned.component_images[componentId]
                 .map((img, idx) => img.file ? `component_images_${componentId}_${idx}` : null)
                 .filter(Boolean);
         });

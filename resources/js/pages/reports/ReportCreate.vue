@@ -260,11 +260,10 @@
                                         <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
                                         Diagnóstico
                                     </label>
-                                    <textarea
+                                    <RichTextEditor
                                         v-model="form.diagnosis[component.id]"
-                                        class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200 min-h-[100px]"
                                         placeholder="Ingresar diagnóstico"
-                                    ></textarea>
+                                    />
                                 </div>
 
                                 <!-- Imágenes del Componente -->
@@ -362,11 +361,10 @@
                                                     </span>
                                                     <span class="text-xs text-gray-500">Recomendación {{ recIndex + 1 }}</span>
                                                 </div>
-                                                <input
+                                                <RichTextEditor
                                                     v-model="form.recommendations[component.id][recIndex]"
-                                                    type="text"
-                                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                                                     :placeholder="`Recomendación ${recIndex + 1}`"
+                                                    :compact="true"
                                                 />
                                             </div>
                                             <button
@@ -495,11 +493,11 @@
                                         :key="index"
                                         class="flex gap-2 items-start"
                                     >
-                                        <textarea
+                                        <RichTextEditor
                                             v-model="form.general_recommendations[index]"
-                                            class="flex-1 min-h-[80px] bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
                                             placeholder="Recomendación general"
-                                            rows="2"
+                                            :compact="true"
+                                            class="flex-1"
                                         />
                                         <button
                                             type="button"
@@ -588,6 +586,7 @@ import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import CreateSelectModal from '../../components/CreateSelectModal.vue';
+import RichTextEditor from '../../components/RichTextEditor.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -816,12 +815,18 @@ const loadEquipmentData = async () => {
                 if (!form.recommendations[component.id]) {
                     form.recommendations[component.id] = [];
                 }
+                if (form.recommendations[component.id].length === 0) {
+                    form.recommendations[component.id].push('');
+                }
                 if (!form.component_images[component.id]) {
                     form.component_images[component.id] = [];
                 }
             });
         } else {
             components.value = [];
+        }
+        if (form.general_recommendations.length === 0) {
+            form.general_recommendations.push('');
         }
         await loadReportsOfEquipment();
     } catch (error) {
@@ -1015,25 +1020,39 @@ const saveReport = async () => {
     try {
         const formData = new FormData();
 
-        Object.keys(form).forEach(key => {
+        // Limpiar arrays vacíos antes de enviar
+        const cleaned = {
+            ...form,
+            recommendations: Object.fromEntries(
+                Object.entries(form.recommendations).map(([cid, arr]) => [
+                    cid,
+                    (arr || []).map((s) => String(s).trim()).filter((s) => s !== '')
+                ])
+            ),
+            general_recommendations: (form.general_recommendations || [])
+                .map((s) => String(s).trim())
+                .filter((s) => s !== '')
+        };
+
+        Object.keys(cleaned).forEach(key => {
             if (key === 'component_images') {
-                Object.keys(form.component_images).forEach(componentId => {
-                    form.component_images[componentId].forEach((imageObj, imgIndex) => {
+                Object.keys(cleaned.component_images).forEach(componentId => {
+                    cleaned.component_images[componentId].forEach((imageObj, imgIndex) => {
                         if (imageObj && imageObj.file) {
                             formData.append(`component_images_${componentId}_${imgIndex}`, imageObj.file);
                         }
                     });
                 });
             } else if (key === 'diagnosis' || key === 'recommendations' || key === 'general_recommendations') {
-                formData.append(key, JSON.stringify(form[key]));
-            } else if (form[key] !== null && form[key] !== '') {
-                formData.append(key, form[key]);
+                formData.append(key, JSON.stringify(cleaned[key]));
+            } else if (cleaned[key] !== null && cleaned[key] !== '') {
+                formData.append(key, cleaned[key]);
             }
         });
 
         const componentImagesStructure = {};
-        Object.keys(form.component_images).forEach(componentId => {
-            componentImagesStructure[componentId] = form.component_images[componentId]
+        Object.keys(cleaned.component_images).forEach(componentId => {
+            componentImagesStructure[componentId] = cleaned.component_images[componentId]
                 .map((img, idx) => img.file ? `component_images_${componentId}_${idx}` : null)
                 .filter(Boolean);
         });
