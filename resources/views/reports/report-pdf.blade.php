@@ -226,6 +226,7 @@
             max-width: 100%;
             width: auto;
             height: auto;
+            max-height: 100px;
             display: inline-block;
             margin-left: auto;
             margin-right: auto;
