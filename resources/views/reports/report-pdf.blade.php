@@ -502,7 +502,9 @@
                             @foreach ($rows as $row)
                                 <tr>
                                     @foreach ($row as $imageUrl)
-                                        <td @if (count($row) === 1) colspan="2" @endif><img src="{{ $imageUrl }}" alt="Espectro" /></td>
+                                        <td @if (count($row) === 1) colspan="2" @endif>
+                                            <img src="{{ $imageUrl }}" alt="Espectro" height="100" style="max-height: 100px; width: auto;" />
+                                        </td>
                                     @endforeach
                                 </tr>
                             @endforeach
