@@ -221,7 +221,7 @@
                                     Diagnóstico
                                 </label>
                                 <div
-                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full px-4 py-3 min-h-[100px]"
+                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full px-4 py-3 min-h-[100px] rte-view leading-relaxed"
                                     v-html="getDiagnosisHtml(component.id) || 'Sin diagnóstico'"
                                 ></div>
                             </div>
@@ -269,7 +269,7 @@
                                             <span class="flex-shrink-0 bg-yellow-100 text-yellow-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mr-3 mt-0.5">
                                                 {{ recIndex + 1 }}
                                             </span>
-                                            <div class="text-gray-900 text-sm" v-html="sanitizeHtml(rec)"></div>
+                                            <div class="text-gray-900 text-sm rte-view leading-relaxed" v-html="sanitizeHtml(rec)"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -369,7 +369,7 @@
                                 <template v-if="(report.general_recommendations || []).length">
                                     <ul class="list-disc pl-5 space-y-1">
                                         <li v-for="(rec, idx) in report.general_recommendations" :key="idx">
-                                            <span v-html="sanitizeHtml(rec)"></span>
+                                            <div class="rte-view leading-relaxed" v-html="sanitizeHtml(rec)"></div>
                                         </li>
                                     </ul>
                                 </template>
@@ -775,7 +775,7 @@ const closeImageModal = () => {
     imageModalUrl.value = null;
 };
 
-const allowedTags = ['b','strong','i','em','u','ul','ol','li','br','p'];
+const allowedTags = ['b','strong','i','em','u','ul','ol','li','br','p','div','span'];
 const sanitizeHtml = (html) => {
     if (!html) return '';
     const temp = document.createElement('div');
@@ -784,10 +784,35 @@ const sanitizeHtml = (html) => {
         for (let i = node.childNodes.length - 1; i >= 0; i--) {
             const child = node.childNodes[i];
             if (child.nodeType === 1) {
-                if (!allowedTags.includes(child.nodeName.toLowerCase())) {
+                const tag = child.nodeName.toLowerCase();
+                if (!allowedTags.includes(tag)) {
                     while (child.firstChild) node.insertBefore(child.firstChild, child);
                     node.removeChild(child);
                     continue;
+                }
+                // Preserve only safe color styles for span/div
+                if (tag === 'span' || tag === 'div') {
+                    const style = child.getAttribute('style') || '';
+                    const parts = style.split(';').map(s => s.trim()).filter(Boolean);
+                    const safe = [];
+                    const colorRe = /^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|rgb(a)?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(?:\s*,\s*(0|0?\.\d+|1))?\s*\))$/;
+                    for (const part of parts) {
+                        const [propRaw, valRaw] = part.split(':');
+                        if (!propRaw || !valRaw) continue;
+                        const prop = propRaw.trim().toLowerCase();
+                        const val = valRaw.trim();
+                        if ((prop === 'color' || prop === 'background-color') && colorRe.test(val)) {
+                            safe.push(`${prop}: ${val}`);
+                        }
+                    }
+                    // remove all attributes first
+                    [...child.attributes].forEach(attr => child.removeAttribute(attr.name));
+                    if (safe.length) {
+                        child.setAttribute('style', safe.join('; '));
+                    }
+                } else {
+                    // strip attributes on other tags
+                    [...child.attributes].forEach(attr => child.removeAttribute(attr.name));
                 }
                 walker(child);
             } else if (child.nodeType === 8) {
@@ -812,5 +837,19 @@ const getDiagnosisHtml = (componentId) => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+.rte-view {
+    line-height: 1.625;
+}
+.rte-view p,
+.rte-view div {
+    margin: 0 0 0.5rem 0;
+}
+.rte-view p:last-child,
+.rte-view div:last-child {
+    margin-bottom: 0;
+}
+.rte-view li {
+    margin: 0.25rem 0;
 }
 </style>

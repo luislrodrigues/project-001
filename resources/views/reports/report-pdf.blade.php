@@ -241,9 +241,12 @@
 
         .section .diagnosis-text {
             font-size: 8pt;
-            white-space: pre-line;
             margin: 0 0 10px 0;
             text-align: justify;
+        }
+        .section .diagnosis-text p,
+        .section .diagnosis-text div {
+            margin: 0 0 6px 0;
         }
 
         .section .rec-label {
@@ -255,6 +258,10 @@
 
         .section .rec-list {
             font-size: 8pt;
+        }
+        .section .rec-list li p,
+        .section .rec-list li div {
+            margin: 0 0 4px 0;
         }
 
         .recommendations-list {
@@ -269,6 +276,10 @@
             text-align: justify;
             line-height: 1.5;
             color: #1a1a1a;
+        }
+        .recommendations-list li p,
+        .recommendations-list li div {
+            margin: 0 0 4px 0;
         }
 
         /* Recomendación general: título + subsecciones con viñeta de punto */
@@ -468,7 +479,7 @@
                 @if (!empty(trim($diagnosisText)))
                     <p class="diagnosis-label">Diagnóstico:</p>
                     @php
-                        $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p>');
+                        $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p><div>');
                     @endphp
                     <div class="diagnosis-text">{!! $diagnosisHtml !!}</div>
                 @endif
@@ -482,7 +493,7 @@
                     <ul class="rec-list">
                         @foreach ($recs as $rec)
                             @php
-                                $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br>');
+                                $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
                             @endphp
                             <li>{!! $recHtml !!}</li>
                         @endforeach
@@ -524,7 +535,7 @@
                 <ul class="recommendations-list">
                     @foreach ($generalRecs as $rec)
                         @php
-                            $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br>');
+                            $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
                         @endphp
                         <li>{!! $recHtml !!}</li>
                     @endforeach

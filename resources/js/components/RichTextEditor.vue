@@ -15,7 +15,7 @@
     </div>
     <div
       ref="editor"
-      class="px-4 py-3 text-sm text-gray-900 focus:outline-none whitespace-pre-wrap"
+      class="px-4 py-3 text-sm text-gray-900 focus:outline-none whitespace-pre-wrap rte"
       :class="contentClass"
       contenteditable="true"
       :data-placeholder="placeholder"
@@ -154,5 +154,19 @@ const buttonClass = computed(() => (props.compact
 .empty:before {
   content: attr(data-placeholder);
   color: #9ca3af;
+}
+.rte {
+  line-height: 1.625;
+}
+.rte p,
+.rte div {
+  margin: 0 0 0.5rem 0;
+}
+.rte p:last-child,
+.rte div:last-child {
+  margin-bottom: 0;
+}
+.rte li {
+  margin: 0.25rem 0;
 }
 </style>
