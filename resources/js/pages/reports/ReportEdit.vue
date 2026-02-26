@@ -41,11 +41,11 @@
                     <div>
                         <h2 class="text-3xl font-bold text-gray-800 flex items-center">
                             <i class="fas fa-file-alt text-blue-600 mr-3"></i>
-                            Editar Reporte 
-                            <span v-if="report && report.consecutivo" class="ml-3 text-base font-semibold text-gray-600">
-                                Informe: {{ report.consecutivo }}
-                            </span>
+                            Editar Reporte
                         </h2>
+                        <div v-if="report && report.consecutivo" class="mt-1 text-base font-semibold text-gray-700">
+                            Informe: {{ report.consecutivo }}
+                        </div>
                         <p class="text-gray-500 text-sm mt-1">Modifica la información del reporte</p>
                     </div>
                     <router-link
