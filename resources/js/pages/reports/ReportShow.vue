@@ -778,8 +778,9 @@ const closeImageModal = () => {
 const allowedTags = ['b','strong','i','em','u','ul','ol','li','br','p','div','span'];
 const sanitizeHtml = (html) => {
     if (!html) return '';
+    let input = String(html).replace(/\r\n?/g, '\n');
     const temp = document.createElement('div');
-    temp.innerHTML = String(html);
+    temp.innerHTML = input;
     const walker = (node) => {
         for (let i = node.childNodes.length - 1; i >= 0; i--) {
             const child = node.childNodes[i];
@@ -821,7 +822,12 @@ const sanitizeHtml = (html) => {
         }
     };
     walker(temp);
-    return temp.innerHTML;
+    let out = temp.innerHTML;
+    // Convert plain-text newlines to explicit <br> so they render
+    out = out
+        .replace(/(^|[^>])\n/g, (m, p1) => `${p1}<br>`) // single newlines
+        .replace(/(\s*<br\s*\/?>\s*){2,}/gi, '<br><div></div>'); // group of line breaks -> block gap
+    return out;
 };
 const getDiagnosisHtml = (componentId) => {
     const text = getDiagnosisText(componentId);
@@ -839,17 +845,17 @@ const getDiagnosisHtml = (componentId) => {
     opacity: 0;
 }
 .rte-view {
-    line-height: 1.625;
+    line-height: 1.9;
 }
 .rte-view p,
 .rte-view div {
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 1rem 0;
 }
 .rte-view p:last-child,
 .rte-view div:last-child {
     margin-bottom: 0;
 }
 .rte-view li {
-    margin: 0.25rem 0;
+    margin: 0.5rem 0;
 }
 </style>

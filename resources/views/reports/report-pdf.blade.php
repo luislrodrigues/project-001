@@ -480,6 +480,8 @@
                     <p class="diagnosis-label">Diagnóstico:</p>
                     @php
                         $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p><div>');
+                        $diagnosisHtml = nl2br($diagnosisHtml, false);
+                        $diagnosisHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br><div style="height:6px;"></div>', $diagnosisHtml);
                     @endphp
                     <div class="diagnosis-text">{!! $diagnosisHtml !!}</div>
                 @endif
@@ -494,6 +496,8 @@
                         @foreach ($recs as $rec)
                             @php
                                 $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
+                                $recHtml = nl2br($recHtml, false);
+                                $recHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br><div style="height:6px;"></div>', $recHtml);
                             @endphp
                             <li>{!! $recHtml !!}</li>
                         @endforeach
@@ -536,6 +540,8 @@
                     @foreach ($generalRecs as $rec)
                         @php
                             $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
+                            $recHtml = nl2br($recHtml, false);
+                            $recHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br><div style="height:6px;"></div>', $recHtml);
                         @endphp
                         <li>{!! $recHtml !!}</li>
                     @endforeach
