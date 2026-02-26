@@ -260,6 +260,13 @@
         .section .rec-list {
             font-size: 8pt;
         }
+        .section .rec-list li {
+            margin-bottom: 6px;
+            text-align: justify;
+            line-height: 1.5;
+            color: #1a1a1a;
+            white-space: pre-wrap;
+        }
         .section .rec-list li p,
         .section .rec-list li div {
             margin: 0 0 4px 0;
