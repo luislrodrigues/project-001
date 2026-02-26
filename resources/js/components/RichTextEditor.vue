@@ -15,7 +15,7 @@
     </div>
     <div
       ref="editor"
-      class="px-4 py-3 text-sm text-gray-900 focus:outline-none"
+      class="px-4 py-3 text-sm text-gray-900 focus:outline-none whitespace-pre-wrap"
       :class="contentClass"
       contenteditable="true"
       :data-placeholder="placeholder"
@@ -90,7 +90,9 @@ const onInput = () => {
 
 const onPaste = (e) => {
   e.preventDefault();
-  const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+  let text = (e.clipboardData || window.clipboardData).getData('text/plain');
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  text = text.replace(/\t/g, '    ');
   document.execCommand('insertText', false, text);
 };
 
@@ -102,6 +104,10 @@ const onKeyDown = (e) => {
     } else {
       document.execCommand('insertParagraph', false, null);
     }
+    onInput();
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    document.execCommand('insertText', false, '    ');
     onInput();
   }
 };
