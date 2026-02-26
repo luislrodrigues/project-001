@@ -37,7 +37,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-search mr-2 text-gray-400"></i>
-                                Buscar por consecutivo
+                                Buscar por informe
                             </label>
                             <input
                                 v-model="filters.consecutivo"
@@ -194,7 +194,7 @@
                                 >
                                     <div class="flex items-center gap-1">
                                         <i class="fas fa-hashtag mr-2"></i>
-                                        Consecutivo
+                                        Informe
                                         <i v-if="sortOrder === 'desc'" class="fas fa-sort-down text-sm"></i>
                                         <i v-else class="fas fa-sort-up text-sm"></i>
                                     </div>

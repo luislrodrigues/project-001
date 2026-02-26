@@ -66,7 +66,7 @@
                         <p class="text-sm text-gray-600 mb-3">Selecciona un informe anterior de este equipo para copiar diagnóstico, recomendaciones y demás datos. La fecha de medición no se copia.</p>
                         <div class="flex flex-wrap items-end gap-3">
                             <div class="flex-1 min-w-[200px]">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Informe a copiar (consecutivo)</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Informe a copiar (informe)</label>
                                 <select
                                     v-model="copyFromReportId"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
