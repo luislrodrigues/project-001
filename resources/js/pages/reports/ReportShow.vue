@@ -846,6 +846,8 @@ const getDiagnosisHtml = (componentId) => {
 }
 .rte-view {
     line-height: 1.9;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 .rte-view p,
 .rte-view div {

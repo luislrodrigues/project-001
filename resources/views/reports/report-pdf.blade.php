@@ -243,6 +243,7 @@
             font-size: 8pt;
             margin: 0 0 10px 0;
             text-align: justify;
+            white-space: pre-wrap;
         }
         .section .diagnosis-text p,
         .section .diagnosis-text div {
@@ -262,6 +263,7 @@
         .section .rec-list li p,
         .section .rec-list li div {
             margin: 0 0 4px 0;
+            white-space: pre-wrap;
         }
 
         .recommendations-list {
@@ -276,10 +278,12 @@
             text-align: justify;
             line-height: 1.5;
             color: #1a1a1a;
+            white-space: pre-wrap;
         }
         .recommendations-list li p,
         .recommendations-list li div {
             margin: 0 0 4px 0;
+            white-space: pre-wrap;
         }
 
         /* Recomendación general: título + subsecciones con viñeta de punto */
