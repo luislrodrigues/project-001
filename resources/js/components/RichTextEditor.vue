@@ -21,6 +21,7 @@
       :data-placeholder="placeholder"
       @input="onInput"
       @paste="onPaste"
+      @keydown="onKeyDown"
     ></div>
   </div>
  </template>
@@ -38,7 +39,7 @@ const emit = defineEmits(['update:modelValue']);
 
 const editor = ref(null);
 
-const allowedTags = ['B','STRONG','I','EM','U','UL','OL','LI','BR','P'];
+const allowedTags = ['B','STRONG','I','EM','U','UL','OL','LI','BR','P','DIV'];
 
 const setHTML = (html) => {
   if (!editor.value) return;
@@ -91,6 +92,18 @@ const onPaste = (e) => {
   e.preventDefault();
   const text = (e.clipboardData || window.clipboardData).getData('text/plain');
   document.execCommand('insertText', false, text);
+};
+
+const onKeyDown = (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (e.shiftKey) {
+      document.execCommand('insertLineBreak', false, null);
+    } else {
+      document.execCommand('insertParagraph', false, null);
+    }
+    onInput();
+  }
 };
 
 const cmd = (command) => {
