@@ -433,8 +433,8 @@ onMounted(async () => {
 
 const loadCatalogs = async () => {
     try {
-        const [equipmentsRes, conditionsRes, prioritiesRes, companiesRes, processesRes, analistsRes] = await Promise.all([
-            api.get('/equipment'),
+    const [equipmentsRes, conditionsRes, prioritiesRes, companiesRes, processesRes, analistsRes] = await Promise.all([
+        api.get('/catalogs/equipment'),
             api.get('/catalogs/conditions'),
             api.get('/catalogs/priorities'),
             api.get('/catalogs/companies'),
@@ -442,7 +442,7 @@ const loadCatalogs = async () => {
             api.get('/catalogs/analists'),
         ]);
 
-        equipments.value = equipmentsRes.data.data;
+    equipments.value = equipmentsRes.data.data;
         conditions.value = conditionsRes.data.data;
         priorities.value = prioritiesRes.data.data ?? prioritiesRes.data ?? [];
         companies.value = companiesRes.data.data;
