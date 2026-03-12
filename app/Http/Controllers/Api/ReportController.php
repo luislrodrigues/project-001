@@ -785,6 +785,25 @@ class ReportController extends Controller
 
             $components = $r->equipment->components ?? collect();
             if ($components->isEmpty()) {
+                $diagGlobal = '';
+                if (!empty($diagnosis)) {
+                    $diagGlobal = $toSingleLine(implode('; ', array_values($diagnosis)));
+                }
+                $recsGlobal = '';
+                if (!empty($recommendations)) {
+                    $flatRecs = [];
+                    foreach ($recommendations as $arr) {
+                        if (is_array($arr)) {
+                            foreach ($arr as $s) {
+                                $trimmed = trim((string) $s);
+                                if ($trimmed !== '') {
+                                    $flatRecs[] = $toSingleLine($trimmed);
+                                }
+                            }
+                        }
+                    }
+                    $recsGlobal = implode('; ', $flatRecs);
+                }
                 // Fila sin componentes
                 $sheet->setCellValue("A{$row}", (string) ($r->consecutivo ?? $r->id));
                 $sheet->setCellValue("B{$row}", (string) ($r->equipment->company->name ?? ''));
@@ -793,8 +812,8 @@ class ReportController extends Controller
                 // E-H datos de componente (vacíos en este caso)
                 $sheet->setCellValue("E{$row}", '');
                 $sheet->setCellValue("F{$row}", '');
-                $sheet->setCellValue("G{$row}", '');
-                $sheet->setCellValue("H{$row}", '');
+                $sheet->setCellValue("G{$row}", $diagGlobal);
+                $sheet->setCellValue("H{$row}", $recsGlobal);
                 // Resto de campos del reporte
                 $sheet->setCellValue("I{$row}", (string) ($r->equipment->ubication->name ?? ''));
                 $sheet->setCellValue("J{$row}", (string) ($r->equipment->code ?? ''));
