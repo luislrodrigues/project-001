@@ -306,7 +306,7 @@ class EquipmentController extends Controller
     {
         $query = Equipment::with(['company', 'equipmentType', 'process', 'ubication', 'components.componentType', 'components.brand']);
         if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
-            $query->where('company_id', auth()->user()->company_id)
+            $query->where('company_id', auth()->user()->company_id);
         }
         if ($request->has('search') && !empty($request->search)) {
             $query->where('name', 'like', '%' . $request->search . '%');
