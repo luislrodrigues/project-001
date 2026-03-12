@@ -100,22 +100,35 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-end gap-2">
-                            <button
-                                type="button"
-                                @click="clearFilters"
-                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
-                            >
-                                <i class="fas fa-times mr-2"></i>
-                                Limpiar
-                            </button>
-                            <button
-                                @click="fetchEquipment"
-                                class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
-                            >
-                                <i class="fas fa-redo mr-2"></i>
-                                Actualizar
-                            </button>
+                        <div class="mt-3 w-full flex items-center justify-between gap-2">
+                            <div v-if="authStore.hasPermission('export equipment')">
+                                <button
+                                    type="button"
+                                    @click="exportExcel"
+                                    class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                                    title="Exportar a Excel los equipos filtrados"
+                                >
+                                    <i class="fas fa-file-excel mr-2"></i>
+                                    {{ exporting ? 'Exportando...' : 'Generar Excel' }}
+                                </button>
+                            </div>
+                            <div class="flex gap-2 ml-auto">
+                                <button
+                                    type="button"
+                                    @click="clearFilters"
+                                    class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                                >
+                                    <i class="fas fa-times mr-2"></i>
+                                    Limpiar
+                                </button>
+                                <button
+                                    @click="fetchEquipment"
+                                    class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                                >
+                                    <i class="fas fa-redo mr-2"></i>
+                                    Actualizar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -386,6 +399,39 @@ const fetchEquipment = async (page = 1) => {
         Swal.fire('Error', 'Error al cargar equipos', 'error');
     } finally {
         loading.value = false;
+    }
+};
+
+const exportExcel = async () => {
+    try {
+        const payload = {
+            page: 1,
+            per_page: 10000,
+            sort_by: sortBy.value,
+            sort_order: normalizeSortOrder(sortOrder.value),
+        };
+        if (search.value) payload.search = search.value;
+        if (filters.value.company_id) payload.company_id = filters.value.company_id;
+        if (filters.value.equipment_type_id) payload.equipment_type_id = filters.value.equipment_type_id;
+        if (filters.value.process_id) payload.process_id = filters.value.process_id;
+
+        const response = await api.post('/equipment/export', payload, { responseType: 'blob' });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        const nowJs = new Date();
+        const y = nowJs.getFullYear();
+        const m = String(nowJs.getMonth() + 1).padStart(2, '0');
+        const d = String(nowJs.getDate()).padStart(2, '0');
+        const filename = `Equipos_Listado_${y}_${m}_${d}.xlsx`;
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error al exportar equipos:', error);
+        Swal.fire('Error', 'No se pudo exportar el listado de equipos.', 'error');
     }
 };
 

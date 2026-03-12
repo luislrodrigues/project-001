@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('equipment', [EquipmentController::class, 'index'])->middleware('permission:consult equipment');
     Route::get('equipment/{equipment}', [EquipmentController::class, 'show'])->middleware('permission:detalle equipment');
     Route::post('equipment', [EquipmentController::class, 'store'])->middleware('permission:save equipment');
+    Route::post('equipment/export', [EquipmentController::class, 'export'])->middleware('permission:export equipment');
     Route::post('equipment/{equipment}', [EquipmentController::class, 'update'])->middleware('permission:edit equipment');
     Route::put('equipment/{equipment}', [EquipmentController::class, 'update'])->middleware('permission:edit equipment');
     Route::delete('equipment/{equipment}', [EquipmentController::class, 'destroy'])->middleware('permission:delete equipment');
@@ -62,13 +63,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->middleware('permission:consult report');
         Route::post('/', [ReportController::class, 'store'])->middleware('permission:save report');
+        // Exportar debe ir antes de las rutas con {id} para evitar colisiones
+        Route::post('/export', [ReportController::class, 'export'])->middleware('permission:export report');
         Route::get('/{id}', [ReportController::class, 'show'])->middleware('permission:detalle report');
         Route::post('/{id}', [ReportController::class, 'update'])->middleware('permission:edit report');
         Route::put('/{id}', [ReportController::class, 'update'])->middleware('permission:edit report');
         Route::delete('/{id}', [ReportController::class, 'destroy'])->middleware('permission:delete report');
         Route::get('/{id}/pdf', [ReportController::class, 'downloadPdf'])->middleware('permission:download pdf report');
         Route::get('/{id}/email-recipients', [ReportController::class, 'getEmailRecipients'])->middleware('permission:send email report');
-        Route::post('/export', [ReportController::class, 'export'])->middleware('permission:consult report');
         Route::post('/{id}/send-email', [ReportController::class, 'sendEmail'])->middleware('permission:send email report');
     });
 

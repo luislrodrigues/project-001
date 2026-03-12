@@ -156,22 +156,40 @@
                             </select>
                         </div>
                     </div>
-                    <div class="mt-3 flex justify-end gap-2">
-                        <button
-                            type="button"
-                            @click="clearFilters"
-                            class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
-                        >
-                            <i class="fas fa-times mr-2"></i>
-                            Limpiar
-                        </button>
-                        <button
-                            @click="fetchReports"
-                            class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
-                        >
-                            <i class="fas fa-redo mr-2"></i>
-                            Actualizar
-                        </button>
+                    <div class="mt-3 flex items-center justify-between gap-2">
+                        <div v-if="authStore.hasPermission('export report')">
+                            <button
+                                type="button"
+                                @click="exportExcel"
+                                :disabled="exporting"
+                                class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Exportar a Excel los reportes filtrados"
+                            >
+                                <i v-if="!exporting" class="fas fa-file-excel mr-2"></i>
+                                <svg v-else class="animate-spin h-4 w-4 mr-2 inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
+                                    <path d="M12 2a10 10 0 00-9.5 7.5M12 2c2.5 0 5 1 7 2.5" stroke="currentColor" stroke-width="2" fill="none"></path>
+                                </svg>
+                                {{ exporting ? 'Exportando...' : 'Generar Excel' }}
+                            </button>
+                        </div>
+                        <div class="flex gap-2 ml-auto">
+                            <button
+                                type="button"
+                                @click="clearFilters"
+                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200 font-medium"
+                            >
+                                <i class="fas fa-times mr-2"></i>
+                                Limpiar
+                            </button>
+                            <button
+                                @click="fetchReports"
+                                class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duración-200 font-medium"
+                            >
+                                <i class="fas fa-redo mr-2"></i>
+                                Actualizar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -339,6 +357,7 @@ const authStore = useAuthStore();
 
 const reports = ref([]);
 const loading = ref(false);
+const exporting = ref(false);
 const pagination = ref(null);
 const equipments = ref([]);
 const conditions = ref([]);
@@ -519,6 +538,46 @@ const fetchReports = async (page = 1) => {
         Swal.fire('Error', message, 'error');
     } finally {
         loading.value = false;
+    }
+};
+
+const exportExcel = async () => {
+    try {
+        exporting.value = true;
+        const payload = {
+            sort_by: sortBy.value,
+            sort_order: normalizeSortOrder(sortOrder.value)
+        };
+        if (filters.consecutivo) payload.consecutivo = filters.consecutivo.trim();
+        if (filters.equipment_id) payload.equipment_id = filters.equipment_id;
+        if (filters.condition_id) payload.condition_id = filters.condition_id;
+        if (filters.priority_id) payload.priority_id = filters.priority_id;
+        if (filters.company_id) payload.company_id = filters.company_id;
+        if (filters.process_id) payload.process_id = filters.process_id;
+        if (filters.analist_id) payload.analist_id = filters.analist_id;
+        if (filters.measurement_date_start) payload.measurement_date_start = filters.measurement_date_start;
+        if (filters.measurement_date_end) payload.measurement_date_end = filters.measurement_date_end;
+        const response = await api.post('/reports/export', payload, { responseType: 'blob' });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        const nowJs = new Date();
+        const y = nowJs.getFullYear();
+        const m = String(nowJs.getMonth() + 1).padStart(2, '0');
+        const d = String(nowJs.getDate()).padStart(2, '0');
+        const filename = `Informes_Listado_${y}_${m}_${d}.xlsx`;
+        link.href = url;
+        link.setAttribute('download', filename);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error al exportar Excel:', error);
+        const message = error.response?.data?.message || error.message || 'Error al exportar Excel';
+        Swal.fire('Error', message, 'error');
+    } finally {
+        exporting.value = false;
     }
 };
 

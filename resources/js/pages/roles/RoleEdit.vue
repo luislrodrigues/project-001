@@ -145,6 +145,7 @@ function formatPermissionLabel(permissionName) {
         inactive: 'Activar/Desactivar',
         download: 'Descargar PDF',
         send: 'Enviar correo',
+        export: 'Exportar Excel',
     };
     return actionLabels[action] || action;
 }

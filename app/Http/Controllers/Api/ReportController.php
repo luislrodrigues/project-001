@@ -20,6 +20,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ReportController extends Controller
 {
@@ -562,9 +566,310 @@ class ReportController extends Controller
         }
     }
 
-    public function export(): JsonResponse
+    public function export(Request $request)
     {
-        return ApiResponse::success(null, 'En desarrollo');
+        if (!auth()->user()->can('export report')) {
+            abort(403, 'No tienes los permisos requeridos.');
+        }
+
+        // Construir el query con los mismos filtros que index()
+        $query = Report::with([
+            'equipment.components.componentType',
+            'equipment.components.brand',
+            'equipment.company',
+            'equipment.equipmentType',
+            'equipment.ubication',
+            'equipment.process',
+            'condition',
+            'priority',
+            'mechanismFail',
+            'componentFail',
+            'analist'
+        ])->whereNull('deleted_at');
+
+        if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
+            $query->whereHas('equipment', function ($q) {
+                $q->where('company_id', auth()->user()->company_id);
+            });
+        }
+        if ($request->filled('equipment_id')) {
+            $query->where('equipment_id', $request->equipment_id);
+        }
+        if ($request->filled('condition_id')) {
+            $query->where('condition_id', $request->condition_id);
+        }
+        if ($request->filled('priority_id')) {
+            $query->where('priority_id', $request->priority_id);
+        }
+        if ($request->filled('company_id')) {
+            $query->whereHas('equipment', function ($q) use ($request) {
+                $q->where('company_id', $request->company_id);
+            });
+        }
+        if ($request->filled('process_id')) {
+            $query->whereHas('equipment', function ($q) use ($request) {
+                $q->where('process_id', (int) $request->process_id);
+            });
+        }
+        if ($request->filled('analist_id')) {
+            $query->where('analist_id', (int) $request->analist_id);
+        }
+        if ($request->filled('consecutivo')) {
+            $raw = (string) $request->input('consecutivo', '');
+            $digitsOnly = preg_replace('/\D+/', '', $raw) ?? '';
+            if ($digitsOnly !== '') {
+                $numericId = (int) ltrim($digitsOnly, '0');
+                $query->where(function ($q) use ($digitsOnly, $numericId) {
+                    $q->where('id', $numericId)
+                      ->orWhereRaw('CAST(id AS CHAR) LIKE ?', ['%' . $digitsOnly . '%']);
+                });
+            }
+        }
+        if ($request->filled('measurement_date_start') || $request->filled('measurement_date_end')) {
+            $startRaw = (string) $request->input('measurement_date_start', '');
+            $endRaw = (string) $request->input('measurement_date_end', '');
+            $start = null;
+            $end = null;
+            if ($startRaw !== '' && strtotime($startRaw) !== false) {
+                $start = date('Y-m-d', strtotime($startRaw));
+            }
+            if ($endRaw !== '' && strtotime($endRaw) !== false) {
+                $end = date('Y-m-d', strtotime($endRaw));
+            }
+            if ($start && $end) {
+                $query->whereBetween('measurement_date', [$start, $end]);
+            } elseif ($start) {
+                $query->whereDate('measurement_date', '>=', $start);
+            } elseif ($end) {
+                $query->whereDate('measurement_date', '<=', $end);
+            }
+        }
+
+        $sortBy = in_array($request->get('sort_by'), ['id', 'created_at', 'measurement_date'], true) ? $request->get('sort_by') : 'id';
+        $sortOrder = in_array(strtolower($request->get('sort_order')), ['asc', 'desc'], true) ? strtolower($request->get('sort_order')) : 'desc';
+        $reports = $query->orderBy($sortBy, $sortOrder)->get();
+
+        // Helpers para limpiar HTML
+        $toMultiline = function (?string $html): string {
+            $html = (string) $html;
+            if ($html === '') return '';
+            $text = preg_replace('/<\s*br\s*\/?>/i', "\n", $html);
+            $text = preg_replace('/<\/\s*(p|div|li)\s*>/i', "\n", $text);
+            $text = strip_tags($text);
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $text = preg_replace("/\r\n?/", "\n", $text);
+            $text = preg_replace("/\n{3,}/", "\n\n", $text);
+            return trim($text);
+        };
+        $toSingleLine = function (?string $html) use ($toMultiline): string {
+            $text = $toMultiline($html);
+            $text = preg_replace('/\s+/', ' ', $text);
+            return trim($text);
+        };
+        $toArgb = function (?string $hex, string $default) {
+            $s = is_string($hex) ? trim($hex) : '';
+            if ($s === '') return $default;
+            if ($s[0] === '#') $s = substr($s, 1);
+            if (strlen($s) === 3) {
+                $s = strtoupper($s);
+                $s = $s[0].$s[0].$s[1].$s[1].$s[2].$s[2];
+            }
+            $s = strtoupper($s);
+            if (strlen($s) !== 6 || !preg_match('/^[0-9A-F]{6}$/', $s)) return $default;
+            return 'FF' . $s;
+        };
+
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->getProperties()->setCreator('3Sanchez')->setTitle('Listado de reportes');
+
+        // Una sola hoja con toda la información
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Reportes');
+        $headers = [
+            'Informe',
+            'Empresa',
+            'Equipo',
+            'Tipo de equipo',
+            'Tipo de componente',
+            'Marca',
+            'Diagnóstico',
+            'Recomendaciones',
+            'Ubicación',
+            'Código',
+            'TAG',
+            'Proceso',
+            'Fecha de medición',
+            'Condición',
+            'Prioridad',
+            'Mecanismo de falla',
+            'Componente de falla',
+            'OT creada',
+            'Estado de OT',
+            'Fecha de ejecución',
+            'Analista',
+            'Recomendaciones generales'
+        ];
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:' . Coordinate::stringFromColumnIndex(count($headers)) . '1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:V1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF059669');
+        $sheet->getStyle('A1:V1')->getFont()->getColor()->setARGB('FFFFFFFF');
+        // AutoSize para columnas generales hasta Analista (col U)
+        for ($i = 1; $i <= 21; $i++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
+        }
+        // Ajustes de ancho: columnas de componente y textos largos
+        $sheet->getColumnDimension('E')->setWidth(28); // Tipo componente
+        $sheet->getColumnDimension('F')->setWidth(18); // Marca
+        $sheet->getColumnDimension('G')->setWidth(80); // Diagnóstico
+        $sheet->getColumnDimension('H')->setWidth(80); // Recomendaciones
+        $sheet->getColumnDimension('V')->setWidth(100); // Recs generales
+
+        $row = 2;
+        foreach ($reports as $r) {
+            // Normalizar diagnosis y recomendaciones por componente
+            $diagnosis = [];
+            if ($r->diagnosis) {
+                $decoded = self::decodeJsonField($r->diagnosis);
+                if (is_array($decoded)) {
+                    $componentsList = $r->equipment ? $r->equipment->components : collect();
+                    $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                    if ($isNumericArray) {
+                        foreach ($decoded as $index => $data) {
+                            if ($componentsList->has($index)) {
+                                $componentId = (string) $componentsList->get($index)->id;
+                                $diagnosis[$componentId] = is_array($data) ? (string) ($data['text'] ?? '') : (string) $data;
+                            }
+                        }
+                    } else {
+                        foreach ($decoded as $componentId => $data) {
+                            $componentId = (string) $componentId;
+                            $diagnosis[$componentId] = is_array($data) ? (string) ($data['text'] ?? '') : (string) $data;
+                        }
+                    }
+                }
+            }
+            $recommendations = [];
+            if ($r->recommendations) {
+                $decoded = self::decodeJsonField($r->recommendations);
+                if (is_array($decoded)) {
+                    $componentsList = $r->equipment ? $r->equipment->components : collect();
+                    $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                    if ($isNumericArray) {
+                        foreach ($decoded as $index => $data) {
+                            if ($componentsList->has($index)) {
+                                $componentId = (string) $componentsList->get($index)->id;
+                                $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($x) => trim((string)$x) !== '')) : [];
+                            }
+                        }
+                    } else {
+                        foreach ($decoded as $componentId => $data) {
+                            $componentId = (string) $componentId;
+                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($x) => trim((string)$x) !== '')) : [];
+                        }
+                    }
+                }
+            }
+            // Recs generales en una sola línea (sin saltos)
+            $general = is_array($r->general_recommendations) ? $r->general_recommendations : self::decodeJsonField($r->general_recommendations);
+            $generalText = implode(' • ', array_map(fn ($s) => $toSingleLine($s), $general));
+            if ($generalText !== '') {
+                $generalText = '• ' . $generalText;
+            }
+
+            $components = $r->equipment->components ?? collect();
+            if ($components->isEmpty()) {
+                // Fila sin componentes
+                $sheet->setCellValue("A{$row}", (string) ($r->consecutivo ?? $r->id));
+                $sheet->setCellValue("B{$row}", (string) ($r->equipment->company->name ?? ''));
+                $sheet->setCellValue("C{$row}", (string) ($r->equipment->name ?? ''));
+                $sheet->setCellValue("D{$row}", (string) ($r->equipment->equipmentType->name ?? ''));
+                // E-H datos de componente (vacíos en este caso)
+                $sheet->setCellValue("E{$row}", '');
+                $sheet->setCellValue("F{$row}", '');
+                $sheet->setCellValue("G{$row}", '');
+                $sheet->setCellValue("H{$row}", '');
+                // Resto de campos del reporte
+                $sheet->setCellValue("I{$row}", (string) ($r->equipment->ubication->name ?? ''));
+                $sheet->setCellValue("J{$row}", (string) ($r->equipment->code ?? ''));
+                $sheet->setCellValue("K{$row}", (string) ($r->equipment->tag ?? ''));
+                $sheet->setCellValue("L{$row}", (string) ($r->equipment->process->name ?? ''));
+                $sheet->setCellValue("M{$row}", $r->measurement_date ? $r->measurement_date->format('Y-m-d') : '');
+                $sheet->setCellValue("N{$row}", (string) ($r->condition->name ?? ''));
+                $sheet->setCellValue("O{$row}", (string) ($r->priority->name ?? $r->priority));
+                $sheet->setCellValue("P{$row}", (string) ($r->mechanismFail->name ?? ''));
+                $sheet->setCellValue("Q{$row}", (string) ($r->componentFail->name ?? ''));
+                $sheet->setCellValue("R{$row}", (string) ($r->ot_created ? 'Sí' : 'No'));
+                $sheet->setCellValue("S{$row}", (string) ($r->status_ot ?? ''));
+                $sheet->setCellValue("T{$row}", (string) ($r->execution_date ? $r->execution_date->format('Y-m-d') : ''));
+                $sheet->setCellValue("U{$row}", (string) ($r->analist->name ?? ''));
+                $sheet->setCellValue("V{$row}", $generalText);
+                $condBg = $toArgb($r->condition->color ?? '', 'FFE5E7EB');
+                $condFg = $toArgb($r->condition->text_color ?? '', 'FF111827');
+                $sheet->getStyle("N{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($condBg);
+                $sheet->getStyle("N{$row}")->getFont()->getColor()->setARGB($condFg);
+                $priBg = $toArgb($r->priority->color ?? ($r->priority['color'] ?? ''), 'FFE5E7EB');
+                $priFg = $toArgb($r->priority->text_color ?? ($r->priority['text_color'] ?? ''), 'FF111827');
+                $sheet->getStyle("O{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($priBg);
+                $sheet->getStyle("O{$row}")->getFont()->getColor()->setARGB($priFg);
+                $row++;
+            } else {
+                foreach ($components as $component) {
+                    $cid = (string) $component->id;
+                    // Texto en una sola línea (sin saltos) para evitar espacios verticales
+                    $diag = $toSingleLine($diagnosis[$cid] ?? '');
+                    $recs = $recommendations[$cid] ?? [];
+                    $recsText = implode(' • ', array_map(fn ($s) => $toSingleLine($s), $recs));
+                    if ($recsText !== '') {
+                        $recsText = '• ' . $recsText;
+                    }
+                    $sheet->setCellValue("A{$row}", (string) ($r->consecutivo ?? $r->id));
+                    $sheet->setCellValue("B{$row}", (string) ($r->equipment->company->name ?? ''));
+                    $sheet->setCellValue("C{$row}", (string) ($r->equipment->name ?? ''));
+                    $sheet->setCellValue("D{$row}", (string) ($r->equipment->equipmentType->name ?? ''));
+                    // E-H datos de componente
+                    $sheet->setCellValue("E{$row}", (string) ($component->componentType->name ?? ''));
+                    $sheet->setCellValue("F{$row}", (string) ($component->brand->name ?? ''));
+                    $sheet->setCellValue("G{$row}", $diag);
+                    $sheet->setCellValue("H{$row}", $recsText);
+                    // Resto de campos del reporte
+                    $sheet->setCellValue("I{$row}", (string) ($r->equipment->ubication->name ?? ''));
+                    $sheet->setCellValue("J{$row}", (string) ($r->equipment->code ?? ''));
+                    $sheet->setCellValue("K{$row}", (string) ($r->equipment->tag ?? ''));
+                    $sheet->setCellValue("L{$row}", (string) ($r->equipment->process->name ?? ''));
+                    $sheet->setCellValue("M{$row}", $r->measurement_date ? $r->measurement_date->format('Y-m-d') : '');
+                    $sheet->setCellValue("N{$row}", (string) ($r->condition->name ?? ''));
+                    $sheet->setCellValue("O{$row}", (string) ($r->priority->name ?? $r->priority));
+                    $sheet->setCellValue("P{$row}", (string) ($r->mechanismFail->name ?? ''));
+                    $sheet->setCellValue("Q{$row}", (string) ($r->componentFail->name ?? ''));
+                    $sheet->setCellValue("R{$row}", (string) ($r->ot_created ? 'Sí' : 'No'));
+                    $sheet->setCellValue("S{$row}", (string) ($r->status_ot ?? ''));
+                    $sheet->setCellValue("T{$row}", (string) ($r->execution_date ? $r->execution_date->format('Y-m-d') : ''));
+                    $sheet->setCellValue("U{$row}", (string) ($r->analist->name ?? ''));
+                    $sheet->setCellValue("V{$row}", $generalText);
+                    $condBg = $toArgb($r->condition->color ?? '', 'FFE5E7EB');
+                    $condFg = $toArgb($r->condition->text_color ?? '', 'FF111827');
+                    $sheet->getStyle("N{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($condBg);
+                    $sheet->getStyle("N{$row}")->getFont()->getColor()->setARGB($condFg);
+                    $priBg = $toArgb($r->priority->color ?? ($r->priority['color'] ?? ''), 'FFE5E7EB');
+                    $priFg = $toArgb($r->priority->text_color ?? ($r->priority['text_color'] ?? ''), 'FF111827');
+                    $sheet->getStyle("O{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($priBg);
+                    $sheet->getStyle("O{$row}")->getFont()->getColor()->setARGB($priFg);
+                    $row++;
+                }
+            }
+        }
+        // Sin wrapText para evitar expansión vertical en columnas largas
+        $sheet->getStyle("G2:G{$row}")->getAlignment()->setWrapText(false); // Diagnóstico
+        $sheet->getStyle("H2:H{$row}")->getAlignment()->setWrapText(false); // Recomendaciones
+        $sheet->getStyle("V2:V{$row}")->getAlignment()->setWrapText(false); // Recs generales
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'Informes_Listado_' . now()->format('Ymd') . '.xlsx';
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function getEmailRecipients($id): JsonResponse

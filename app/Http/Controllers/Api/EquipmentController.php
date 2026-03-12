@@ -17,6 +17,10 @@ use App\Models\ComponentTypeValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class EquipmentController extends Controller
 {
@@ -296,5 +300,80 @@ class EquipmentController extends Controller
             ->get();
 
         return ApiResponse::success($ubications);
+    }
+
+    public function export(Request $request)
+    {
+        $query = Equipment::with(['company', 'equipmentType', 'process', 'ubication', 'components.componentType', 'components.brand']);
+        if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
+            $query->where('company_id', auth()->user()->company_id);
+        }
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+        if ($request->filled('company_id')) {
+            $query->where('company_id', (int) $request->company_id);
+        }
+        if ($request->has('equipment_type_id') && $request->equipment_type_id !== '') {
+            $query->where('equipment_type_id', $request->equipment_type_id);
+        }
+        if ($request->filled('process_id')) {
+            $query->where('process_id', (int) $request->process_id);
+        }
+        $sortByRaw = $request->get('sort_by', 'id');
+        $allowedSort = ['id', 'name', 'created_at'];
+        $sortBy = (is_string($sortByRaw) && $sortByRaw !== '' && in_array($sortByRaw, $allowedSort, true)) ? $sortByRaw : 'id';
+        $sortOrderRaw = $request->get('sort_order', 'desc');
+        $sortOrder = (is_string($sortOrderRaw) && in_array(strtolower($sortOrderRaw), ['asc', 'desc'], true)) ? strtolower($sortOrderRaw) : 'desc';
+        $equipments = $query->orderBy($sortBy, $sortOrder)->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Equipos');
+        $headers = [
+            'Empresa',
+            'Nombre',
+            'Proceso',
+            'Tipo de equipo',
+            'Ubicación',
+            'Código',
+            'TAG',
+            'Componentes'
+        ];
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:' . Coordinate::stringFromColumnIndex(count($headers)) . '1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:H1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF059669');
+        $sheet->getStyle('A1:H1')->getFont()->getColor()->setARGB('FFFFFFFF');
+        for ($i = 1; $i <= count($headers); $i++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
+        }
+        // Columna de componentes con ancho amplio
+        $sheet->getColumnDimension('H')->setWidth(80);
+        $row = 2;
+        foreach ($equipments as $e) {
+            $sheet->setCellValue("A{$row}", (string) ($e->company->name ?? ''));
+            $sheet->setCellValue("B{$row}", (string) ($e->name ?? ''));
+            $sheet->setCellValue("C{$row}", (string) ($e->process->name ?? ''));
+            $sheet->setCellValue("D{$row}", (string) ($e->equipmentType->name ?? ''));
+            $sheet->setCellValue("E{$row}", (string) ($e->ubication->name ?? ''));
+            $sheet->setCellValue("F{$row}", (string) ($e->code ?? ''));
+            $sheet->setCellValue("G{$row}", (string) ($e->tag ?? ''));
+            $compNames = [];
+            foreach ($e->components as $c) {
+                $t = trim((string) ($c->componentType->name ?? ''));
+                if ($t !== '') {
+                    $compNames[] = $t;
+                }
+            }
+            $sheet->setCellValue("H{$row}", implode(' • ', $compNames));
+            $row++;
+        }
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'Equipos_Listado.xlsx';
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }
