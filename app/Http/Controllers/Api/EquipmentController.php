@@ -365,7 +365,7 @@ class EquipmentController extends Controller
                     $compNames[] = $t;
                 }
             }
-            $sheet->setCellValue("H{$row}", implode(' • ', $compNames));
+            $sheet->setCellValue("H{$row}", implode('; ', $compNames));
             $row++;
         }
         $writer = new Xlsx($spreadsheet);

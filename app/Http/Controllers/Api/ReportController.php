@@ -771,10 +771,7 @@ class ReportController extends Controller
             }
             // Recs generales en una sola línea (sin saltos)
             $general = is_array($r->general_recommendations) ? $r->general_recommendations : self::decodeJsonField($r->general_recommendations);
-            $generalText = implode(' • ', array_map(fn ($s) => $toSingleLine($s), $general));
-            if ($generalText !== '') {
-                $generalText = '• ' . $generalText;
-            }
+            $generalText = implode('; ', array_map(fn ($s) => $toSingleLine($s), $general));
 
             $components = $r->equipment->components ?? collect();
             if ($components->isEmpty()) {
@@ -818,10 +815,7 @@ class ReportController extends Controller
                     // Texto en una sola línea (sin saltos) para evitar espacios verticales
                     $diag = $toSingleLine($diagnosis[$cid] ?? '');
                     $recs = $recommendations[$cid] ?? [];
-                    $recsText = implode(' • ', array_map(fn ($s) => $toSingleLine($s), $recs));
-                    if ($recsText !== '') {
-                        $recsText = '• ' . $recsText;
-                    }
+                    $recsText = implode('; ', array_map(fn ($s) => $toSingleLine($s), $recs));
                     $sheet->setCellValue("A{$row}", (string) ($r->consecutivo ?? $r->id));
                     $sheet->setCellValue("B{$row}", (string) ($r->equipment->company->name ?? ''));
                     $sheet->setCellValue("C{$row}", (string) ($r->equipment->name ?? ''));
