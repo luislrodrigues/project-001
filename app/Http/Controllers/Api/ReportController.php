@@ -728,12 +728,16 @@ class ReportController extends Controller
         foreach ($reports as $r) {
             // Normalizar diagnosis y recomendaciones por componente
             $diagnosis = [];
+            $rawDiagnosis = [];
+            $diagnosisIndexMode = false;
             if ($r->diagnosis) {
                 $decoded = self::decodeJsonField($r->diagnosis);
                 if (is_array($decoded)) {
+                    $rawDiagnosis = $decoded;
                     $componentsList = $r->equipment ? $r->equipment->components : collect();
                     $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
                     if ($isNumericArray) {
+                        $diagnosisIndexMode = true;
                         foreach ($decoded as $index => $data) {
                             if ($componentsList->has($index)) {
                                 $componentId = (string) $componentsList->get($index)->id;
@@ -754,12 +758,16 @@ class ReportController extends Controller
                 }
             }
             $recommendations = [];
+            $rawRecommendations = [];
+            $recommendationsIndexMode = false;
             if ($r->recommendations) {
                 $decoded = self::decodeJsonField($r->recommendations);
                 if (is_array($decoded)) {
+                    $rawRecommendations = $decoded;
                     $componentsList = $r->equipment ? $r->equipment->components : collect();
                     $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
                     if ($isNumericArray) {
+                        $recommendationsIndexMode = true;
                         foreach ($decoded as $index => $data) {
                             if ($componentsList->has($index)) {
                                 $componentId = (string) $componentsList->get($index)->id;
@@ -839,12 +847,23 @@ class ReportController extends Controller
                 $sheet->getStyle("O{$row}")->getFont()->getColor()->setARGB($priFg);
                 $row++;
             } else {
-                foreach ($components as $component) {
+                foreach ($components as $index => $component) {
                     $cid = (string) $component->id;
-                    // Texto en una sola línea (sin saltos) para evitar espacios verticales
-                    $diag = $toSingleLine($diagnosis[$cid] ?? '');
-                    $recs = $recommendations[$cid] ?? [];
-                    $recsText = implode('; ', array_map(fn ($s) => $toSingleLine($s), $recs));
+                    $diagSource = '';
+                    if (isset($diagnosis[$cid])) {
+                        $diagSource = $diagnosis[$cid];
+                    } elseif ($diagnosisIndexMode && isset($rawDiagnosis[$index])) {
+                        $data = $rawDiagnosis[$index];
+                        $diagSource = is_array($data) ? (string) ($data['text'] ?? '') : (string) $data;
+                    }
+                    $diag = $toSingleLine($diagSource);
+                    $recsSource = [];
+                    if (isset($recommendations[$cid])) {
+                        $recsSource = $recommendations[$cid];
+                    } elseif ($recommendationsIndexMode && isset($rawRecommendations[$index]) && is_array($rawRecommendations[$index])) {
+                        $recsSource = array_values(array_filter($rawRecommendations[$index], fn ($x) => trim((string) $x) !== ''));
+                    }
+                    $recsText = implode('; ', array_map(fn ($s) => $toSingleLine($s), $recsSource));
                     $sheet->setCellValue("A{$row}", (string) ($r->consecutivo ?? $r->id));
                     $sheet->setCellValue("B{$row}", (string) ($r->equipment->company->name ?? ''));
                     $sheet->setCellValue("C{$row}", (string) ($r->equipment->name ?? ''));
