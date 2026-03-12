@@ -741,8 +741,13 @@ class ReportController extends Controller
                             }
                         }
                     } else {
-                        foreach ($decoded as $componentId => $data) {
-                            $componentId = (string) $componentId;
+                        foreach ($decoded as $key => $data) {
+                            $keyStr = (string) $key;
+                            if (ctype_digit($keyStr) && $componentsList->has((int) $keyStr)) {
+                                $componentId = (string) $componentsList->get((int) $keyStr)->id;
+                            } else {
+                                $componentId = $keyStr;
+                            }
                             $diagnosis[$componentId] = is_array($data) ? (string) ($data['text'] ?? '') : (string) $data;
                         }
                     }
@@ -762,8 +767,13 @@ class ReportController extends Controller
                             }
                         }
                     } else {
-                        foreach ($decoded as $componentId => $data) {
-                            $componentId = (string) $componentId;
+                        foreach ($decoded as $key => $data) {
+                            $keyStr = (string) $key;
+                            if (ctype_digit($keyStr) && $componentsList->has((int) $keyStr)) {
+                                $componentId = (string) $componentsList->get((int) $keyStr)->id;
+                            } else {
+                                $componentId = $keyStr;
+                            }
                             $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($x) => trim((string)$x) !== '')) : [];
                         }
                     }
