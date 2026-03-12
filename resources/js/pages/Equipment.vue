@@ -102,7 +102,7 @@
                         </div>
                         <div class="mt-3 w-full flex items-center justify-between gap-2">
                             <div v-if="authStore.hasPermission('export equipment')">
-                                <button
+                                <!-- <button
                                     type="button"
                                     @click="exportExcel"
                                     class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
@@ -110,7 +110,7 @@
                                 >
                                     <i class="fas fa-file-excel mr-2"></i>
                                     {{ exporting ? 'Exportando...' : 'Generar Excel' }}
-                                </button>
+                                </button> -->
                             </div>
                             <div class="flex gap-2 ml-auto">
                                 <button
