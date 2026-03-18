@@ -330,7 +330,7 @@ class EquipmentController extends Controller
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Equipos');
-        $headers = [
+        $baseHeaders = [
             'Empresa',
             'Nombre',
             'Proceso',
@@ -338,17 +338,27 @@ class EquipmentController extends Controller
             'Ubicación',
             'Código',
             'TAG',
-            'Componentes'
         ];
-        $sheet->fromArray($headers, null, 'A1');
-        $sheet->getStyle('A1:' . Coordinate::stringFromColumnIndex(count($headers)) . '1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:H1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF059669');
-        $sheet->getStyle('A1:H1')->getFont()->getColor()->setARGB('FFFFFFFF');
-        for ($i = 1; $i <= count($headers); $i++) {
+        $sheet->fromArray($baseHeaders, null, 'A1');
+        $maxComponents = 0;
+        foreach ($equipments as $e) {
+            $cnt = $e->components->count();
+            if ($cnt > $maxComponents) $maxComponents = $cnt;
+        }
+        if ($maxComponents < 1) $maxComponents = 1;
+        $startIdx = count($baseHeaders) + 1;
+        $endIdx = $startIdx + $maxComponents - 1;
+        for ($i = 0; $i < $maxComponents; $i++) {
+            $col = Coordinate::stringFromColumnIndex($startIdx + $i);
+            $sheet->setCellValue($col . '1', 'Componente ' . ($i + 1));
+        }
+        $lastHeaderCol = Coordinate::stringFromColumnIndex($endIdx);
+        $sheet->getStyle('A1:' . $lastHeaderCol . '1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:' . $lastHeaderCol . '1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF059669');
+        $sheet->getStyle('A1:' . $lastHeaderCol . '1')->getFont()->getColor()->setARGB('FFFFFFFF');
+        for ($i = 1; $i <= $endIdx; $i++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
         }
-        // Columna de componentes con ancho amplio
-        $sheet->getColumnDimension('H')->setWidth(80);
         $row = 2;
         foreach ($equipments as $e) {
             $sheet->setCellValue("A{$row}", (string) ($e->company->name ?? ''));
@@ -358,14 +368,14 @@ class EquipmentController extends Controller
             $sheet->setCellValue("E{$row}", (string) ($e->ubication->name ?? ''));
             $sheet->setCellValue("F{$row}", (string) ($e->code ?? ''));
             $sheet->setCellValue("G{$row}", (string) ($e->tag ?? ''));
-            $compNames = [];
+            $i = 0;
             foreach ($e->components as $c) {
+                if ($i >= $maxComponents) break;
                 $t = trim((string) ($c->componentType->name ?? ''));
-                if ($t !== '') {
-                    $compNames[] = $t;
-                }
+                $col = Coordinate::stringFromColumnIndex($startIdx + $i);
+                $sheet->setCellValue($col . $row, $t);
+                $i++;
             }
-            $sheet->setCellValue("H{$row}", implode('; ', $compNames));
             $row++;
         }
         $writer = new Xlsx($spreadsheet);
