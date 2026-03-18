@@ -24,6 +24,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class ReportController extends Controller
 {
@@ -714,10 +715,10 @@ class ReportController extends Controller
         for ($i = 1; $i <= count($headers); $i++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
         }
-        $sheet->getColumnDimension('H')->setWidth(28); // Tipo de componente
-        $sheet->getColumnDimension('I')->setWidth(18); // Marca
-        $sheet->getColumnDimension('J')->setWidth(100); // Diagnóstico
-        $sheet->getColumnDimension('O')->setWidth(100); // Recomendaciones generales
+        $sheet->getColumnDimension('H')->setWidth(28);
+        $sheet->getColumnDimension('I')->setWidth(18);
+        $sheet->getColumnDimension('J')->setWidth(50);
+        $sheet->getColumnDimension('O')->setWidth(50);
 
         $row = 2;
         foreach ($reports as $r) {
@@ -782,9 +783,9 @@ class ReportController extends Controller
                     }
                 }
             }
-            // Recs generales en una sola línea (sin saltos)
+            // Recs generales en formato multilínea con separación
             $general = is_array($r->general_recommendations) ? $r->general_recommendations : self::decodeJsonField($r->general_recommendations);
-            $generalText = implode('; ', array_map(fn ($s) => $toSingleLine($s), $general));
+            $generalText = implode("\n", array_map(fn ($s) => '• ' . $toMultiline($s), $general));
 
             $components = $r->equipment->components ?? collect();
             if ($components->isEmpty()) {
@@ -826,7 +827,7 @@ class ReportController extends Controller
                         $data = $rawDiagnosis[$index];
                         $diagSource = is_array($data) ? (string) ($data['text'] ?? '') : (string) $data;
                     }
-                    $diag = $toSingleLine($diagSource);
+                    $diag = $toMultiline($diagSource);
                     $recsSource = [];
                     if (isset($recommendations[$cid])) {
                         $recsSource = $recommendations[$cid];
@@ -867,6 +868,8 @@ class ReportController extends Controller
         }
         $sheet->getStyle("J2:J{$row}")->getAlignment()->setWrapText(false); // Diagnóstico
         $sheet->getStyle("O2:O{$row}")->getAlignment()->setWrapText(false); // Recs generales
+        $sheet->getStyle("J2:J{$row}")->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
+        $sheet->getStyle("O2:O{$row}")->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
 
         $writer = new Xlsx($spreadsheet);
         $filename = 'Informes_Listado_' . now()->format('Ymd') . '.xlsx';
