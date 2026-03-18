@@ -17,7 +17,7 @@ class ReportNumberConverter
     public static function fromId(int $id): string
     {
         $numeric = str_pad((string) $id, static::$padding, '0', STR_PAD_LEFT);
-        return 'No: ' . static::$prefix . '-' . $numeric;
+        return 'No. ' . static::$prefix . '-' . $numeric;
     }
 
     /**
