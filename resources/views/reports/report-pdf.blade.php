@@ -15,7 +15,7 @@
             padding: 0;
             color: #1a1a1a;
             font-size: 12pt;
-            line-height: 1.5;
+            line-height: 1.3;
         }
 
         .report-content {
@@ -81,13 +81,13 @@
 
         .equipment-top-table .equipment-data-cell {
             width: 55%;
-            vertical-align: middle;
+            vertical-align: top;
             padding: 0 20px 0 0;
         }
 
         .equipment-top-table .equipment-image-cell {
             width: 45%;
-            vertical-align: middle;
+            vertical-align: top;
             padding: 0 0 0 12px;
             text-align: right;
         }
@@ -98,8 +98,8 @@
         }
 
         .equipment-data-div .data-line {
-            margin: 0 0 14px 0;
-            line-height: 1.6;
+            margin: 0 0 10px 0;
+            line-height: 1.3;
         }
 
         .equipment-data-div .data-line:last-child {
@@ -147,15 +147,15 @@
             font-size: 12pt;
             color: #1a1a1a;
             margin: 0 0 8px 0;
-            line-height: 1.5;
+            line-height: 1.3;
         }
 
         /* Especificidad mayor que .section p para que los valores queden en 8pt */
         .section p.component-spec-paragraph {
             font-size: 8pt;
             color: #1a1a1a;
-            margin: 0 0 12px 0;
-            line-height: 1.5;
+            margin: 0 0 8px 0;
+            line-height: 1.3;
             text-align: justify;
         }
 
@@ -178,10 +178,10 @@
         }
 
         .section p {
-            margin: 0 0 12px 0;
+            margin: 0 0 8px 0;
             text-align: justify;
             font-size: 12pt;
-            line-height: 1.5;
+            line-height: 1.3;
             color: #1a1a1a;
         }
 
@@ -234,20 +234,20 @@
 
         .section .diagnosis-label {
             font-weight: bold;
-            margin: 12px 0 6px 0;
+            margin: 8px 0 2px 0;
             font-size: 9pt;
             color: #1a1a1a;
         }
 
         .section .diagnosis-text {
             font-size: 8pt;
-            margin: 0 0 10px 0;
+            margin: 0 0 4px 0;
             text-align: justify;
             white-space: pre-wrap;
         }
         .section .diagnosis-text p,
         .section .diagnosis-text div {
-            margin: 0 0 6px 0;
+            margin: 0;
         }
 
         .section .rec-label {
@@ -263,7 +263,7 @@
         .section .rec-list li {
             margin-bottom: 6px;
             text-align: justify;
-            line-height: 1.5;
+            line-height: 1.3;
             color: #1a1a1a;
             white-space: pre-wrap;
         }
@@ -283,7 +283,7 @@
         .recommendations-list li {
             margin-bottom: 6px;
             text-align: justify;
-            line-height: 1.5;
+            line-height: 1.3;
             color: #1a1a1a;
             white-space: pre-wrap;
         }
@@ -309,7 +309,7 @@
         .recommendation-general-text {
             margin: 0;
             font-size: 8pt;
-            line-height: 1.5;
+            line-height: 1.3;
             color: #1a1a1a;
             text-align: justify;
         }
@@ -334,7 +334,7 @@
 
         .recommendation-general .rec-list li {
             margin-bottom: 6px;
-            line-height: 1.5;
+            line-height: 1.3;
             color: #1a1a1a;
             text-align: justify;
         }
@@ -431,7 +431,7 @@
     <div class="report-content">
         {{-- Tabla: datos izquierda, imagen derecha --}}
         <table class="equipment-top-table" cellpadding="0" cellspacing="0">
-            <tr style="height: 260px;">
+            <tr>
                 <td class="equipment-data-cell">
                     <div class="equipment-data-div">
                         <div class="data-line"><strong>INFORME:</strong> {{ $reportData->consecutivo ?? '—' }}</div>
@@ -492,7 +492,7 @@
                     @php
                         $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p><div>');
                         $diagnosisHtml = nl2br($diagnosisHtml, false);
-                        $diagnosisHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br><div style="height:6px;"></div>', $diagnosisHtml);
+                        $diagnosisHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br>', $diagnosisHtml);
                     @endphp
                     <div class="diagnosis-text">{!! $diagnosisHtml !!}</div>
                 @endif
@@ -508,7 +508,7 @@
                             @php
                                 $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
                                 $recHtml = nl2br($recHtml, false);
-                                $recHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br><div style="height:6px;"></div>', $recHtml);
+                                $recHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br>', $recHtml);
                             @endphp
                             <li>{!! $recHtml !!}</li>
                         @endforeach
@@ -552,7 +552,7 @@
                         @php
                             $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
                             $recHtml = nl2br($recHtml, false);
-                            $recHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br><div style="height:6px;"></div>', $recHtml);
+                            $recHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br>', $recHtml);
                         @endphp
                         <li>{!! $recHtml !!}</li>
                     @endforeach
