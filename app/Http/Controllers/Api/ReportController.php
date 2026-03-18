@@ -688,13 +688,14 @@ class ReportController extends Controller
         $headers = [
             'Informe',
             'Empresa',
-            'Equipo',
-            'Tipo de equipo',
             'Ubicación',
             'Proceso',
+            'Tipo de equipo',
+            'Equipo',
             'Fecha de medición',
             'Tipo de componente',
             'Marca',
+            'Diagnóstico',
             'Condición',
             'Prioridad',
             'Mecanismo de falla',
@@ -713,9 +714,10 @@ class ReportController extends Controller
         for ($i = 1; $i <= count($headers); $i++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
         }
-        $sheet->getColumnDimension('H')->setWidth(28);
-        $sheet->getColumnDimension('I')->setWidth(18);
-        $sheet->getColumnDimension('N')->setWidth(100);
+        $sheet->getColumnDimension('H')->setWidth(28); // Tipo de componente
+        $sheet->getColumnDimension('I')->setWidth(18); // Marca
+        $sheet->getColumnDimension('J')->setWidth(100); // Diagnóstico
+        $sheet->getColumnDimension('O')->setWidth(100); // Recomendaciones generales
 
         $row = 2;
         foreach ($reports as $r) {
@@ -788,30 +790,31 @@ class ReportController extends Controller
             if ($components->isEmpty()) {
                 $sheet->setCellValue("A{$row}", (string) ($r->consecutivo ?? $r->id));
                 $sheet->setCellValue("B{$row}", (string) ($r->equipment->company->name ?? ''));
-                $sheet->setCellValue("C{$row}", (string) ($r->equipment->name ?? ''));
-                $sheet->setCellValue("D{$row}", (string) ($r->equipment->equipmentType->name ?? ''));
-                $sheet->setCellValue("E{$row}", (string) ($r->equipment->ubication->name ?? ''));
-                $sheet->setCellValue("F{$row}", (string) ($r->equipment->process->name ?? ''));
+                $sheet->setCellValue("C{$row}", (string) ($r->equipment->ubication->name ?? ''));
+                $sheet->setCellValue("D{$row}", (string) ($r->equipment->process->name ?? ''));
+                $sheet->setCellValue("E{$row}", (string) ($r->equipment->equipmentType->name ?? ''));
+                $sheet->setCellValue("F{$row}", (string) ($r->equipment->name ?? ''));
                 $sheet->setCellValue("G{$row}", $r->measurement_date ? $r->measurement_date->format('Y-m-d') : '');
                 $sheet->setCellValue("H{$row}", '');
                 $sheet->setCellValue("I{$row}", '');
-                $sheet->setCellValue("J{$row}", (string) ($r->condition->name ?? ''));
-                $sheet->setCellValue("K{$row}", (string) ($r->priority->name ?? $r->priority));
-                $sheet->setCellValue("L{$row}", (string) ($r->mechanismFail->name ?? ''));
-                $sheet->setCellValue("M{$row}", (string) ($r->componentFail->name ?? ''));
-                $sheet->setCellValue("N{$row}", $generalText);
-                $sheet->setCellValue("O{$row}", (string) ($r->ot_created ? 'Sí' : 'No'));
-                $sheet->setCellValue("P{$row}", (string) ($r->status_ot ?? ''));
-                $sheet->setCellValue("Q{$row}", (string) ($r->execution_date ? $r->execution_date->format('Y-m-d') : ''));
-                $sheet->setCellValue("R{$row}", (string) ($r->analist->name ?? ''));
+                $sheet->setCellValue("J{$row}", ''); // Diagnóstico
+                $sheet->setCellValue("K{$row}", (string) ($r->condition->name ?? ''));
+                $sheet->setCellValue("L{$row}", (string) ($r->priority->name ?? $r->priority));
+                $sheet->setCellValue("M{$row}", (string) ($r->mechanismFail->name ?? ''));
+                $sheet->setCellValue("N{$row}", (string) ($r->componentFail->name ?? ''));
+                $sheet->setCellValue("O{$row}", $generalText);
+                $sheet->setCellValue("P{$row}", (string) ($r->ot_created ? 'Sí' : 'No'));
+                $sheet->setCellValue("Q{$row}", (string) ($r->status_ot ?? ''));
+                $sheet->setCellValue("R{$row}", (string) ($r->execution_date ? $r->execution_date->format('Y-m-d') : ''));
+                $sheet->setCellValue("S{$row}", (string) ($r->analist->name ?? ''));
                 $condBg = $toArgb($r->condition->color ?? '', 'FFE5E7EB');
                 $condFg = $toArgb($r->condition->text_color ?? '', 'FF111827');
-                $sheet->getStyle("J{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($condBg);
-                $sheet->getStyle("J{$row}")->getFont()->getColor()->setARGB($condFg);
+                $sheet->getStyle("K{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($condBg);
+                $sheet->getStyle("K{$row}")->getFont()->getColor()->setARGB($condFg);
                 $priBg = $toArgb($r->priority->color ?? ($r->priority['color'] ?? ''), 'FFE5E7EB');
                 $priFg = $toArgb($r->priority->text_color ?? ($r->priority['text_color'] ?? ''), 'FF111827');
-                $sheet->getStyle("K{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($priBg);
-                $sheet->getStyle("K{$row}")->getFont()->getColor()->setARGB($priFg);
+                $sheet->getStyle("L{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($priBg);
+                $sheet->getStyle("L{$row}")->getFont()->getColor()->setARGB($priFg);
                 $row++;
             } else {
                 foreach ($components as $index => $component) {
@@ -833,35 +836,37 @@ class ReportController extends Controller
                     $recsText = implode('; ', array_map(fn ($s) => $toSingleLine($s), $recsSource));
                     $sheet->setCellValue("A{$row}", (string) ($r->consecutivo ?? $r->id));
                     $sheet->setCellValue("B{$row}", (string) ($r->equipment->company->name ?? ''));
-                    $sheet->setCellValue("C{$row}", (string) ($r->equipment->name ?? ''));
-                    $sheet->setCellValue("D{$row}", (string) ($r->equipment->equipmentType->name ?? ''));
-                    $sheet->setCellValue("E{$row}", (string) ($r->equipment->ubication->name ?? ''));
-                    $sheet->setCellValue("F{$row}", (string) ($r->equipment->process->name ?? ''));
+                    $sheet->setCellValue("C{$row}", (string) ($r->equipment->ubication->name ?? ''));
+                    $sheet->setCellValue("D{$row}", (string) ($r->equipment->process->name ?? ''));
+                    $sheet->setCellValue("E{$row}", (string) ($r->equipment->equipmentType->name ?? ''));
+                    $sheet->setCellValue("F{$row}", (string) ($r->equipment->name ?? ''));
                     $sheet->setCellValue("G{$row}", $r->measurement_date ? $r->measurement_date->format('Y-m-d') : '');
                     $sheet->setCellValue("H{$row}", (string) ($component->componentType->name ?? ''));
                     $sheet->setCellValue("I{$row}", (string) ($component->brand->name ?? ''));
-                    $sheet->setCellValue("J{$row}", (string) ($r->condition->name ?? ''));
-                    $sheet->setCellValue("K{$row}", (string) ($r->priority->name ?? $r->priority));
-                    $sheet->setCellValue("L{$row}", (string) ($r->mechanismFail->name ?? ''));
-                    $sheet->setCellValue("M{$row}", (string) ($r->componentFail->name ?? ''));
-                    $sheet->setCellValue("N{$row}", $generalText);
-                    $sheet->setCellValue("O{$row}", (string) ($r->ot_created ? 'Sí' : 'No'));
-                    $sheet->setCellValue("P{$row}", (string) ($r->status_ot ?? ''));
-                    $sheet->setCellValue("Q{$row}", (string) ($r->execution_date ? $r->execution_date->format('Y-m-d') : ''));
-                    $sheet->setCellValue("R{$row}", (string) ($r->analist->name ?? ''));
+                    $sheet->setCellValue("J{$row}", (string) $diag);
+                    $sheet->setCellValue("K{$row}", (string) ($r->condition->name ?? ''));
+                    $sheet->setCellValue("L{$row}", (string) ($r->priority->name ?? $r->priority));
+                    $sheet->setCellValue("M{$row}", (string) ($r->mechanismFail->name ?? ''));
+                    $sheet->setCellValue("N{$row}", (string) ($r->componentFail->name ?? ''));
+                    $sheet->setCellValue("O{$row}", $generalText);
+                    $sheet->setCellValue("P{$row}", (string) ($r->ot_created ? 'Sí' : 'No'));
+                    $sheet->setCellValue("Q{$row}", (string) ($r->status_ot ?? ''));
+                    $sheet->setCellValue("R{$row}", (string) ($r->execution_date ? $r->execution_date->format('Y-m-d') : ''));
+                    $sheet->setCellValue("S{$row}", (string) ($r->analist->name ?? ''));
                     $condBg = $toArgb($r->condition->color ?? '', 'FFE5E7EB');
                     $condFg = $toArgb($r->condition->text_color ?? '', 'FF111827');
-                    $sheet->getStyle("J{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($condBg);
-                    $sheet->getStyle("J{$row}")->getFont()->getColor()->setARGB($condFg);
+                    $sheet->getStyle("K{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($condBg);
+                    $sheet->getStyle("K{$row}")->getFont()->getColor()->setARGB($condFg);
                     $priBg = $toArgb($r->priority->color ?? ($r->priority['color'] ?? ''), 'FFE5E7EB');
                     $priFg = $toArgb($r->priority->text_color ?? ($r->priority['text_color'] ?? ''), 'FF111827');
-                    $sheet->getStyle("K{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($priBg);
-                    $sheet->getStyle("K{$row}")->getFont()->getColor()->setARGB($priFg);
+                    $sheet->getStyle("L{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($priBg);
+                    $sheet->getStyle("L{$row}")->getFont()->getColor()->setARGB($priFg);
                     $row++;
                 }
             }
         }
-        $sheet->getStyle("N2:N{$row}")->getAlignment()->setWrapText(false);
+        $sheet->getStyle("J2:J{$row}")->getAlignment()->setWrapText(false); // Diagnóstico
+        $sheet->getStyle("O2:O{$row}")->getAlignment()->setWrapText(false); // Recs generales
 
         $writer = new Xlsx($spreadsheet);
         $filename = 'Informes_Listado_' . now()->format('Ymd') . '.xlsx';
