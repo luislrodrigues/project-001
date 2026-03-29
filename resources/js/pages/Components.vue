@@ -39,63 +39,51 @@
                                 <i class="fas fa-building mr-2 text-gray-400"></i>
                                 Empresa
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.company_id"
+                                :options="companies"
+                                allLabel="Todas"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todas</option>
-                                <option v-for="company in companies" :key="company.id" :value="company.id">
-                                    {{ company.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-cog mr-2 text-gray-400"></i>
                                 Equipo
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.equipment_id"
+                                :options="filteredEquipments"
+                                allLabel="Todos"
                                 @change="fetchComponents"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="eq in filteredEquipments" :key="eq.id" :value="eq.id">
-                                    {{ eq.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-snowplow mr-2 text-gray-400"></i>
                                 Tipo Componente
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.component_type_id"
+                                :options="componentTypes"
+                                allLabel="Todos"
                                 @change="fetchComponents"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="type in componentTypes" :key="type.id" :value="type.id">
-                                    {{ type.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-tag mr-2 text-gray-400"></i>
                                 Marca
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.brand_id"
+                                :options="brands"
+                                allLabel="Todas"
                                 @change="fetchComponents"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todas</option>
-                                <option v-for="brand in brands" :key="brand.id" :value="brand.id">
-                                    {{ brand.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-shrink-0 flex gap-2">
                             <button
@@ -240,6 +228,7 @@ import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
+import Select2 from '../components/Select2.vue';
 
 const STORAGE_KEY = 'components-list-filters';
 

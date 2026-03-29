@@ -67,15 +67,12 @@
                         <div class="flex flex-wrap items-end gap-3">
                             <div class="flex-1 min-w-[200px]">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Equipo a copiar</label>
-                                <select
+                                <Select2
                                     v-model="copyFromEquipmentId"
+                                    :options="existingEquipmentsOptions"
+                                    allLabel="Ninguno (formulario vacío)"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
-                                >
-                                    <option value="">Ninguno (formulario vacío)</option>
-                                    <option v-for="eq in existingEquipments" :key="eq.id" :value="eq.id">
-                                        {{ eq.name }} {{ eq.equipment_type && eq.equipment_type.name ? `(${eq.equipment_type.name})` : '' }}
-                                    </option>
-                                </select>
+                                />
                             </div>
                             <button
                                 type="button"
@@ -129,16 +126,13 @@
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <div class="flex space-x-2 items-stretch">
-                                    <select
+                                    <Select2
                                         v-model="form.equipment_type_id"
+                                        :options="equipmentTypes"
+                                        allLabel="Seleccione"
                                         required
                                         class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    >
-                                        <option value="">Seleccione</option>
-                                        <option v-for="type in equipmentTypes" :key="type.id" :value="type.id">
-                                            {{ type.name }}
-                                        </option>
-                                    </select>
+                                    />
                                     <button
                                         type="button"
                                         @click="showEquipmentTypeModal = true"
@@ -159,16 +153,13 @@
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <div class="flex space-x-2 items-stretch">
-                                    <select
+                                    <Select2
                                         v-model="form.process_id"
+                                        :options="processes"
+                                        allLabel="Seleccione"
                                         required
                                         class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    >
-                                        <option value="">Seleccione</option>
-                                        <option v-for="process in processes" :key="process.id" :value="process.id">
-                                            {{ process.name }}
-                                        </option>
-                                    </select>
+                                    />
                                     <button
                                         type="button"
                                         @click="showProcessModal = true"
@@ -189,16 +180,13 @@
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <div class="flex space-x-2 items-stretch">
-                                    <select
+                                    <Select2
                                         v-model="form.ubication_id"
+                                        :options="ubications"
+                                        allLabel="Seleccione"
                                         required
                                         class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    >
-                                        <option value="">Seleccione</option>
-                                        <option v-for="ubication in ubications" :key="ubication.id" :value="ubication.id">
-                                            {{ ubication.name }}
-                                        </option>
-                                    </select>
+                                    />
                                     <button
                                         type="button"
                                         @click="showUbicationModal = true"
@@ -248,16 +236,13 @@
                                     Empresa
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
-                                <select
+                                <Select2
                                     v-model="form.company_id"
+                                    :options="companies"
+                                    allLabel="Seleccione"
                                     required
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione</option>
-                                    <option v-for="company in companies" :key="company.id" :value="company.id">
-                                        {{ company.name }}
-                                    </option>
-                                </select>
+                                />
                                 <p v-if="errors.company_id" class="mt-1 text-sm text-red-600">{{ errors.company_id }}</p>
                             </div>
 
@@ -360,29 +345,23 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de componente <span class="text-red-500">*</span></label>
-                                        <select
+                                        <Select2
                                             v-model="comp.component_type_id"
-                                            @change="loadComponentTypeFieldsForRow(compIndex)"
+                                            :options="componentTypes"
+                                            allLabel="Seleccione"
+                                            @change="() => loadComponentTypeFieldsForRow(compIndex)"
                                             class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
-                                        >
-                                            <option value="">Seleccione</option>
-                                            <option v-for="type in componentTypes" :key="type.id" :value="type.id">
-                                                {{ type.name }}
-                                            </option>
-                                        </select>
+                                        />
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Marca <span class="text-red-500">*</span></label>
                                         <div class="flex space-x-2 items-stretch">
-                                            <select
+                                            <Select2
                                                 v-model="comp.brand_id"
+                                                :options="brands"
+                                                allLabel="Seleccione"
                                                 class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-4 py-2.5"
-                                            >
-                                                <option value="">Seleccione</option>
-                                                <option v-for="brand in brands" :key="brand.id" :value="brand.id">
-                                                    {{ brand.name }}
-                                                </option>
-                                            </select>
+                                            />
                                             <button
                                                 type="button"
                                                 @click="openBrandModal(compIndex)"
@@ -407,26 +386,24 @@
                                                 <span v-if="field.unit" class="text-xs text-gray-500">({{ field.unit }})</span>
                                                 <span v-if="field.is_required" class="text-red-500">*</span>
                                             </label>
-                                            <select
+                                            <Select2
                                                 v-if="field.type === 'select' || field.type === 'multiselect'"
                                                 v-model="comp.field_values[field.id]"
+                                                :options="field.options || []"
+                                                labelKey="label"
+                                                valueKey="value"
+                                                allLabel="Seleccione"
                                                 :multiple="field.type === 'multiselect'"
                                                 class="block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                                            >
-                                                <option value="">Seleccione</option>
-                                                <option v-for="opt in (field.options || [])" :key="opt.id" :value="opt.value">
-                                                    {{ opt.label || opt.value }}
-                                                </option>
-                                            </select>
-                                            <select
+                                            />
+                                            <Select2
                                                 v-else-if="field.type === 'boolean'"
                                                 v-model="comp.field_values[field.id]"
+                                                :options="yesNoOptions"
+                                                allLabel="Seleccione"
+                                                :search="false"
                                                 class="block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                                            >
-                                                <option value="">Seleccione</option>
-                                                <option value="1">Sí</option>
-                                                <option value="0">No</option>
-                                            </select>
+                                            />
                                             <input
                                                 v-else-if="field.type === 'date' || field.type === 'datetime'"
                                                 :type="field.type === 'date' ? 'date' : 'datetime-local'"
@@ -511,12 +488,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import CreateSelectModal from '../../components/CreateSelectModal.vue';
+import Select2 from '../../components/Select2.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -553,6 +531,18 @@ const currentComponentIndexForBrand = ref(null);
 const existingEquipments = ref([]);
 const copyFromEquipmentId = ref('');
 const copyLoading = ref(false);
+
+const existingEquipmentsOptions = computed(() => {
+    return (existingEquipments.value || []).map((eq) => ({
+        id: eq.id,
+        name: eq.name + (eq.equipment_type?.name ? ` (${eq.equipment_type.name})` : ''),
+    }));
+});
+
+const yesNoOptions = [
+    { id: '1', name: 'Sí' },
+    { id: '0', name: 'No' },
+];
 
 onMounted(async () => {
     await loadCatalogs();

@@ -47,16 +47,13 @@
                                     Equipo
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
-                                <select
+                                <Select2
                                     v-model="form.equipment_id"
+                                    :options="equipments"
+                                    allLabel="Seleccione"
                                     required
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione</option>
-                                    <option v-for="eq in equipments" :key="eq.id" :value="eq.id">
-                                        {{ eq.name }}
-                                    </option>
-                                </select>
+                                />
                                 <p v-if="errors.equipment_id" class="mt-1 text-sm text-red-600">{{ errors.equipment_id }}</p>
                             </div>
 
@@ -66,17 +63,14 @@
                                     Tipo Componente
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
-                                <select
+                                <Select2
                                     v-model="form.component_type_id"
-                                    @change="loadComponentTypeFields"
+                                    :options="componentTypes"
+                                    allLabel="Seleccione"
                                     required
+                                    @change="loadComponentTypeFields"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione</option>
-                                    <option v-for="type in componentTypes" :key="type.id" :value="type.id">
-                                        {{ type.name }}
-                                    </option>
-                                </select>
+                                />
                                 <p v-if="errors.component_type_id" class="mt-1 text-sm text-red-600">{{ errors.component_type_id }}</p>
                             </div>
 
@@ -87,16 +81,13 @@
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <div class="flex space-x-2 items-stretch">
-                                    <select
+                                    <Select2
                                         v-model="form.brand_id"
+                                        :options="brands"
+                                        allLabel="Seleccione"
                                         required
                                         class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                    >
-                                        <option value="">Seleccione</option>
-                                        <option v-for="brand in brands" :key="brand.id" :value="brand.id">
-                                            {{ brand.name }}
-                                        </option>
-                                    </select>
+                                    />
                                     <button
                                         type="button"
                                         @click="showBrandModal = true"
@@ -131,31 +122,29 @@
                                 </label>
 
                                 <!-- Valores por índice para que cada input coincida con su campo -->
-                                <select
+                                <Select2
                                     v-if="field.type === 'select' || field.type === 'multiselect'"
                                     :id="`field_${field.id}`"
                                     v-model="form.additionalFieldValues[index]"
+                                    :options="field.options"
+                                    labelKey="label"
+                                    valueKey="value"
+                                    allLabel="Seleccione una opción"
                                     :multiple="field.type === 'multiselect'"
                                     :required="field.is_required"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione una opción</option>
-                                    <option v-for="option in field.options" :key="option.id" :value="option.value">
-                                        {{ option.label || option.value }}
-                                    </option>
-                                </select>
+                                />
 
-                                <select
+                                <Select2
                                     v-else-if="field.type === 'boolean'"
                                     :id="`field_${field.id}`"
                                     v-model="form.additionalFieldValues[index]"
+                                    :options="yesNoOptions"
+                                    allLabel="Seleccione"
+                                    :search="false"
                                     :required="field.is_required"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione</option>
-                                    <option value="1">Sí</option>
-                                    <option value="0">No</option>
-                                </select>
+                                />
 
                                 <input
                                     v-else-if="field.type === 'date' || field.type === 'datetime'"
@@ -239,6 +228,7 @@ import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import CreateSelectModal from '../../components/CreateSelectModal.vue';
+import Select2 from '../../components/Select2.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -261,6 +251,11 @@ const loading = ref(true);
 const saving = ref(false);
 const errors = ref({});
 const showBrandModal = ref(false);
+
+const yesNoOptions = [
+    { id: '1', name: 'Sí' },
+    { id: '0', name: 'No' },
+];
 
 onMounted(async () => {
     loading.value = true;

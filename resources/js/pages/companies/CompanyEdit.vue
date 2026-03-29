@@ -56,15 +56,12 @@
                             Segmento de la empresa
                         </label>
                         <div class="flex space-x-2 items-stretch">
-                            <select
+                            <Select2
                                 v-model="form.company_segment_id"
+                                :options="companySegments"
+                                allLabel="Sin segmento"
                                 class="flex-1 min-w-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 transition-all duration-200"
-                            >
-                                <option :value="null">Sin segmento</option>
-                                <option v-for="seg in companySegments" :key="seg.id" :value="seg.id">
-                                    {{ seg.name }}
-                                </option>
-                            </select>
+                            />
                             <button
                                 type="button"
                                 @click="showSegmentModal = true"
@@ -117,6 +114,7 @@ import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import CreateSelectModal from '../../components/CreateSelectModal.vue';
+import Select2 from '../../components/Select2.vue';
 
 const router = useRouter();
 const route = useRoute();

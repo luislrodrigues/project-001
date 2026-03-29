@@ -1,6 +1,6 @@
 <template>
     <select ref="selectEl" :disabled="disabled" :multiple="multiple" class="w-full">
-        <option v-if="!multiple" value="">{{ allLabel }}</option>
+        <option v-if="!multiple && includeEmptyOption" value="">{{ allLabel }}</option>
         <option v-for="opt in normalizedOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
         </option>
@@ -28,6 +28,14 @@ const props = defineProps({
     allLabel: {
         type: String,
         default: 'Todos',
+    },
+    includeEmptyOption: {
+        type: Boolean,
+        default: true,
+    },
+    placeholder: {
+        type: String,
+        default: '',
     },
     multiple: {
         type: Boolean,
@@ -111,6 +119,7 @@ const init = async () => {
     $el.select2({
         width: '100%',
         allowClear: false,
+        placeholder: props.placeholder || (props.includeEmptyOption ? props.allLabel : undefined),
         minimumResultsForSearch: props.search ? 0 : Infinity,
     });
 

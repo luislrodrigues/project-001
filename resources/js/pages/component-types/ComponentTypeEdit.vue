@@ -153,21 +153,13 @@
                                             Tipo
                                             <span class="text-red-500 ml-1">*</span>
                                         </label>
-                                        <select
+                                        <Select2
                                             v-model="field.type"
-                                            required
+                                            :options="fieldTypeOptions"
+                                            allLabel="Seleccione"
+                                            :search="false"
                                             class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                        >
-                                            <option value="">Seleccione</option>
-                                            <option value="text">📝 Texto</option>
-                                            <option value="numeric">🔢 Numérico</option>
-                                            <option value="textarea">📄 Texto largo</option>
-                                            <option value="select">☑️ Selección</option>
-                                            <option value="multiselect">☑️ Selección Múltiple</option>
-                                            <option value="date">📅 Fecha</option>
-                                            <option value="datetime">📅 Fecha y Hora</option>
-                                            <option value="boolean">✓ Sí/No</option>
-                                        </select>
+                                        />
                                         <p v-if="errors[`fields.${index}.type`]" class="mt-1 text-xs text-red-600">
                                             {{ errors[`fields.${index}.type`] }}
                                         </p>
@@ -285,6 +277,7 @@ import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import FieldOptionsManager from '../../components/FieldOptionsManager.vue';
+import Select2 from '../../components/Select2.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -301,6 +294,17 @@ const errors = ref({});
 const showOptionsModal = ref(false);
 const currentFieldIndex = ref(null);
 const currentFieldOptions = ref([]);
+
+const fieldTypeOptions = [
+    { id: 'text', name: '📝 Texto' },
+    { id: 'numeric', name: '🔢 Numérico' },
+    { id: 'textarea', name: '📄 Texto largo' },
+    { id: 'select', name: '☑️ Selección' },
+    { id: 'multiselect', name: '☑️ Selección Múltiple' },
+    { id: 'date', name: '📅 Fecha' },
+    { id: 'datetime', name: '📅 Fecha y Hora' },
+    { id: 'boolean', name: '✓ Sí/No' },
+];
 
 onMounted(async () => {
     await loadComponentType();

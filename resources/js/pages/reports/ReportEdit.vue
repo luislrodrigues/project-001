@@ -75,16 +75,13 @@
                                     <i class="fas fa-building mr-2 text-blue-600"></i>
                                     Empresa
                                 </label>
-                                <select
+                                <Select2
                                     v-model="filterCompanyId"
+                                    :options="companies"
+                                    allLabel="Seleccione empresa"
                                     @change="onCompanyFilterChange"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione empresa</option>
-                                    <option v-for="c in companies" :key="c.id" :value="c.id">
-                                        {{ c.name }}
-                                    </option>
-                                </select>
+                                />
                                 <p class="mt-1 text-xs text-gray-500">Filtra los equipos por empresa</p>
                             </div>
                             <!-- Equipo -->
@@ -94,17 +91,14 @@
                                     Equipo
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
-                                <select
+                                <Select2
                                     v-model="form.equipment_id"
-                                    @change="loadEquipmentData"
+                                    :options="equipmentSelectOptions"
+                                    allLabel="Seleccione"
                                     required
+                                    @change="loadEquipmentData"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione</option>
-                                    <option v-for="eq in filteredEquipments" :key="eq.id" :value="eq.id">
-                                        {{ eq.name }}{{ eq.company?.name ? ` (${eq.company.name})` : '' }}
-                                    </option>
-                                </select>
+                                />
                                 <p v-if="errors.equipment_id" class="mt-1 text-sm text-red-600">{{ errors.equipment_id }}</p>
                             </div>
 
@@ -174,16 +168,13 @@
                                     Analista
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
-                                <select
+                                <Select2
                                     v-model="form.analist_id"
+                                    :options="users"
+                                    allLabel="Seleccione"
                                     required
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione</option>
-                                    <option v-for="user in users" :key="user.id" :value="user.id">
-                                        {{ user.name }}
-                                    </option>
-                                </select>
+                                />
                                 <p v-if="errors.analist_id" class="mt-1 text-sm text-red-600">{{ errors.analist_id }}</p>
                             </div>
 
@@ -386,10 +377,13 @@
                                     Condición <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <div class="flex space-x-2 items-stretch">
-                                    <select v-model="form.condition_id" required class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
-                                        <option value="">Seleccione</option>
-                                        <option v-for="condition in conditions" :key="condition.id" :value="condition.id">{{ condition.name }}</option>
-                                    </select>
+                                    <Select2
+                                        v-model="form.condition_id"
+                                        :options="conditions"
+                                        allLabel="Seleccione"
+                                        required
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
+                                    />
                                     <button type="button" @click="showConditionModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar condiciones"><i class="fas fa-cog text-sm"></i></button>
                                 </div>
                                 <p v-if="errors.condition_id" class="mt-1 text-sm text-red-600">{{ errors.condition_id }}</p>
@@ -400,10 +394,13 @@
                                     Mecanismo Falla <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <div class="flex space-x-2 items-stretch">
-                                    <select v-model="form.mechanism_fail_id" required class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
-                                        <option value="">Seleccione</option>
-                                        <option v-for="fail in mechanismFails" :key="fail.id" :value="fail.id">{{ fail.name }}</option>
-                                    </select>
+                                    <Select2
+                                        v-model="form.mechanism_fail_id"
+                                        :options="mechanismFails"
+                                        allLabel="Seleccione"
+                                        required
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
+                                    />
                                     <button type="button" @click="showMechanismFailModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar mecanismos de falla"><i class="fas fa-cog text-sm"></i></button>
                                 </div>
                                 <p v-if="errors.mechanism_fail_id" class="mt-1 text-sm text-red-600">{{ errors.mechanism_fail_id }}</p>
@@ -414,10 +411,13 @@
                                     Componente Falla <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <div class="flex space-x-2 items-stretch">
-                                    <select v-model="form.component_fail_id" required class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
-                                        <option value="">Seleccione</option>
-                                        <option v-for="fail in componentFails" :key="fail.id" :value="fail.id">{{ fail.name }}</option>
-                                    </select>
+                                    <Select2
+                                        v-model="form.component_fail_id"
+                                        :options="componentFails"
+                                        allLabel="Seleccione"
+                                        required
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
+                                    />
                                     <button type="button" @click="showComponentFailModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar componentes de falla"><i class="fas fa-cog text-sm"></i></button>
                                 </div>
                                 <p v-if="errors.component_fail_id" class="mt-1 text-sm text-red-600">{{ errors.component_fail_id }}</p>
@@ -428,10 +428,13 @@
                                     Prioridad <span class="text-red-500 ml-1">*</span>
                                 </label>
                                 <div class="flex space-x-2 items-stretch">
-                                    <select v-model="form.priority_id" required class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5">
-                                        <option value="">Seleccione</option>
-                                        <option v-for="p in priorities" :key="p.id" :value="p.id">{{ p.name }}</option>
-                                    </select>
+                                    <Select2
+                                        v-model="form.priority_id"
+                                        :options="priorities"
+                                        allLabel="Seleccione"
+                                        required
+                                        class="flex-1 min-w-0 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
+                                    />
                                     <button type="button" @click="showPriorityModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar prioridades"><i class="fas fa-cog text-sm"></i></button>
                                 </div>
                                 <p v-if="errors.priority_id" class="mt-1 text-sm text-red-600">{{ errors.priority_id }}</p>
@@ -448,15 +451,13 @@
                                     <i class="fas fa-info-circle mr-2 text-blue-600"></i>
                                     Estado de OT
                                 </label>
-                                <select
+                                <Select2
                                     v-model="form.status_ot"
+                                    :options="statusOtOptions"
+                                    allLabel="Seleccione"
+                                    :search="false"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
-                                >
-                                    <option value="">Seleccione</option>
-                                    <option value="Cerrada">Cerrada</option>
-                                    <option value="Abierta">Abierta</option>
-                                    <option value="En ejecución">En ejecución</option>
-                                </select>
+                                />
                             </div>
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -574,6 +575,7 @@ import api from '../../services/api';
 import Swal from 'sweetalert2';
 import CreateSelectModal from '../../components/CreateSelectModal.vue';
 import RichTextEditor from '../../components/RichTextEditor.vue';
+import Select2 from '../../components/Select2.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -701,6 +703,19 @@ const filteredEquipments = computed(() => {
         (eq) => Number(eq.company_id ?? eq.company?.id) === cid
     );
 });
+
+const equipmentSelectOptions = computed(() => {
+    return filteredEquipments.value.map((eq) => ({
+        id: eq.id,
+        name: eq.name + (eq.company?.name ? ` (${eq.company.name})` : ''),
+    }));
+});
+
+const statusOtOptions = [
+    { id: 'Cerrada', name: 'Cerrada' },
+    { id: 'Abierta', name: 'Abierta' },
+    { id: 'En ejecución', name: 'En ejecución' },
+];
 
 const onCompanyFilterChange = () => {
     if (!form.equipment_id) return;

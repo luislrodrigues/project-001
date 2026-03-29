@@ -79,16 +79,13 @@
                                     Empresa
                                     <span class="text-red-500 ml-1">*</span>
                                 </label>
-                                <select
+                                <Select2
                                     v-model="form.company_id"
+                                    :options="companies"
+                                    allLabel="Seleccione una compañía"
                                     required
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione una compañía</option>
-                                    <option v-for="company in companies" :key="company.id" :value="company.id">
-                                        {{ company.name }}
-                                    </option>
-                                </select>
+                                />
                                 <p v-if="errors.company_id" class="mt-1 text-sm text-red-600">{{ errors.company_id }}</p>
                             </div>
 
@@ -97,15 +94,12 @@
                                     <i class="fas fa-user-tag mr-2 text-blue-600"></i>
                                     Rol
                                 </label>
-                                <select
+                                <Select2
                                     v-model="form.role_id"
+                                    :options="roles"
+                                    allLabel="Seleccione un rol"
                                     class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                >
-                                    <option value="">Seleccione un rol</option>
-                                    <option v-for="role in roles" :key="role.id" :value="role.id">
-                                        {{ role.name }}
-                                    </option>
-                                </select>
+                                />
                                 <p v-if="errors.role_id" class="mt-1 text-sm text-red-600">{{ errors.role_id }}</p>
                             </div>
 
@@ -180,6 +174,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
+import Select2 from '../../components/Select2.vue';
 
 const router = useRouter();
 const route = useRoute();
