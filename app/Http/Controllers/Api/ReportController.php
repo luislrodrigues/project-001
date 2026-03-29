@@ -976,7 +976,7 @@ class ReportController extends Controller
             $pdf->save($pdfPath);
 
             $equipmentName = $report->equipment?->name ?? 'N/A';
-            $subject = 'Informe Vibraciones ' . $equipmentName;
+            $subject = 'Informe Vibraciones ' . $equipmentName . ' - ' . now()->format('Y-m-d H:i:s');
             $pdfFilename = 'Informe Vibraciones ' . preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName)) . '.pdf';
 
             $firmaPath = public_path('images/firma_correo.jpeg');

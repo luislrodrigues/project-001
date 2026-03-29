@@ -39,48 +39,39 @@
                                 <i class="fas fa-building mr-2 text-gray-400"></i>
                                 Empresa
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.company_id"
-                                @change="fetchEquipment"
+                                :options="companies"
+                                allLabel="Todas"
+                                @change="() => fetchEquipment(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todas</option>
-                                <option v-for="company in companies" :key="company.id" :value="company.id">
-                                    {{ company.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-project-diagram mr-2 text-gray-400"></i>
                                 Proceso
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.process_id"
-                                @change="fetchEquipment"
+                                :options="processes"
+                                allLabel="Todos"
+                                @change="() => fetchEquipment(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="proc in processes" :key="proc.id" :value="proc.id">
-                                    {{ proc.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-cog mr-2 text-gray-400"></i>
                                 Tipo
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.equipment_type_id"
-                                @change="fetchEquipment"
+                                :options="equipmentTypes"
+                                allLabel="Todos"
+                                @change="() => fetchEquipment(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="type in equipmentTypes" :key="type.id" :value="type.id">
-                                    {{ type.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -93,7 +84,7 @@
                                     type="text"
                                     placeholder="Buscar por nombre..."
                                     class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-10 pr-4 py-2.5 transition-all duration-200"
-                                    @input="fetchEquipment"
+                                    @input="fetchEquipment(1)"
                                 />
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="fas fa-search text-gray-400"></i>
@@ -122,7 +113,7 @@
                                     Limpiar
                                 </button>
                                 <button
-                                    @click="fetchEquipment"
+                                    @click="fetchEquipment(1)"
                                     class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
                                 >
                                     <i class="fas fa-redo mr-2"></i>
@@ -265,6 +256,7 @@ import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
+import Select2 from '../components/Select2.vue';
 
 const STORAGE_KEY = 'equipment-list-filters';
 
@@ -422,7 +414,10 @@ const exportExcel = async () => {
         const y = nowJs.getFullYear();
         const m = String(nowJs.getMonth() + 1).padStart(2, '0');
         const d = String(nowJs.getDate()).padStart(2, '0');
-        const filename = `Equipos_Listado_${y}_${m}_${d}.xlsx`;
+        const hh = String(nowJs.getHours()).padStart(2, '0');
+        const mm = String(nowJs.getMinutes()).padStart(2, '0');
+        const ss = String(nowJs.getSeconds()).padStart(2, '0');
+        const filename = `Equipos_Listado_${y}_${m}_${d}_${hh}_${mm}_${ss}.xlsx`;
         link.href = url;
         link.setAttribute('download', filename);
         document.body.appendChild(link);

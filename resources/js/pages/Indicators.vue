@@ -22,25 +22,23 @@
                 <div class="flex flex-wrap items-center gap-4">
                     <div v-if="!authStore.hasRole('Cliente')" class="flex items-center gap-2">
                         <label for="empresa-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Ver detalle por empresa:</label>
-                        <select
+                        <Select2
                             id="empresa-select"
                             v-model="selectedCompanyId"
+                            :options="companies"
+                            allLabel="Todas las empresas"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 min-w-[200px]"
-                        >
-                            <option :value="null">Todas las empresas</option>
-                            <option v-for="c in companies" :key="c.id" :value="c.id">{{ c.name }}</option>
-                        </select>
+                        />
                     </div>
                     <div class="flex items-center gap-2">
                         <label for="process-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Proceso:</label>
-                        <select
+                        <Select2
                             id="process-select"
                             v-model="selectedProcessId"
+                            :options="processes"
+                            allLabel="Todos los procesos"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 min-w-[200px]"
-                        >
-                            <option :value="null">Todos los procesos</option>
-                            <option v-for="p in processes" :key="p.id" :value="p.id">{{ p.name }}</option>
-                        </select>
+                        />
                     </div>
                 </div>
             </div>
@@ -511,6 +509,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
 import { useAuthStore } from '../stores/auth';
+import Select2 from '../components/Select2.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();

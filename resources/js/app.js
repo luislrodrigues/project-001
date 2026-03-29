@@ -1,4 +1,5 @@
 import './bootstrap';
+import 'select2/dist/css/select2.css';
 import '../css/app.css';
 
 import { createApp } from 'vue';

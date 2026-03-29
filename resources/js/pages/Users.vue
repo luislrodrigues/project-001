@@ -39,31 +39,27 @@
                                 <i class="fas fa-building mr-2 text-gray-400"></i>
                                 Empresa
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.company_id"
-                                @change="fetchUsers"
+                                :options="companies"
+                                allLabel="Todas"
+                                @change="() => fetchUsers(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todas</option>
-                                <option v-for="company in companies" :key="company.id" :value="company.id">
-                                    {{ company.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-1">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Estado
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.status"
-                                @change="fetchUsers"
+                                :options="statusOptions"
+                                allLabel="Todos"
+                                :search="false"
+                                @change="() => fetchUsers(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option value="active">Activo</option>
-                                <option value="inactive">Inactivo</option>
-                            </select>
+                            />
                         </div>
                         <div class="flex-1">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -93,7 +89,7 @@
                                 Limpiar
                             </button>
                             <button
-                                @click="fetchUsers"
+                                @click="fetchUsers(1)"
                                 class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 font-medium"
                             >
                                 <i class="fas fa-redo mr-2"></i>
@@ -267,6 +263,7 @@ import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
+import Select2 from '../components/Select2.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -282,6 +279,11 @@ const filters = ref({
     status: route.query.status ?? '',
     company_id: route.query.company_id ?? ''
 });
+
+const statusOptions = [
+    { id: 'active', name: 'Activo' },
+    { id: 'inactive', name: 'Inactivo' },
+];
 
 const sortBy = ref('id');
 const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');

@@ -17,7 +17,9 @@
         "vite": "^5.0.0"
     },
     "dependencies": {
+        "jquery": "^4.0.0",
         "pinia": "^2.1.7",
+        "select2": "^4.1.0-rc.0",
         "sweetalert2": "^11.11.1",
         "vue": "^3.4.21",
         "vue-router": "^4.3.0"

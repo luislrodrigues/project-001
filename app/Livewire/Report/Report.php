@@ -738,9 +738,11 @@ class Report extends Component
                 $pdfPath = $tempPath . '/reporte.pdf';
                 $pdf->save($pdfPath);
 
-                Mail::send([], [], function ($message) use ($pdfPath,$recipients) {
+                $subject = 'Envio de reporte - ' . now()->format('Y-m-d H:i:s');
+
+                Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject) {
                     $message->to($recipients)
-                            ->subject('Envio de reporte')
+                            ->subject($subject)
                             ->html('Este es un correo de prueba.');
 
                     $message->attach($pdfPath);

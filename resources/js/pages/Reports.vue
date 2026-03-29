@@ -52,32 +52,26 @@
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Empresa
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.company_id"
-                                @change="fetchReports"
+                                :options="companies"
+                                placeholder="Todas"
+                                @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todas</option>
-                                <option v-for="company in companies" :key="company.id" :value="company.id">
-                                    {{ company.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Proceso
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.process_id"
-                                @change="fetchReports"
+                                :options="processes"
+                                allLabel="Todos"
+                                @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="proc in processes" :key="proc.id" :value="proc.id">
-                                    {{ proc.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -98,62 +92,52 @@
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Equipo
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.equipment_id"
-                                @change="fetchReports"
+                                :options="equipments"
+                                allLabel="Todos"
+                                @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="eq in equipments" :key="eq.id" :value="eq.id">
-                                    {{ eq.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Condición
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.condition_id"
-                                @change="fetchReports"
+                                :options="conditions"
+                                allLabel="Todas"
+                                @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todas</option>
-                                <option v-for="condition in conditions" :key="condition.id" :value="condition.id">
-                                    {{ condition.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-filter mr-2 text-gray-400"></i>
                                 Prioridad
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.priority_id"
-                                @change="fetchReports"
+                                :options="priorities"
+                                allLabel="Todas"
+                                @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todas</option>
-                                <option v-for="p in priorities" :key="p.id" :value="p.id">{{ p.name }}</option>
-                            </select>
+                            />
                         </div>
                         <div v-if="!authStore.hasRole('Cliente')">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-user-tie mr-2 text-gray-400"></i>
                                 Analista
                             </label>
-                            <select
+                            <Select2
                                 v-model="filters.analist_id"
-                                @change="fetchReports"
+                                :options="analists"
+                                allLabel="Todos"
+                                @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                            >
-                                <option value="">Todos</option>
-                                <option v-for="analist in analists" :key="analist.id" :value="analist.id">
-                                    {{ analist.name }}
-                                </option>
-                            </select>
+                            />
                         </div>
                     </div>
                     <div class="mt-3 flex items-center justify-between gap-2">
@@ -183,7 +167,7 @@
                                 Limpiar
                             </button>
                             <button
-                                @click="fetchReports"
+                                @click="() => fetchReports(1)"
                                 class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duración-200 font-medium"
                             >
                                 <i class="fas fa-redo mr-2"></i>
@@ -348,6 +332,7 @@ import api from '../services/api';
 import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
 import RangeDatePicker from '../components/RangeDatePicker.vue';
+import Select2 from '../components/Select2.vue';
 
 const STORAGE_KEY = 'reports-list-filters';
 
@@ -564,7 +549,10 @@ const exportExcel = async () => {
         const y = nowJs.getFullYear();
         const m = String(nowJs.getMonth() + 1).padStart(2, '0');
         const d = String(nowJs.getDate()).padStart(2, '0');
-        const filename = `Informes_Listado_${y}_${m}_${d}.xlsx`;
+        const hh = String(nowJs.getHours()).padStart(2, '0');
+        const mm = String(nowJs.getMinutes()).padStart(2, '0');
+        const ss = String(nowJs.getSeconds()).padStart(2, '0');
+        const filename = `Informes_Listado_${y}_${m}_${d}_${hh}_${mm}_${ss}.xlsx`;
         link.href = url;
         link.setAttribute('download', filename);
         link.style.display = 'none';
