@@ -40,6 +40,14 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 min-w-[200px]"
                         />
                     </div>
+                    <button
+                        type="button"
+                        @click="clearFilters"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium flex items-center gap-2"
+                    >
+                        <i class="fas fa-times text-sm"></i>
+                        Limpiar filtros
+                    </button>
                 </div>
             </div>
 
@@ -716,6 +724,16 @@ async function loadDetail() {
     } finally {
         loadingDetail.value = false;
     }
+}
+
+function clearFilters() {
+    selectedProcessId.value = null;
+    if (authStore.hasRole('Cliente') && authStore.user?.company?.id) {
+        selectedCompanyId.value = authStore.user.company.id;
+        return;
+    }
+    selectedCompanyId.value = null;
+    detailData.value = null;
 }
 
 watch(selectedCompanyId, () => {
