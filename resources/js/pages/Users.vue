@@ -271,6 +271,7 @@ const router = useRouter();
 const users = ref([]);
 const companies = ref([]);
 const loading = ref(false);
+const pendingRequests = ref(0);
 const pagination = ref(null);
 const route = useRoute();
 
@@ -311,8 +312,18 @@ const syncQueryToUrl = (page = 1) => {
     } catch (_) {}
 };
 
-const fetchUsers = async (page = 1) => {
+const beginLoading = () => {
+    pendingRequests.value += 1;
     loading.value = true;
+};
+
+const endLoading = () => {
+    pendingRequests.value = Math.max(0, pendingRequests.value - 1);
+    loading.value = pendingRequests.value > 0;
+};
+
+const fetchUsers = async (page = 1) => {
+    beginLoading();
     try {
         const params = {
             page,
@@ -341,16 +352,19 @@ const fetchUsers = async (page = 1) => {
     } catch (error) {
         Swal.fire('Error', 'Error al cargar usuarios', 'error');
     } finally {
-        loading.value = false;
+        endLoading();
     }
 };
 
 const fetchCompanies = async () => {
+    beginLoading();
     try {
         const response = await api.get('/catalogs/companies');
         companies.value = response.data.data;
     } catch (error) {
         console.error('Error al cargar empresas:', error);
+    } finally {
+        endLoading();
     }
 };
 
