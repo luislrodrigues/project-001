@@ -269,6 +269,7 @@ const companies = ref([]);
 const equipmentTypes = ref([]);
 const processes = ref([]);
 const loading = ref(false);
+const pendingRequests = ref(0);
 const search = ref(route.query.search ?? '');
 const filters = ref({
     company_id: route.query.company_id ?? '',
@@ -325,6 +326,16 @@ const toggleSortId = () => {
     fetchEquipment(1);
 };
 
+const beginLoading = () => {
+    pendingRequests.value += 1;
+    loading.value = true;
+};
+
+const endLoading = () => {
+    pendingRequests.value = Math.max(0, pendingRequests.value - 1);
+    loading.value = pendingRequests.value > 0;
+};
+
 onMounted(async () => {
     applyQueryToFilters();
     await Promise.all([loadCompanies(), loadEquipmentTypes(), loadProcesses()]);
@@ -333,29 +344,38 @@ onMounted(async () => {
 });
 
 const loadCompanies = async () => {
+    beginLoading();
     try {
         const response = await api.get('/catalogs/companies');
         companies.value = response.data.data;
     } catch (error) {
         console.error('Error al cargar empresas:', error);
+    } finally {
+        endLoading();
     }
 };
 
 const loadEquipmentTypes = async () => {
+    beginLoading();
     try {
         const response = await api.get('/catalogs/equipment-types');
         equipmentTypes.value = response.data.data;
     } catch (error) {
         console.error('Error al cargar tipos de equipo:', error);
+    } finally {
+        endLoading();
     }
 };
 
 const loadProcesses = async () => {
+    beginLoading();
     try {
         const response = await api.get('/catalogs/processes');
         processes.value = response.data.data ?? response.data ?? [];
     } catch (error) {
         console.error('Error al cargar procesos:', error);
+    } finally {
+        endLoading();
     }
 };
 
@@ -368,7 +388,7 @@ const clearFilters = () => {
 };
 
 const fetchEquipment = async (page = 1) => {
-    loading.value = true;
+    beginLoading();
     try {
         const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
         if (search.value) params.search = search.value;
@@ -390,7 +410,7 @@ const fetchEquipment = async (page = 1) => {
     } catch (error) {
         Swal.fire('Error', 'Error al cargar equipos', 'error');
     } finally {
-        loading.value = false;
+        endLoading();
     }
 };
 

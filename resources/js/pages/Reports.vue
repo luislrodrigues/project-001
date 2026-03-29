@@ -342,6 +342,7 @@ const authStore = useAuthStore();
 
 const reports = ref([]);
 const loading = ref(false);
+const pendingRequests = ref(0);
 const exporting = ref(false);
 const pagination = ref(null);
 const equipments = ref([]);
@@ -428,6 +429,16 @@ const toggleSortId = () => {
     fetchReports(1);
 };
 
+const beginLoading = () => {
+    pendingRequests.value += 1;
+    loading.value = true;
+};
+
+const endLoading = () => {
+    pendingRequests.value = Math.max(0, pendingRequests.value - 1);
+    loading.value = pendingRequests.value > 0;
+};
+
 onMounted(async () => {
     applyQueryToFilters();
     await loadCatalogs();
@@ -436,6 +447,7 @@ onMounted(async () => {
 });
 
 const loadCatalogs = async () => {
+    beginLoading();
     try {
     const [equipmentsRes, conditionsRes, prioritiesRes, companiesRes, processesRes, analistsRes] = await Promise.all([
         api.get('/catalogs/equipment'),
@@ -454,6 +466,8 @@ const loadCatalogs = async () => {
         analists.value = analistsRes.data.data ?? analistsRes.data ?? [];
     } catch (error) {
         console.error('Error al cargar catálogos:', error);
+    } finally {
+        endLoading();
     }
 };
 
@@ -491,7 +505,7 @@ const priorityBadgeStyle = (priority) => {
 };
 
 const fetchReports = async (page = 1) => {
-    loading.value = true;
+    beginLoading();
     try {
         const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
 
@@ -522,7 +536,7 @@ const fetchReports = async (page = 1) => {
         const message = error.response?.data?.message || error.message || 'Error al cargar reportes';
         Swal.fire('Error', message, 'error');
     } finally {
-        loading.value = false;
+        endLoading();
     }
 };
 
