@@ -738,7 +738,8 @@ class Report extends Component
                 $pdfPath = $tempPath . '/reporte.pdf';
                 $pdf->save($pdfPath);
 
-                $subject = 'Envio de reporte - ' . now()->format('Y-m-d H:i:s');
+                $tz = config('app.timezone', 'America/Bogota');
+                $subject = 'Envio de reporte - ' . now($tz)->format('Y-m-d H:i:s');
 
                 Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject) {
                     $message->to($recipients)
