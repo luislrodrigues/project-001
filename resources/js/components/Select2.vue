@@ -121,6 +121,15 @@ const init = async () => {
         allowClear: false,
         placeholder: props.placeholder || (props.includeEmptyOption ? props.allLabel : undefined),
         minimumResultsForSearch: props.search ? 0 : Infinity,
+        language: {
+            errorLoading: () => 'No se pudieron cargar los resultados',
+            inputTooLong: (args) => `Elimine ${args.input.length - args.maximum} caracteres`,
+            inputTooShort: (args) => `Ingrese ${args.minimum - args.input.length} caracteres más`,
+            loadingMore: () => 'Cargando más resultados…',
+            maximumSelected: (args) => `Solo puede seleccionar ${args.maximum} elemento${args.maximum === 1 ? '' : 's'}`,
+            noResults: () => 'No hay resultados',
+            searching: () => 'Buscando…',
+        },
     });
 
     setValue(props.modelValue);
