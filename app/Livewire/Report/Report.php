@@ -712,9 +712,11 @@ class Report extends Component
     {
         try{
             $pdf = $this->generatePdf($id);
+            $report = ModelsReport::find($id);
+            $datePart = $report && $report->measurement_date ? $report->measurement_date->format('Y-m-d') : null;
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
-            }, 'reporte.pdf');
+            }, 'reporte' . ($datePart ? '_' . $datePart : '') . '.pdf');
 
         }catch (\Exception $e) {
             $this->dispatch('alertFailed', 'Error al descargar el pdf' . $e->getMessage());
@@ -728,6 +730,7 @@ class Report extends Component
 
             if(is_array($recipients) && !empty($recipients)){
                 $pdf = $this->generatePdf($this->reportIdToUpdate);
+                $report = ModelsReport::find($this->reportIdToUpdate);
 
                 $tempPath = storage_path('app/temp');
 
@@ -739,7 +742,8 @@ class Report extends Component
                 $pdf->save($pdfPath);
 
                 $tz = config('app.timezone', 'America/Bogota');
-                $subject = 'Envio de reporte - ' . now($tz)->format('Y-m-d H:i:s');
+                $dateForSubject = $report && $report->measurement_date ? $report->measurement_date->format('Y-m-d') : now($tz)->format('Y-m-d');
+                $subject = 'Envio de reporte - ' . $dateForSubject;
 
                 Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject) {
                     $message->to($recipients)

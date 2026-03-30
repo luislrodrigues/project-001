@@ -658,14 +658,23 @@ const downloadPdf = async (event) => {
         });
         const eqName = report.value?.equipment?.name;
         const baseName = sanitizeFilename(eqName) || `reporte-${route.params.id}`;
-        const nowJs = new Date();
-        const y = nowJs.getFullYear();
-        const m = String(nowJs.getMonth() + 1).padStart(2, '0');
-        const d = String(nowJs.getDate()).padStart(2, '0');
-        const hh = String(nowJs.getHours()).padStart(2, '0');
-        const mm = String(nowJs.getMinutes()).padStart(2, '0');
-        const ss = String(nowJs.getSeconds()).padStart(2, '0');
-        const filename = `Informe Vibraciones ${baseName}_${y}-${m}-${d}_${hh}-${mm}-${ss}.pdf`;
+        const measurementRaw = report.value?.measurement_date;
+        let datePart = '';
+        if (measurementRaw) {
+            const str = String(measurementRaw).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                datePart = str;
+            } else {
+                const dt = new Date(measurementRaw);
+                if (!Number.isNaN(dt.getTime())) {
+                    const y = dt.getFullYear();
+                    const m = String(dt.getMonth() + 1).padStart(2, '0');
+                    const d = String(dt.getDate()).padStart(2, '0');
+                    datePart = `${y}-${m}-${d}`;
+                }
+            }
+        }
+        const filename = `Informe Vibraciones ${baseName}${datePart ? `_${datePart}` : ''}.pdf`;
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;

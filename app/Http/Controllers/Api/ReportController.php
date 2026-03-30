@@ -555,7 +555,9 @@ class ReportController extends Controller
             ]);
 
             $equipmentName = $report->equipment?->name ?? 'reporte-' . $report->id;
-            $filename = 'Informe Vibraciones ' . preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName)) . '.pdf';
+            $measurementDate = $report->measurement_date?->format('Y-m-d');
+            $safeEquipmentName = preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName));
+            $filename = 'Informe Vibraciones ' . $safeEquipmentName . ($measurementDate ? '_' . $measurementDate : '') . '.pdf';
 
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
@@ -976,9 +978,11 @@ class ReportController extends Controller
             $pdf->save($pdfPath);
 
             $equipmentName = $report->equipment?->name ?? 'N/A';
-            $tz = config('app.timezone', 'America/Bogota');
-            $subject = 'Informe Vibraciones ' . $equipmentName . ' - ' . now($tz)->format('Y-m-d H:i:s');
-            $pdfFilename = 'Informe Vibraciones ' . preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName)) . '.pdf';
+            $measurementDate = $report->measurement_date?->format('Y-m-d');
+            $safeEquipmentName = preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName));
+            $dateForSubject = $measurementDate ?: now(config('app.timezone', 'America/Bogota'))->format('Y-m-d');
+            $subject = 'Informe Vibraciones ' . $equipmentName . ' - ' . $dateForSubject;
+            $pdfFilename = 'Informe Vibraciones ' . $safeEquipmentName . ($measurementDate ? '_' . $measurementDate : '') . '.pdf';
 
             $firmaPath = public_path('images/firma_correo.jpeg');
 
