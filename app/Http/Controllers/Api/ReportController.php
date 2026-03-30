@@ -555,11 +555,14 @@ class ReportController extends Controller
             ]);
 
             $equipmentName = $report->equipment?->name ?? 'reporte-' . $report->id;
-            $measurementDate = $report->measurement_date?->format('Y-m-d');
             $consecutivo = trim((string) ($report->consecutivo ?? ''));
-            $safeConsecutivo = $consecutivo !== '' ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $consecutivo) : ('reporte-' . $report->id);
-            $safeEquipmentName = preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName));
-            $filename = 'Informe Vibraciones ' . $safeConsecutivo . '_' . $safeEquipmentName . ($measurementDate ? '_' . $measurementDate : '') . '.pdf';
+            $datePrefix = $report->measurement_date?->format('Ymd') ?? '';
+
+            $cleanEquipmentName = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $equipmentName)));
+            $cleanConsecutivo = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $consecutivo)));
+
+            $filenameBase = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($cleanConsecutivo !== '' ? ($cleanConsecutivo . ' ') : '') . $cleanEquipmentName);
+            $filename = $filenameBase . '.pdf';
 
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
@@ -980,13 +983,18 @@ class ReportController extends Controller
             $pdf->save($pdfPath);
 
             $equipmentName = $report->equipment?->name ?? 'N/A';
-            $measurementDate = $report->measurement_date?->format('Y-m-d');
             $consecutivo = trim((string) ($report->consecutivo ?? ''));
-            $safeConsecutivo = $consecutivo !== '' ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $consecutivo) : ('reporte-' . $report->id);
-            $safeEquipmentName = preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName));
-            $dateForSubject = $measurementDate ?: now(config('app.timezone', 'America/Bogota'))->format('Y-m-d');
-            $subject = 'Informe Vibraciones ' . ($consecutivo !== '' ? ($consecutivo . ' ') : '') . $equipmentName . ' - ' . $dateForSubject;
-            $pdfFilename = 'Informe Vibraciones ' . $safeConsecutivo . '_' . $safeEquipmentName . ($measurementDate ? '_' . $measurementDate : '') . '.pdf';
+            $datePrefix = $report->measurement_date?->format('Ymd') ?? '';
+
+            $cleanEquipmentName = trim(preg_replace('/\s+/', ' ', $equipmentName));
+            $cleanConsecutivo = trim(preg_replace('/\s+/', ' ', $consecutivo));
+
+            $subject = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($cleanConsecutivo !== '' ? ($cleanConsecutivo . ' ') : '') . $cleanEquipmentName);
+
+            $safeEquipmentName = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $equipmentName)));
+            $safeConsecutivo = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $consecutivo)));
+            $pdfFilenameBase = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($safeConsecutivo !== '' ? ($safeConsecutivo . ' ') : '') . $safeEquipmentName);
+            $pdfFilename = $pdfFilenameBase . '.pdf';
 
             $firmaPath = public_path('images/firma_correo.jpeg');
 

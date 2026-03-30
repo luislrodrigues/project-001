@@ -643,7 +643,7 @@ const priorityBadgeStyle = (priority) => {
     };
 };
 
-const sanitizeFilename = (name) => (name || '').replace(/[\\/:*?"<>|]/g, '_').trim();
+const sanitizeFilename = (name) => (name || '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
 const downloadPdf = async (event) => {
     if (event) {
         event.preventDefault();
@@ -675,7 +675,13 @@ const downloadPdf = async (event) => {
                 }
             }
         }
-        const filename = `Informe Vibraciones ${consecutivo}_${baseName}${datePart ? `_${datePart}` : ''}.pdf`;
+        const datePrefix = datePart ? datePart.replace(/-/g, '') : '';
+        const parts = [];
+        if (datePrefix) parts.push(datePrefix);
+        parts.push('Informe Vibraciones');
+        if (consecutivo) parts.push(consecutivo);
+        parts.push(baseName);
+        const filename = `${parts.join(' ')}.pdf`;
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;

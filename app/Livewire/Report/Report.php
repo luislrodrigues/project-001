@@ -713,12 +713,16 @@ class Report extends Component
         try{
             $pdf = $this->generatePdf($id);
             $report = ModelsReport::find($id);
-            $datePart = $report && $report->measurement_date ? $report->measurement_date->format('Y-m-d') : null;
+            $equipmentName = $report?->equipment?->name ?? ('reporte-' . $id);
             $consecutivo = $report ? trim((string) $report->consecutivo) : '';
-            $safeConsecutivo = $consecutivo !== '' ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $consecutivo) : ('reporte-' . $id);
+            $datePrefix = $report && $report->measurement_date ? $report->measurement_date->format('Ymd') : '';
+
+            $cleanEquipmentName = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $equipmentName)));
+            $cleanConsecutivo = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $consecutivo)));
+            $filenameBase = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($cleanConsecutivo !== '' ? ($cleanConsecutivo . ' ') : '') . $cleanEquipmentName);
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
-            }, 'Informe_Vibraciones_' . $safeConsecutivo . ($datePart ? '_' . $datePart : '') . '.pdf');
+            }, $filenameBase . '.pdf');
 
         }catch (\Exception $e) {
             $this->dispatch('alertFailed', 'Error al descargar el pdf' . $e->getMessage());
@@ -743,12 +747,18 @@ class Report extends Component
                 $pdfPath = $tempPath . '/reporte.pdf';
                 $pdf->save($pdfPath);
 
-                $tz = config('app.timezone', 'America/Bogota');
-                $dateForSubject = $report && $report->measurement_date ? $report->measurement_date->format('Y-m-d') : now($tz)->format('Y-m-d');
+                $equipmentName = $report?->equipment?->name ?? ('reporte-' . $this->reportIdToUpdate);
                 $consecutivo = $report ? trim((string) $report->consecutivo) : '';
-                $safeConsecutivo = $consecutivo !== '' ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $consecutivo) : ('reporte-' . $this->reportIdToUpdate);
-                $subject = 'Envio de reporte - ' . ($consecutivo !== '' ? ($consecutivo . ' - ') : '') . $dateForSubject;
-                $attachmentName = 'Informe_Vibraciones_' . $safeConsecutivo . '_' . $dateForSubject . '.pdf';
+                $datePrefix = $report && $report->measurement_date ? $report->measurement_date->format('Ymd') : '';
+
+                $cleanEquipmentName = trim(preg_replace('/\s+/', ' ', $equipmentName));
+                $cleanConsecutivo = trim(preg_replace('/\s+/', ' ', $consecutivo));
+                $subject = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($cleanConsecutivo !== '' ? ($cleanConsecutivo . ' ') : '') . $cleanEquipmentName);
+
+                $safeEquipmentName = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $equipmentName)));
+                $safeConsecutivo = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $consecutivo)));
+                $attachmentBase = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($safeConsecutivo !== '' ? ($safeConsecutivo . ' ') : '') . $safeEquipmentName);
+                $attachmentName = $attachmentBase . '.pdf';
 
                 Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $attachmentName) {
                     $message->to($recipients)
