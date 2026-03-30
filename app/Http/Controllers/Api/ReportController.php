@@ -556,8 +556,10 @@ class ReportController extends Controller
 
             $equipmentName = $report->equipment?->name ?? 'reporte-' . $report->id;
             $measurementDate = $report->measurement_date?->format('Y-m-d');
+            $consecutivo = trim((string) ($report->consecutivo ?? ''));
+            $safeConsecutivo = $consecutivo !== '' ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $consecutivo) : ('reporte-' . $report->id);
             $safeEquipmentName = preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName));
-            $filename = 'Informe Vibraciones ' . $safeEquipmentName . ($measurementDate ? '_' . $measurementDate : '') . '.pdf';
+            $filename = 'Informe Vibraciones ' . $safeConsecutivo . '_' . $safeEquipmentName . ($measurementDate ? '_' . $measurementDate : '') . '.pdf';
 
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
@@ -979,10 +981,12 @@ class ReportController extends Controller
 
             $equipmentName = $report->equipment?->name ?? 'N/A';
             $measurementDate = $report->measurement_date?->format('Y-m-d');
+            $consecutivo = trim((string) ($report->consecutivo ?? ''));
+            $safeConsecutivo = $consecutivo !== '' ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $consecutivo) : ('reporte-' . $report->id);
             $safeEquipmentName = preg_replace('/[\\\\\/:*?"<>|]/', '_', trim($equipmentName));
             $dateForSubject = $measurementDate ?: now(config('app.timezone', 'America/Bogota'))->format('Y-m-d');
-            $subject = 'Informe Vibraciones ' . $equipmentName . ' - ' . $dateForSubject;
-            $pdfFilename = 'Informe Vibraciones ' . $safeEquipmentName . ($measurementDate ? '_' . $measurementDate : '') . '.pdf';
+            $subject = 'Informe Vibraciones ' . ($consecutivo !== '' ? ($consecutivo . ' ') : '') . $equipmentName . ' - ' . $dateForSubject;
+            $pdfFilename = 'Informe Vibraciones ' . $safeConsecutivo . '_' . $safeEquipmentName . ($measurementDate ? '_' . $measurementDate : '') . '.pdf';
 
             $firmaPath = public_path('images/firma_correo.jpeg');
 

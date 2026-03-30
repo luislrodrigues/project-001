@@ -656,6 +656,7 @@ const downloadPdf = async (event) => {
         const response = await api.get(`/reports/${route.params.id}/pdf`, {
             responseType: 'blob'
         });
+        const consecutivo = report.value?.consecutivo ? sanitizeFilename(report.value.consecutivo) : `reporte-${route.params.id}`;
         const eqName = report.value?.equipment?.name;
         const baseName = sanitizeFilename(eqName) || `reporte-${route.params.id}`;
         const measurementRaw = report.value?.measurement_date;
@@ -674,7 +675,7 @@ const downloadPdf = async (event) => {
                 }
             }
         }
-        const filename = `Informe Vibraciones ${baseName}${datePart ? `_${datePart}` : ''}.pdf`;
+        const filename = `Informe Vibraciones ${consecutivo}_${baseName}${datePart ? `_${datePart}` : ''}.pdf`;
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;

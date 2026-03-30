@@ -714,9 +714,11 @@ class Report extends Component
             $pdf = $this->generatePdf($id);
             $report = ModelsReport::find($id);
             $datePart = $report && $report->measurement_date ? $report->measurement_date->format('Y-m-d') : null;
+            $consecutivo = $report ? trim((string) $report->consecutivo) : '';
+            $safeConsecutivo = $consecutivo !== '' ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $consecutivo) : ('reporte-' . $id);
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
-            }, 'reporte' . ($datePart ? '_' . $datePart : '') . '.pdf');
+            }, 'Informe_Vibraciones_' . $safeConsecutivo . ($datePart ? '_' . $datePart : '') . '.pdf');
 
         }catch (\Exception $e) {
             $this->dispatch('alertFailed', 'Error al descargar el pdf' . $e->getMessage());
@@ -743,14 +745,20 @@ class Report extends Component
 
                 $tz = config('app.timezone', 'America/Bogota');
                 $dateForSubject = $report && $report->measurement_date ? $report->measurement_date->format('Y-m-d') : now($tz)->format('Y-m-d');
-                $subject = 'Envio de reporte - ' . $dateForSubject;
+                $consecutivo = $report ? trim((string) $report->consecutivo) : '';
+                $safeConsecutivo = $consecutivo !== '' ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $consecutivo) : ('reporte-' . $this->reportIdToUpdate);
+                $subject = 'Envio de reporte - ' . ($consecutivo !== '' ? ($consecutivo . ' - ') : '') . $dateForSubject;
+                $attachmentName = 'Informe_Vibraciones_' . $safeConsecutivo . '_' . $dateForSubject . '.pdf';
 
-                Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject) {
+                Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $attachmentName) {
                     $message->to($recipients)
                             ->subject($subject)
                             ->html('Este es un correo de prueba.');
 
-                    $message->attach($pdfPath);
+                    $message->attach($pdfPath, [
+                        'as' => $attachmentName,
+                        'mime' => 'application/pdf',
+                    ]);
                 });
                 $this->dispatch('alertSuccess', 'Se envio correctamente');
 
