@@ -348,7 +348,7 @@ class Report extends Component
                 'EMPRESA', 'EQUIPO', 'TIPO EQUIPO', 'FECHA MEDICIÓN', 'UBICACIÓN', 'PROCESO',
                 'TIPO COMPONENTE', 'TAG', 'DESCRIPCIÓN', 'CODIGO', 'POT (HP)', 'RPM', 'MARCA',
                 'REFERENCIA MOTOR', 'FRAME', 'RODA. LL', 'ROD. LA', 'REF. CHUMACERAS', 'ROD. CHUMACERAS',
-                'DIAGNÓSTICO', 'CONDICIÓN', 'MECANISMO FALLA', 'COMPONENTE EN FALLA', 'RECOMENDACIÓN',
+                'DIAGNÓSTICO', 'RECOMENDACIÓN', 'MECANISMO FALLA', 'COMPONENTE EN FALLA', 'CONDICIÓN',
                 'PRIORIDAD', 'OT CREADA', 'ESTADO DE OT', 'FECHA EJECUCIÓN', 'VERIFICACIÓN RECOMENDACIÓN',
                 'ANALISTA', 'Mes', 'Año'
             ];
@@ -520,10 +520,10 @@ class Report extends Component
                         $sheet->setCellValue('R' . $row, $refChumacera);
                         $sheet->setCellValue('S' . $row, $rodChumaceras);
                         $sheet->setCellValue('T' . $row, $componentDiagnosis);
-                        $sheet->setCellValue('U' . $row, $report->condition->name ?? '');
+                        $sheet->setCellValue('U' . $row, $recommendationsString);
                         $sheet->setCellValue('V' . $row, $report->mechanismFail->name ?? '');
                         $sheet->setCellValue('W' . $row, $report->componentFail->name ?? '');
-                        $sheet->setCellValue('X' . $row, $recommendationsString);
+                        $sheet->setCellValue('X' . $row, $report->condition->name ?? '');
                         $sheet->setCellValue('Y' . $row, $report->priority ?? '');
                         $sheet->setCellValue('Z' . $row, $report->ot_created ?? '');
                         $sheet->setCellValue('AA' . $row, $report->status_ot ?? '');
@@ -561,7 +561,7 @@ class Report extends Component
                 $sheet->getColumnDimension($column)->setAutoSize(true);
 
                 // Limitar ancho máximo para columnas largas
-                if (in_array($column, ['X', 'T', 'I', 'AC'])) {
+                if (in_array($column, ['T', 'U', 'I', 'AC'])) {
                     $sheet->getColumnDimension($column)->setWidth(30);
                 }
             }
