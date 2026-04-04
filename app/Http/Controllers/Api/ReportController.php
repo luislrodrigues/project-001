@@ -723,11 +723,11 @@ class ReportController extends Controller
         for ($i = 1; $i <= count($headers); $i++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
         }
-        $sheet->getColumnDimension('H')->setWidth(28);
-        $sheet->getColumnDimension('I')->setWidth(18);
-        $sheet->getColumnDimension('J')->setWidth(50);
-        $sheet->getColumnDimension('K')->setWidth(45);
-        $sheet->getColumnDimension('P')->setWidth(50);
+        $sheet->getColumnDimension('H')->setAutoSize(false)->setWidth(28);
+        $sheet->getColumnDimension('I')->setAutoSize(false)->setWidth(18);
+        $sheet->getColumnDimension('J')->setAutoSize(false)->setWidth(50);
+        $sheet->getColumnDimension('K')->setAutoSize(false)->setWidth(45);
+        $sheet->getColumnDimension('P')->setAutoSize(false)->setWidth(50);
 
         $row = 2;
         foreach ($reports as $r) {

@@ -562,7 +562,7 @@ class Report extends Component
 
                 // Limitar ancho máximo para columnas largas
                 if (in_array($column, ['T', 'U', 'I', 'AC'])) {
-                    $sheet->getColumnDimension($column)->setWidth(30);
+                    $sheet->getColumnDimension($column)->setAutoSize(false)->setWidth(30);
                 }
             }
 
