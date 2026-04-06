@@ -198,8 +198,8 @@
                     <p class="text-gray-500 text-lg">No hay reportes registrados</p>
                 </div>
 
-                <div v-else>
-                    <table class="w-full table-fixed divide-y divide-gray-200">
+                <div v-else class="overflow-x-auto">
+                    <table class="min-w-[980px] w-full table-fixed divide-y divide-gray-200">
                         <thead class="bg-gradient-to-r from-blue-50 to-blue-100">
                             <tr>
                                 <th
@@ -238,7 +238,7 @@
                                         Fecha Medición
                                     </div>
                                 </th>
-                                <th class="w-[120px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th class="w-[100px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
                                         <i class="fas fa-exclamation-triangle mr-2"></i>
                                         Condición
@@ -250,13 +250,13 @@
                                         Mecanismo de falla
                                     </div>
                                 </th>
-                                <th class="w-[120px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th class="w-[100px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
                                         <i class="fas fa-flag mr-2"></i>
                                         Prioridad
                                     </div>
                                 </th>
-                                <th v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" class="w-[120px] px-3 py-3 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" class="w-[96px] px-3 py-3 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center justify-end">
                                         <i class="fas fa-cog mr-2"></i>
                                         Acciones
