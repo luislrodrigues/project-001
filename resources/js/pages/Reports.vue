@@ -199,115 +199,126 @@
                 </div>
 
                 <div v-else class="overflow-x-auto">
-                    <table class="min-w-[980px] w-full table-fixed divide-y divide-gray-200">
+                    <table class="min-w-[1120px] w-full table-fixed divide-y divide-gray-200 text-xs">
+                        <colgroup>
+                            <col style="width: 110px;" />
+                            <col v-if="!authStore.hasRole('Cliente')" style="width: 150px;" />
+                            <col style="width: 210px;" />
+                            <col style="width: 140px;" />
+                            <col style="width: 110px;" />
+                            <col style="width: 90px;" />
+                            <col style="width: 170px;" />
+                            <col style="width: 90px;" />
+                            <col v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" style="width: 80px;" />
+                        </colgroup>
                         <thead class="bg-gradient-to-r from-blue-50 to-blue-100">
                             <tr>
                                 <th
-                                    class="w-[130px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider cursor-pointer hover:bg-blue-200/50 select-none"
+                                    class="px-2 py-2 text-left text-[10px] font-semibold text-blue-900 uppercase leading-tight cursor-pointer hover:bg-blue-200/50 select-none"
                                     @click="toggleSortId"
                                     title="Clic para cambiar orden"
                                 >
                                     <div class="flex items-center gap-1">
-                                        <i class="fas fa-hashtag mr-2"></i>
+                                        <i class="fas fa-hashtag mr-1"></i>
                                         Informe
-                                        <i v-if="sortOrder === 'desc'" class="fas fa-sort-down text-sm"></i>
-                                        <i v-else class="fas fa-sort-up text-sm"></i>
+                                        <i v-if="sortOrder === 'desc'" class="fas fa-sort-down text-[10px]"></i>
+                                        <i v-else class="fas fa-sort-up text-[10px]"></i>
                                     </div>
                                 </th>
-                                <th v-if="!authStore.hasRole('Cliente')" class="w-[190px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="!authStore.hasRole('Cliente')" class="px-2 py-2 text-left text-[10px] font-semibold text-blue-900 uppercase leading-tight">
                                     <div class="flex items-center">
-                                        <i class="fas fa-building mr-2"></i>
+                                        <i class="fas fa-building mr-1"></i>
                                         Empresa
                                     </div>
                                 </th>
-                                <th class="w-[240px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th class="px-2 py-2 text-left text-[10px] font-semibold text-blue-900 uppercase leading-tight">
                                     <div class="flex items-center">
-                                        <i class="fas fa-cog mr-2"></i>
+                                        <i class="fas fa-cog mr-1"></i>
                                         Equipo
                                     </div>
                                 </th>
-                                <th class="w-[170px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th class="px-2 py-2 text-left text-[10px] font-semibold text-blue-900 uppercase leading-tight">
                                     <div class="flex items-center">
-                                        <i class="fas fa-project-diagram mr-2"></i>
+                                        <i class="fas fa-project-diagram mr-1"></i>
                                         Proceso
                                     </div>
                                 </th>
-                                <th class="w-[130px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th class="px-2 py-2 text-left text-[10px] font-semibold text-blue-900 uppercase leading-tight">
                                     <div class="flex items-center">
-                                        <i class="fas fa-calendar mr-2"></i>
+                                        <i class="fas fa-calendar mr-1"></i>
                                         Fecha Medición
                                     </div>
                                 </th>
-                                <th class="w-[100px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th class="px-2 py-2 text-left text-[10px] font-semibold text-blue-900 uppercase leading-tight">
                                     <div class="flex items-center">
-                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
                                         Condición
                                     </div>
                                 </th>
-                                <th class="w-[200px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th class="px-2 py-2 text-left text-[10px] font-semibold text-blue-900 uppercase leading-tight">
                                     <div class="flex items-center">
-                                        <i class="fas fa-tools mr-2"></i>
+                                        <i class="fas fa-tools mr-1"></i>
                                         Mecanismo de falla
                                     </div>
                                 </th>
-                                <th class="w-[100px] px-3 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th class="px-2 py-2 text-left text-[10px] font-semibold text-blue-900 uppercase leading-tight">
                                     <div class="flex items-center">
-                                        <i class="fas fa-flag mr-2"></i>
+                                        <i class="fas fa-flag mr-1"></i>
                                         Prioridad
                                     </div>
                                 </th>
-                                <th v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" class="w-[96px] px-3 py-3 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                <th v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" class="px-2 py-2 text-right text-[10px] font-semibold text-blue-900 uppercase leading-tight">
                                     <div class="flex items-center justify-end">
-                                        <i class="fas fa-cog mr-2"></i>
+                                        <i class="fas fa-cog mr-1"></i>
                                         Acciones
                                     </div>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200 [&>tr>td]:align-top">
                             <tr v-for="report in reports" :key="report.id" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <td class="px-2 py-2 whitespace-nowrap font-medium text-gray-900">
                                     {{ report.consecutivo ?? '—' }}
                                 </td>
-                                <td v-if="!authStore.hasRole('Cliente')" class="px-3 py-3 whitespace-normal align-top">
-                                    <div class="text-sm text-gray-700 break-words leading-snug">{{ report.equipment && report.equipment.company && report.equipment.company.name ? report.equipment.company.name : '—' }}</div>
+                                <td v-if="!authStore.hasRole('Cliente')" class="px-2 py-2 whitespace-normal align-top">
+                                    <div class="text-gray-700 break-words leading-snug">{{ report.equipment && report.equipment.company && report.equipment.company.name ? report.equipment.company.name : '—' }}</div>
                                 </td>
-                                <td class="px-3 py-3 whitespace-normal align-top">
-                                    <div class="text-sm font-medium text-gray-900 break-words leading-snug">{{ report.equipment && report.equipment.name ? report.equipment.name : '' }}</div>
+                                <td class="px-2 py-2 whitespace-normal align-top">
+                                    <div class="font-medium text-gray-900 break-words leading-snug">{{ report.equipment && report.equipment.name ? report.equipment.name : '' }}</div>
                                 </td>
-                                <td class="px-3 py-3 whitespace-normal align-top">
-                                    <div class="text-sm text-gray-500 break-words leading-snug">{{ report.equipment && report.equipment.process ? report.equipment.process : '—' }}</div>
+                                <td class="px-2 py-2 whitespace-normal align-top">
+                                    <div class="text-gray-500 break-words leading-snug">{{ report.equipment && report.equipment.process ? report.equipment.process : '—' }}</div>
                                 </td>
-                                <td class="px-3 py-3 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ formatDate(report.measurement_date) }}</div>
+                                <td class="px-2 py-2 whitespace-nowrap">
+                                    <div class="text-gray-500">{{ formatDate(report.measurement_date) }}</div>
                                 </td>
-                                <td class="px-3 py-3 whitespace-nowrap">
+                                <td class="px-2 py-2 whitespace-nowrap">
                                     <span
                                         :class="!report.condition || !report.condition.color ? getConditionClass() : ''"
                                         :style="report.condition ? (report.condition.color ? { backgroundColor: report.condition.color, color: report.condition.text_color || '#000', borderColor: report.condition.color } : (report.condition.text_color ? { color: report.condition.text_color } : {})) : {}"
-                                        class="px-3 py-1 inline-flex text-xs font-semibold rounded-full border"
+                                        class="px-2 py-0.5 inline-flex text-xs font-semibold rounded-full border"
                                     >
                                         {{ report.condition && report.condition.name ? report.condition.name : '' }}
                                     </span>
                                 </td>
-                                <td class="px-3 py-3 whitespace-normal align-top">
-                                    <div class="text-sm text-gray-500 break-words leading-snug">{{ report.mechanism_fail?.name ?? '—' }}</div>
+                                <td class="px-2 py-2 whitespace-normal align-top">
+                                    <div class="text-gray-500 break-words leading-snug">{{ report.mechanism_fail?.name ?? '—' }}</div>
                                 </td>
-                                <td class="px-3 py-3 whitespace-nowrap">
+                                <td class="px-2 py-2 whitespace-nowrap">
                                     <span
                                         :class="priorityBadgeClass(report.priority)"
                                         :style="priorityBadgeStyle(report.priority)"
-                                        class="px-3 py-1 inline-flex text-xs font-semibold rounded-full"
+                                        class="px-2 py-0.5 inline-flex text-xs font-semibold rounded-full"
                                     >
                                         {{ report.priority?.name ?? report.priority }}
                                     </span>
                                 </td>
-                                <td v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                <td v-if="authStore.hasPermission('detalle report') || authStore.hasPermission('edit report') || authStore.hasPermission('delete report')" class="px-2 py-2 whitespace-nowrap text-right font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
                                             v-if="authStore.hasPermission('detalle report')"
                                             :to="{ name: 'reports.show', params: { id: report.id } }"
-                                            class="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors"
+                                            class="text-green-600 hover:text-green-900 p-1.5 hover:bg-green-50 rounded-lg transition-colors"
                                             title="Ver detalles"
                                         >
                                             <i class="fas fa-eye"></i>
@@ -315,7 +326,7 @@
                                         <router-link
                                             v-if="authStore.hasPermission('edit report')"
                                             :to="{ name: 'reports.edit', params: { id: report.id } }"
-                                            class="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                            class="text-blue-600 hover:text-blue-900 p-1.5 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="Editar"
                                         >
                                             <i class="fas fa-edit"></i>
@@ -323,7 +334,7 @@
                                         <button
                                             v-if="authStore.hasPermission('delete report')"
                                             @click="deleteReport(report.id)"
-                                            class="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                                            class="text-red-600 hover:text-red-900 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                                             title="Eliminar"
                                         >
                                             <i class="fas fa-trash"></i>
