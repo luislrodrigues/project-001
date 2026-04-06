@@ -98,6 +98,10 @@ class ReportController extends Controller
             $query->where('priority_id', $request->priority_id);
         }
 
+        if ($request->filled('mechanism_fail_id')) {
+            $query->where('mechanism_fail_id', (int) $request->mechanism_fail_id);
+        }
+
         if ($request->has('company_id') && $request->company_id !== '') {
             $query->whereHas('equipment', function ($q) use ($request) {
                 $q->where('company_id', $request->company_id);
@@ -608,6 +612,9 @@ class ReportController extends Controller
         }
         if ($request->filled('priority_id')) {
             $query->where('priority_id', $request->priority_id);
+        }
+        if ($request->filled('mechanism_fail_id')) {
+            $query->where('mechanism_fail_id', (int) $request->mechanism_fail_id);
         }
         if ($request->filled('company_id')) {
             $query->whereHas('equipment', function ($q) use ($request) {

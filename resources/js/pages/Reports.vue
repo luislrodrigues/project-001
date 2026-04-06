@@ -126,6 +126,19 @@
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-filter mr-2 text-gray-400"></i>
+                                Mecanismo de falla
+                            </label>
+                            <Select2
+                                v-model="filters.mechanism_fail_id"
+                                :options="mechanismFails"
+                                allLabel="Todos"
+                                @change="() => fetchReports(1)"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            />
+                        </div>
                         <div v-if="!authStore.hasRole('Cliente')">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-user-tie mr-2 text-gray-400"></i>
@@ -233,6 +246,12 @@
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
                                     <div class="flex items-center">
+                                        <i class="fas fa-tools mr-2"></i>
+                                        Mecanismo de falla
+                                    </div>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
+                                    <div class="flex items-center">
                                         <i class="fas fa-flag mr-2"></i>
                                         Prioridad
                                     </div>
@@ -270,6 +289,9 @@
                                     >
                                         {{ report.condition && report.condition.name ? report.condition.name : '' }}
                                     </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">{{ report.mechanism_fail?.name ?? '—' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
@@ -348,6 +370,7 @@ const pagination = ref(null);
 const equipments = ref([]);
 const conditions = ref([]);
 const priorities = ref([]);
+const mechanismFails = ref([]);
 const companies = ref([]);
 const processes = ref([]);
 const analists = ref([]);
@@ -357,6 +380,7 @@ const filters = reactive({
     equipment_id: route.query.equipment_id ?? '',
     condition_id: route.query.condition_id ?? '',
     priority_id: route.query.priority_id ?? '',
+    mechanism_fail_id: route.query.mechanism_fail_id ?? '',
     company_id: route.query.company_id ?? '',
     process_id: route.query.process_id ?? '',
     analist_id: route.query.analist_id ?? '',
@@ -376,6 +400,7 @@ const syncQueryToUrl = (page = 1) => {
         equipment_id: filters.equipment_id,
         condition_id: filters.condition_id,
         priority_id: filters.priority_id,
+        mechanism_fail_id: filters.mechanism_fail_id,
         company_id: filters.company_id,
         process_id: filters.process_id,
         analist_id: filters.analist_id,
@@ -396,6 +421,7 @@ const applyQueryToFilters = () => {
         filters.equipment_id = route.query.equipment_id ?? '';
         filters.condition_id = route.query.condition_id ?? '';
         filters.priority_id = route.query.priority_id ?? '';
+        filters.mechanism_fail_id = route.query.mechanism_fail_id ?? '';
         filters.company_id = route.query.company_id ?? '';
         filters.process_id = route.query.process_id ?? '';
         filters.analist_id = route.query.analist_id ?? '';
@@ -412,6 +438,7 @@ const applyQueryToFilters = () => {
                     filters.equipment_id = query.equipment_id ?? '';
                     filters.condition_id = query.condition_id ?? '';
                     filters.priority_id = query.priority_id ?? '';
+                    filters.mechanism_fail_id = query.mechanism_fail_id ?? '';
                     filters.company_id = query.company_id ?? '';
                     filters.process_id = query.process_id ?? '';
                     filters.analist_id = query.analist_id ?? '';
@@ -449,10 +476,11 @@ onMounted(async () => {
 const loadCatalogs = async () => {
     beginLoading();
     try {
-    const [equipmentsRes, conditionsRes, prioritiesRes, companiesRes, processesRes, analistsRes] = await Promise.all([
+    const [equipmentsRes, conditionsRes, prioritiesRes, mechanismFailsRes, companiesRes, processesRes, analistsRes] = await Promise.all([
         api.get('/catalogs/equipment'),
             api.get('/catalogs/conditions'),
             api.get('/catalogs/priorities'),
+            api.get('/catalogs/mechanism-fails'),
             api.get('/catalogs/companies'),
             api.get('/catalogs/processes'),
             api.get('/catalogs/analists'),
@@ -461,6 +489,7 @@ const loadCatalogs = async () => {
     equipments.value = equipmentsRes.data.data;
         conditions.value = conditionsRes.data.data;
         priorities.value = prioritiesRes.data.data ?? prioritiesRes.data ?? [];
+        mechanismFails.value = mechanismFailsRes.data.data ?? mechanismFailsRes.data ?? [];
         companies.value = companiesRes.data.data;
         processes.value = processesRes.data.data ?? processesRes.data ?? [];
         analists.value = analistsRes.data.data ?? analistsRes.data ?? [];
@@ -476,6 +505,7 @@ const clearFilters = () => {
     filters.equipment_id = '';
     filters.condition_id = '';
     filters.priority_id = '';
+    filters.mechanism_fail_id = '';
     filters.company_id = '';
     filters.process_id = '';
     filters.analist_id = '';
@@ -513,6 +543,7 @@ const fetchReports = async (page = 1) => {
         if (filters.equipment_id) params.equipment_id = filters.equipment_id;
         if (filters.condition_id) params.condition_id = filters.condition_id;
         if (filters.priority_id) params.priority_id = filters.priority_id;
+        if (filters.mechanism_fail_id) params.mechanism_fail_id = filters.mechanism_fail_id;
         if (filters.company_id) params.company_id = filters.company_id;
         if (filters.process_id) params.process_id = filters.process_id;
         if (filters.analist_id) params.analist_id = filters.analist_id;
@@ -551,6 +582,7 @@ const exportExcel = async () => {
         if (filters.equipment_id) payload.equipment_id = filters.equipment_id;
         if (filters.condition_id) payload.condition_id = filters.condition_id;
         if (filters.priority_id) payload.priority_id = filters.priority_id;
+        if (filters.mechanism_fail_id) payload.mechanism_fail_id = filters.mechanism_fail_id;
         if (filters.company_id) payload.company_id = filters.company_id;
         if (filters.process_id) payload.process_id = filters.process_id;
         if (filters.analist_id) payload.analist_id = filters.analist_id;
