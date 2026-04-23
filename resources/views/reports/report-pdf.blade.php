@@ -497,7 +497,7 @@
                             $diagnosisHtml = nl2br($diagnosisHtml, false);
                             $diagnosisHtml = preg_replace('/(\s*<br\s*\/?>\s*){3,}/i', '<br><br>', $diagnosisHtml);
                         }
-                        $diagnosisHtml = preg_replace('/<(p|div)(\\s[^>]*)?>\\s*(?:<br\\s*\\/?>\\s*)?<\\/\\1>/i', '<$1$2>&nbsp;</$1>', $diagnosisHtml);
+                        $diagnosisHtml = preg_replace('/<(p|div)(\s[^>]*)?>\s*(?:<br\s*\/?>\s*)?<\/\1>/i', '<$1$2>&nbsp;</$1>', $diagnosisHtml);
                     @endphp
                     <div class="diagnosis-text">{!! $diagnosisHtml !!}</div>
                 @endif
