@@ -247,7 +247,7 @@
         }
         .section .diagnosis-text p,
         .section .diagnosis-text div {
-            margin: 0;
+            margin: 0 0 4px 0;
         }
 
         .section .rec-label {
@@ -491,8 +491,12 @@
                     <p class="diagnosis-label">Diagnóstico:</p>
                     @php
                         $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p><div>');
-                        $diagnosisHtml = nl2br($diagnosisHtml, false);
-                        $diagnosisHtml = preg_replace('/(\s*<br\s*\/?>\s*){2,}/i', '<br>', $diagnosisHtml);
+                        $hasBlockTags = preg_match('/<(p|div|ul|ol|li)\b/i', $diagnosisHtml) === 1;
+                        if (!$hasBlockTags) {
+                            $diagnosisHtml = preg_replace("/\r\n|\r/", "\n", $diagnosisHtml);
+                            $diagnosisHtml = nl2br($diagnosisHtml, false);
+                            $diagnosisHtml = preg_replace('/(\s*<br\s*\/?>\s*){3,}/i', '<br><br>', $diagnosisHtml);
+                        }
                     @endphp
                     <div class="diagnosis-text">{!! $diagnosisHtml !!}</div>
                 @endif
