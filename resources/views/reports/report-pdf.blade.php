@@ -492,12 +492,15 @@
                     @php
                         $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p><div>');
                         $diagnosisHtml = preg_replace("/\r\n|\r/", "\n", $diagnosisHtml);
-                        $diagnosisHtml = preg_replace('/>\s+</', '><', $diagnosisHtml);
                         $diagnosisHtml = str_replace("\n", "<br>", $diagnosisHtml);
+                        $diagnosisHtml = preg_replace('/>\s+</', '><', $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/(\s*<br\s*\/?>\s*){3,}/i', '<br><br>', $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/<(p|div)(\s[^>]*)?>\s*(?:<br\s*\/?>\s*)?<\/\1>/i', '<$1$2>&nbsp;</$1>', $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/<\/(p|div)>\s*<(p|div|ul|ol)\b/i', '</$1><br><$2', $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/<\/(ul|ol)>\s*<(p|div|ul|ol)\b/i', '</$1><br><$2', $diagnosisHtml);
+                        $diagnosisHtml = preg_replace_callback('/(?<=>)[^<]+(?=<)|^[^<]+$/', function ($m) {
+                            return preg_replace('/ {2,}/', fn($sp) => str_repeat('&nbsp;', strlen($sp[0])), $m[0]);
+                        }, $diagnosisHtml);
                     @endphp
                     <div class="diagnosis-text">{!! $diagnosisHtml !!}</div>
                 @endif
