@@ -499,7 +499,9 @@
                         $diagnosisHtml = preg_replace('/<\/(p|div)>\s*<(p|div|ul|ol)\b/i', '</$1><br><$2', $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/<\/(ul|ol)>\s*<(p|div|ul|ol)\b/i', '</$1><br><$2', $diagnosisHtml);
                         $diagnosisHtml = preg_replace_callback('/(?<=>)[^<]+(?=<)|^[^<]+$/', function ($m) {
-                            return preg_replace('/ {2,}/', fn($sp) => str_repeat('&nbsp;', strlen($sp[0])), $m[0]);
+                            return preg_replace('/ {2,}/', function ($sp) {
+                                return str_repeat('&nbsp;', strlen($sp[0]));
+                            }, $m[0]);
                         }, $diagnosisHtml);
                     @endphp
                     <div class="diagnosis-text">{!! $diagnosisHtml !!}</div>
