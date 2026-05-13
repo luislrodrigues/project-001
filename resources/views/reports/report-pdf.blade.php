@@ -491,7 +491,7 @@
                     <p class="diagnosis-label">Diagnóstico:</p>
                     @php
                         $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p><div>');
-                        $diagnosisHtml = mb_convert_encoding($diagnosisHtml, 'UTF-8', 'UTF-8');
+                        $diagnosisHtml = iconv('UTF-8', 'UTF-8//IGNORE', $diagnosisHtml);
                         $diagnosisHtml = preg_replace("/\r\n|\r/", "\n", $diagnosisHtml);
                         $diagnosisHtml = str_replace("\n", "<br>", $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/>\s+</', '><', $diagnosisHtml);
@@ -518,7 +518,7 @@
                         @foreach ($recs as $rec)
                             @php
                                 $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
-                                $recHtml = mb_convert_encoding($recHtml, 'UTF-8', 'UTF-8');
+                                $recHtml = iconv('UTF-8', 'UTF-8//IGNORE', $recHtml);
                                 $recHtml = nl2br($recHtml, false);
                                 $recHtml = preg_replace('/(?:<br\s*\/?>\s*){3,}/i', '<br><br>', $recHtml);
                             @endphp
@@ -563,7 +563,7 @@
                     @foreach ($generalRecs as $rec)
                         @php
                             $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
-                            $recHtml = mb_convert_encoding($recHtml, 'UTF-8', 'UTF-8');
+                            $recHtml = iconv('UTF-8', 'UTF-8//IGNORE', $recHtml);
                             $recHtml = nl2br($recHtml, false);
                             $recHtml = preg_replace('/(?:<br\s*\/?>\s*){3,}/i', '<br><br>', $recHtml);
                         @endphp
