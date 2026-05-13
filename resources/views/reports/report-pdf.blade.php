@@ -491,6 +491,7 @@
                     <p class="diagnosis-label">Diagnóstico:</p>
                     @php
                         $diagnosisHtml = strip_tags((string) $diagnosisText, '<b><strong><i><em><u><ul><ol><li><br><p><div>');
+                        $diagnosisHtml = mb_convert_encoding($diagnosisHtml, 'UTF-8', 'UTF-8');
                         $diagnosisHtml = preg_replace("/\r\n|\r/", "\n", $diagnosisHtml);
                         $diagnosisHtml = str_replace("\n", "<br>", $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/>\s+</', '><', $diagnosisHtml);
@@ -498,9 +499,9 @@
                         $diagnosisHtml = preg_replace('/<(p|div)(\s[^>]*)?>\s*(?:<br\s*\/?>\s*)?<\/\1>/i', '<$1$2>&nbsp;</$1>', $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/<\/(p|div)>\s*<(p|div|ul|ol)\b/i', '</$1><br><$2', $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/<\/(ul|ol)>\s*<(p|div|ul|ol)\b/i', '</$1><br><$2', $diagnosisHtml);
-                        $diagnosisHtml = preg_replace_callback('/(?<=>)[^<]+(?=<)|^[^<]+$/', function ($m) {
-                            return preg_replace_callback('/ {2,}/', function ($sp) {
-                                return str_repeat('&nbsp;', strlen($sp[0]));
+                        $diagnosisHtml = preg_replace_callback('/(?<=>)[^<]+(?=<)|^[^<]+$/u', function ($m) {
+                            return preg_replace_callback('/ {2,}/u', function ($sp) {
+                                return str_repeat('&nbsp;', mb_strlen($sp[0], 'UTF-8'));
                             }, $m[0]);
                         }, $diagnosisHtml);
                     @endphp
@@ -517,6 +518,7 @@
                         @foreach ($recs as $rec)
                             @php
                                 $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
+                                $recHtml = mb_convert_encoding($recHtml, 'UTF-8', 'UTF-8');
                                 $recHtml = nl2br($recHtml, false);
                                 $recHtml = preg_replace('/(?:<br\s*\/?>\s*){3,}/i', '<br><br>', $recHtml);
                             @endphp
@@ -561,6 +563,7 @@
                     @foreach ($generalRecs as $rec)
                         @php
                             $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
+                            $recHtml = mb_convert_encoding($recHtml, 'UTF-8', 'UTF-8');
                             $recHtml = nl2br($recHtml, false);
                             $recHtml = preg_replace('/(?:<br\s*\/?>\s*){3,}/i', '<br><br>', $recHtml);
                         @endphp
