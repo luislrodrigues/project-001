@@ -247,7 +247,7 @@
         }
         .section .diagnosis-text p,
         .section .diagnosis-text div {
-            margin: 0 0 4px 0;
+            margin: 0;
         }
 
         .section .rec-label {
@@ -434,12 +434,12 @@
             <tr>
                 <td class="equipment-data-cell">
                     <div class="equipment-data-div">
-                        <div class="data-line"><strong>INFORME:</strong> {{ $reportData->consecutivo ?? '—' }}</div>
-                        <div class="data-line" ><strong>PLANTA:</strong> {{ $reportData->equipment?->company?->name ?? '—' }}</div>
-                        <div class="data-line"><strong>EQUIPO:</strong> <span class="value-equipo">{{ $reportData->equipment?->name ?? '—' }}</span></div>
+                        <div class="data-line"><strong>INFORME:</strong> {{ utf8_sanitize($reportData->consecutivo ?? '—') }}</div>
+                        <div class="data-line" ><strong>PLANTA:</strong> {{ utf8_sanitize($reportData->equipment?->company?->name ?? '—') }}</div>
+                        <div class="data-line"><strong>EQUIPO:</strong> <span class="value-equipo">{{ utf8_sanitize($reportData->equipment?->name ?? '—') }}</span></div>
                         <div class="data-line"><strong>CONDICIÓN:</strong>
                             @php
-                                $condicion = $reportData->condition?->name ?? '';
+                                $condicion = utf8_sanitize($reportData->condition?->name ?? '');
                                 $esAlarma = stripos($condicion, 'alarma') !== false;
                                 $condTextColor = $reportData->condition?->text_color ?? '#000';
                                 $condBgColor = $reportData->condition?->color;
@@ -450,9 +450,9 @@
                                 <span class="condition-value" style="color: {{ $condTextColor }};{{ $condBgColor ? ' background: ' . $condBgColor . ';' : '' }}">{{ $condicion }}</span>
                             @endif
                         </div>
-                        <div class="data-line"><strong>MECANISMO FALLA:</strong> {{ $reportData->mechanismFail->name ?? '—' }}</div>
-                        <div class="data-line"><strong>COMPONENTE EN FALLA:</strong> {{ $reportData->componentFail->name ?? '—' }}</div>
-                        <div class="data-line"><strong>PRIORIDAD ATENCIÓN:</strong> {{ $reportData->priority?->name ?? '—' }}</div>
+                        <div class="data-line"><strong>MECANISMO FALLA:</strong> {{ utf8_sanitize($reportData->mechanismFail->name ?? '—') }}</div>
+                        <div class="data-line"><strong>COMPONENTE EN FALLA:</strong> {{ utf8_sanitize($reportData->componentFail->name ?? '—') }}</div>
+                        <div class="data-line"><strong>PRIORIDAD ATENCIÓN:</strong> {{ utf8_sanitize($reportData->priority?->name ?? '—') }}</div>
                         <div class="data-line"><strong>FECHA MEDICIÓN:</strong> {{ $reportData->measurement_date?->format('d/m/Y') ?? '—' }}</div>
                     </div>
                 </td>
@@ -468,16 +468,16 @@
 
         @foreach ($components as $component)
             <div class="section block component-section">
-                <h3 class="section-title">{{ $component->componentType->name }}</h3>
+                <h3 class="section-title">{{ utf8_sanitize($component->componentType->name) }}</h3>
                 <p class="component-spec-paragraph">
-                    <strong>Marca:</strong> {{ $component->brand->name ?? '—' }}.
+                    <strong>Marca:</strong> {{ utf8_sanitize($component->brand->name ?? '—') }}.
                     @foreach (($component->fields ?? collect())->sortBy('display_order') as $field)
                         @php
                             $fieldVal = $component->fieldValues ? $component->fieldValues->where('component_type_field_id', $field->id)->first() : null;
-                            $val = $fieldVal?->value ?? '';
+                            $val = utf8_sanitize($fieldVal?->value ?? '');
                         @endphp
                         @if (trim((string) $val) !== '')
-                            <strong>{{ $field->name }}:</strong> {{ $val }}{{ !empty($field->unit) ? ' ' . $field->unit : '' }}.
+                            <strong>{{ utf8_sanitize($field->name) }}:</strong> {{ $val }}{{ !empty($field->unit) ? ' ' . utf8_sanitize($field->unit) : '' }}.
                         @endif
                     @endforeach
                 </p>
@@ -495,10 +495,8 @@
                         $diagnosisHtml = preg_replace("/\r\n|\r/", "\n", $diagnosisHtml);
                         $diagnosisHtml = str_replace("\n", "<br>", $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/>\s+</', '><', $diagnosisHtml);
-                        $diagnosisHtml = preg_replace('/(?:<br\s*\/?>\s*){3,}/i', '<br><br>', $diagnosisHtml);
+                        $diagnosisHtml = preg_replace('/(?:<br\s*\/?>\s*){2,}/i', '<br>', $diagnosisHtml);
                         $diagnosisHtml = preg_replace('/<(p|div)(\s[^>]*)?>\s*(?:<br\s*\/?>\s*)?<\/\1>/i', '<$1$2>&nbsp;</$1>', $diagnosisHtml);
-                        $diagnosisHtml = preg_replace('/<\/(p|div)>\s*<(p|div|ul|ol)\b/i', '</$1><br><$2', $diagnosisHtml);
-                        $diagnosisHtml = preg_replace('/<\/(ul|ol)>\s*<(p|div|ul|ol)\b/i', '</$1><br><$2', $diagnosisHtml);
                         $diagnosisHtml = preg_replace_callback('/(?<=>)[^<]+(?=<)|^[^<]+$/u', function ($m) {
                             return preg_replace_callback('/ {2,}/u', function ($sp) {
                                 return str_repeat('&nbsp;', mb_strlen($sp[0], 'UTF-8'));
@@ -520,7 +518,7 @@
                                 $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
                                 $recHtml = iconv('UTF-8', 'UTF-8//IGNORE', $recHtml);
                                 $recHtml = nl2br($recHtml, false);
-                                $recHtml = preg_replace('/(?:<br\s*\/?>\s*){3,}/i', '<br><br>', $recHtml);
+                                $recHtml = preg_replace('/(?:<br\s*\/?>\s*){2,}/i', '<br>', $recHtml);
                             @endphp
                             <li>{!! $recHtml !!}</li>
                         @endforeach
@@ -565,7 +563,7 @@
                             $recHtml = strip_tags((string) $rec, '<b><strong><i><em><u><br><p><div>');
                             $recHtml = iconv('UTF-8', 'UTF-8//IGNORE', $recHtml);
                             $recHtml = nl2br($recHtml, false);
-                            $recHtml = preg_replace('/(?:<br\s*\/?>\s*){3,}/i', '<br><br>', $recHtml);
+                            $recHtml = preg_replace('/(?:<br\s*\/?>\s*){2,}/i', '<br>', $recHtml);
                         @endphp
                         <li>{!! $recHtml !!}</li>
                     @endforeach
@@ -574,8 +572,8 @@
         @endif
 
         <p class="elaboro-line">Elaboró:</p>
-        <p class="elaboro-line"><strong> {{ $reportData->analist?->name ?? '—' }}</strong></p>
-        <p class="elaboro-line">{{ $reportData->analist?->workstation ?? '—' }}</p>
+        <p class="elaboro-line"><strong> {{ utf8_sanitize($reportData->analist?->name ?? '—') }}</strong></p>
+        <p class="elaboro-line">{{ utf8_sanitize($reportData->analist?->workstation ?? '—') }}</p>
     </div>
 </body>
 </html>

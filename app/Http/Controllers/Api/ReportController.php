@@ -466,9 +466,9 @@ class ReportController extends Controller
                             if ($componentsList->has($index)) {
                                 $componentId = (string) $componentsList->get($index)->id;
                                 if (is_array($data) && isset($data['text'])) {
-                                    $diagnosis[$componentId] = $data['text'];
+                                    $diagnosis[$componentId] = utf8_sanitize($data['text']);
                                 } elseif (is_string($data)) {
-                                    $diagnosis[$componentId] = $data;
+                                    $diagnosis[$componentId] = utf8_sanitize($data);
                                 }
                             }
                         }
@@ -476,9 +476,9 @@ class ReportController extends Controller
                         foreach ($decoded as $componentId => $data) {
                             $componentId = (string) $componentId;
                             if (is_array($data) && isset($data['text'])) {
-                                $diagnosis[$componentId] = (string) ($data['text'] ?? '');
+                                $diagnosis[$componentId] = utf8_sanitize($data['text'] ?? '');
                             } elseif (is_string($data)) {
-                                $diagnosis[$componentId] = $data;
+                                $diagnosis[$componentId] = utf8_sanitize($data);
                             }
                         }
                     }
@@ -496,13 +496,13 @@ class ReportController extends Controller
                         foreach ($decoded as $index => $data) {
                             if ($componentsList->has($index)) {
                                 $componentId = (string) $componentsList->get($index)->id;
-                                $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($r) => trim((string) $r) !== '')) : [];
+                                $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
                             }
                         }
                     } else {
                         foreach ($decoded as $componentId => $data) {
                             $componentId = (string) $componentId;
-                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($r) => trim((string) $r) !== '')) : [];
+                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
                         }
                     }
                 }
@@ -543,19 +543,24 @@ class ReportController extends Controller
                 $equipmentImage = self::imageToBase64ForPdf($report->equipment->image);
             }
 
-            $pdf = PDF::loadView('reports.report-pdf', [
+            $html = view('reports.report-pdf', [
                 'reportData' => $report,
                 'components' => $components,
                 'diagnosis' => $diagnosis,
                 'recommendations' => $recommendations,
                 'componentImages' => $componentImages,
                 'equipmentImage' => $equipmentImage,
-            ], [], [
-                'margin_left'   => 0,
-                'margin_right'  => 0,
-                'margin_top'    => 28,
-                'margin_header' => 0,
-                'margin_footer' => 10,
+            ])->render();
+
+            $html = utf8_sanitize_html($html);
+
+            $pdf = PDF::loadHTML($html, [
+                'margin_left'           => 0,
+                'margin_right'          => 0,
+                'margin_top'            => 28,
+                'margin_header'         => 0,
+                'margin_footer'         => 10,
+                'ignore_invalid_utf8'   => true,
             ]);
 
             $equipmentName = $report->equipment?->name ?? 'reporte-' . $report->id;
@@ -1069,13 +1074,13 @@ class ReportController extends Controller
                     foreach ($decoded as $index => $data) {
                         if ($componentsList->has($index)) {
                             $componentId = (string) $componentsList->get($index)->id;
-                            $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? $data['text'] : (is_string($data) ? $data : '');
+                            $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? utf8_sanitize($data['text']) : (is_string($data) ? utf8_sanitize($data) : '');
                         }
                     }
                 } else {
                     foreach ($decoded as $componentId => $data) {
                         $componentId = (string) $componentId;
-                        $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? $data['text'] : (is_string($data) ? $data : '');
+                        $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? utf8_sanitize($data['text']) : (is_string($data) ? utf8_sanitize($data) : '');
                     }
                 }
             }
@@ -1091,13 +1096,13 @@ class ReportController extends Controller
                     foreach ($decoded as $index => $data) {
                         if ($componentsList->has($index)) {
                             $componentId = (string) $componentsList->get($index)->id;
-                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($r) => trim((string) $r) !== '')) : [];
+                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
                         }
                     }
                 } else {
                     foreach ($decoded as $componentId => $data) {
                         $componentId = (string) $componentId;
-                        $recommendations[$componentId] = is_array($data) ? array_values(array_filter($data, fn ($r) => trim((string) $r) !== '')) : [];
+                        $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
                     }
                 }
             }
@@ -1138,19 +1143,24 @@ class ReportController extends Controller
             ? self::imageToBase64ForPdf($report->equipment->image)
             : null;
 
-        return PDF::loadView('reports.report-pdf', [
+        $html = view('reports.report-pdf', [
             'reportData' => $report,
             'components' => $components,
             'diagnosis' => $diagnosis,
             'recommendations' => $recommendations,
             'componentImages' => $componentImages,
             'equipmentImage' => $equipmentImage,
-        ], [], [
-            'margin_left'   => 0,
-            'margin_right'  => 0,
-            'margin_top'    => 28,
-            'margin_header' => 0,
-            'margin_footer' => 10,
+        ])->render();
+
+        $html = utf8_sanitize_html($html);
+
+        return PDF::loadHTML($html, [
+            'margin_left'           => 0,
+            'margin_right'          => 0,
+            'margin_top'            => 28,
+            'margin_header'         => 0,
+            'margin_footer'         => 10,
+            'ignore_invalid_utf8'   => true,
         ]);
     }
 
@@ -1163,7 +1173,7 @@ class ReportController extends Controller
             return [];
         }
         return array_values(array_filter(array_map(function ($item) {
-            return trim((string) $item);
+            return utf8_sanitize(trim((string) $item));
         }, $value), fn ($s) => $s !== ''));
     }
 

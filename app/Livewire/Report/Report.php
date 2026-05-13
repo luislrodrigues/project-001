@@ -619,12 +619,12 @@ class Report extends Component
                     foreach ($decoded as $index => $data) {
                         if ($components->has($index)) {
                             $componentId = $components->get($index)->id;
-                            $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? $data['text'] : (is_string($data) ? $data : '');
+                            $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? utf8_sanitize($data['text']) : (is_string($data) ? utf8_sanitize($data) : '');
                         }
                     }
                 } else {
                     foreach ($decoded as $componentId => $data) {
-                        $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? $data['text'] : (is_string($data) ? $data : '');
+                        $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? utf8_sanitize($data['text']) : (is_string($data) ? utf8_sanitize($data) : '');
                     }
                 }
             }
@@ -639,11 +639,15 @@ class Report extends Component
                     foreach ($decoded as $index => $data) {
                         if ($components->has($index)) {
                             $componentId = $components->get($index)->id;
-                            $recommendations[$componentId] = is_array($data) ? $data : [];
+                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn($r) => utf8_sanitize($r), $data), fn($r) => trim($r) !== '')) : [];
                         }
                     }
                 } else {
-                    $recommendations = $decoded;
+                    foreach ($decoded as $componentId => $data) {
+                        if (is_array($data)) {
+                            $recommendations[$componentId] = array_values(array_filter(array_map(fn($r) => utf8_sanitize($r), $data), fn($r) => trim($r) !== ''));
+                        }
+                    }
                 }
             }
         }
@@ -675,19 +679,24 @@ class Report extends Component
             $equipmentImage = $this->imageToBase64ForPdf($this->reportData->equipment->image);
         }
 
-        $pdf = PDF::loadView('livewire.report.report-pdf', [
+        $html = view('reports.report-pdf', [
             'reportData' => $this->reportData,
             'components' => $components,
             'diagnosis' => $diagnosis,
             'recommendations' => $recommendations,
             'componentImages' => $componentImages,
             'equipmentImage' => $equipmentImage,
-        ], [], [
-            'margin_left'   => 0,
-            'margin_right'  => 0,
-            'margin_top'    => 28,
-            'margin_header' => 0,
-            'margin_footer' => 10,
+        ])->render();
+
+        $html = utf8_sanitize_html($html);
+
+        $pdf = PDF::loadHTML($html, [
+            'margin_left'           => 0,
+            'margin_right'          => 0,
+            'margin_top'            => 28,
+            'margin_header'         => 0,
+            'margin_footer'         => 10,
+            'ignore_invalid_utf8'   => true,
         ]);
         return $pdf;
     }
