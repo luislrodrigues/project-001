@@ -259,12 +259,14 @@ class EquipmentController extends Controller
         }
     }
 
-    public function getEquipmentForSelect(): JsonResponse
+    public function getEquipmentForSelect(Request $request): JsonResponse
     {
         $query = Equipment::with(['company', 'equipmentType'])
             ->where('status', 'active');
 
-        if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
+        if ($request->filled('company_id')) {
+            $query->where('company_id', (int) $request->company_id);
+        } elseif (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
             $query->where('company_id', auth()->user()->company_id);
         }
 

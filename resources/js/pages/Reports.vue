@@ -56,7 +56,7 @@
                                 v-model="filters.company_id"
                                 :options="companies"
                                 placeholder="Todas"
-                                @change="() => fetchReports(1)"
+                                @change="onCompanyChange"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -484,11 +484,22 @@ onMounted(async () => {
     await fetchReports(page);
 });
 
+// Carga los equipos según la empresa seleccionada en el filtro
+const loadEquipments = async () => {
+    try {
+        const params = {};
+        if (filters.company_id) params.company_id = filters.company_id;
+        const equipmentsRes = await api.get('/catalogs/equipment', { params });
+        equipments.value = equipmentsRes.data.data ?? equipmentsRes.data ?? [];
+    } catch (error) {
+        console.error('Error al cargar equipos:', error);
+    }
+};
+
 const loadCatalogs = async () => {
     beginLoading();
     try {
-    const [equipmentsRes, conditionsRes, prioritiesRes, mechanismFailsRes, companiesRes, processesRes, analistsRes] = await Promise.all([
-        api.get('/catalogs/equipment'),
+        const [conditionsRes, prioritiesRes, mechanismFailsRes, companiesRes, processesRes, analistsRes] = await Promise.all([
             api.get('/catalogs/conditions'),
             api.get('/catalogs/priorities'),
             api.get('/catalogs/mechanism-fails'),
@@ -497,18 +508,25 @@ const loadCatalogs = async () => {
             api.get('/catalogs/analists'),
         ]);
 
-    equipments.value = equipmentsRes.data.data;
         conditions.value = conditionsRes.data.data;
         priorities.value = prioritiesRes.data.data ?? prioritiesRes.data ?? [];
         mechanismFails.value = mechanismFailsRes.data.data ?? mechanismFailsRes.data ?? [];
         companies.value = companiesRes.data.data;
         processes.value = processesRes.data.data ?? processesRes.data ?? [];
         analists.value = analistsRes.data.data ?? analistsRes.data ?? [];
+        await loadEquipments();
     } catch (error) {
         console.error('Error al cargar catálogos:', error);
     } finally {
         endLoading();
     }
+};
+
+// Al cambiar la empresa se recargan los equipos de esa empresa
+const onCompanyChange = async () => {
+    filters.equipment_id = '';
+    await loadEquipments();
+    fetchReports(1);
 };
 
 const clearFilters = () => {
@@ -522,6 +540,7 @@ const clearFilters = () => {
     filters.analist_id = '';
     filters.measurement_date_start = '';
     filters.measurement_date_end = '';
+    loadEquipments();
     fetchReports(1);
 };
 
