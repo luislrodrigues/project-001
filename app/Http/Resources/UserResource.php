@@ -23,6 +23,10 @@ class UserResource extends JsonResource
                 'id' => $this->roles->first()->id,
                 'name' => $this->roles->first()->name,
             ] : null,
+            'raw_password' => $this->when(
+                $request->boolean('with_password') && $request->user()?->can('detalle user'),
+                fn () => $this->raw_password ?: null
+            ),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];

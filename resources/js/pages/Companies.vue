@@ -39,18 +39,12 @@
                                 <i class="fas fa-search mr-2 text-gray-400"></i>
                                 Buscar empresa
                             </label>
-                            <div class="relative">
-                                <input
-                                    v-model="search"
-                                    type="text"
-                                    placeholder="Buscar por nombre..."
-                                    class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-10 pr-4 py-2.5 transition-all duration-200"
-                                    @input="fetchCompanies"
-                                />
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-search text-gray-400"></i>
-                                </div>
-                            </div>
+                            <ClearableInput
+                                v-model="search"
+                                placeholder="Buscar por nombre..."
+                                @input="() => fetchCompanies(1)"
+                                @clear="clearFilters"
+                            />
                         </div>
                         <div class="flex items-end gap-2">
                             <button
@@ -191,6 +185,7 @@ import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
+import ClearableInput from '../components/ClearableInput.vue';
 
 const STORAGE_KEY = 'companies-list-filters';
 

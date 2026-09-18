@@ -103,6 +103,35 @@
                             </span>
                         </p>
                     </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4 md:col-span-2">
+                        <label class="flex items-center mb-2 text-sm font-medium text-gray-500">
+                            <i class="fas fa-key mr-2 text-blue-600"></i>
+                            Contraseña
+                        </label>
+                        <div v-if="user.raw_password" class="flex items-center gap-3">
+                            <p class="text-lg font-semibold text-gray-900 font-mono tracking-wide break-all">
+                                {{ showPassword ? user.raw_password : '••••••••' }}
+                            </p>
+                            <button
+                                type="button"
+                                @click="showPassword = !showPassword"
+                                class="text-gray-500 hover:text-blue-600 p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                                :title="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                            >
+                                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                            </button>
+                            <button
+                                type="button"
+                                @click="copyPassword"
+                                class="text-gray-500 hover:text-blue-600 p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                                title="Copiar contraseña"
+                            >
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <p v-else class="text-lg font-semibold text-gray-400">No disponible</p>
+                    </div>
                 </div>
 
                 <div v-if="user.created_at || user.updated_at" class="mt-6 pt-6 border-t border-gray-200">
@@ -135,17 +164,48 @@ const authStore = useAuthStore();
 
 const user = ref({});
 const loading = ref(true);
+const showPassword = ref(false);
 
 const loadUser = async () => {
     loading.value = true;
     try {
-        const response = await api.get(`/users/${route.params.id}`);
+        const response = await api.get(`/users/${route.params.id}`, {
+            params: { with_password: 1 }
+        });
         user.value = response.data.data;
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el usuario', 'error');
         router.push({ name: 'users' });
     } finally {
         loading.value = false;
+    }
+};
+
+const copyPassword = async () => {
+    if (!user.value.raw_password) return;
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(user.value.raw_password);
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = user.value.raw_password;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Contraseña copiada',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    } catch (error) {
+        Swal.fire('Error', 'No se pudo copiar la contraseña', 'error');
     }
 };
 

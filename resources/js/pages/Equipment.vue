@@ -43,6 +43,7 @@
                                 v-model="filters.company_id"
                                 :options="companies"
                                 allLabel="Todas"
+                                :allow-clear="true"
                                 @change="() => fetchEquipment(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -56,6 +57,7 @@
                                 v-model="filters.process_id"
                                 :options="processes"
                                 allLabel="Todos"
+                                :allow-clear="true"
                                 @change="() => fetchEquipment(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -69,6 +71,7 @@
                                 v-model="filters.equipment_type_id"
                                 :options="equipmentTypes"
                                 allLabel="Todos"
+                                :allow-clear="true"
                                 @change="() => fetchEquipment(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -78,18 +81,12 @@
                                 <i class="fas fa-search mr-2 text-gray-400"></i>
                                 Buscar equipo
                             </label>
-                            <div class="relative">
-                                <input
-                                    v-model="search"
-                                    type="text"
-                                    placeholder="Buscar por nombre..."
-                                    class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-10 pr-4 py-2.5 transition-all duration-200"
-                                    @input="fetchEquipment(1)"
-                                />
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-search text-gray-400"></i>
-                                </div>
-                            </div>
+                            <ClearableInput
+                                v-model="search"
+                                placeholder="Buscar por nombre..."
+                                @input="() => fetchEquipment(1)"
+                                @clear="clearSearch"
+                            />
                         </div>
                         <div class="mt-3 w-full flex items-center justify-between gap-2">
                             <div v-if="authStore.hasPermission('export equipment')">
@@ -257,6 +254,7 @@ import api from '../services/api';
 import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
 import Select2 from '../components/Select2.vue';
+import ClearableInput from '../components/ClearableInput.vue';
 
 const STORAGE_KEY = 'equipment-list-filters';
 
@@ -384,6 +382,12 @@ const clearFilters = () => {
     filters.value.company_id = '';
     filters.value.equipment_type_id = '';
     filters.value.process_id = '';
+    fetchEquipment(1);
+};
+
+// Limpia únicamente el filtro de búsqueda
+const clearSearch = () => {
+    search.value = '';
     fetchEquipment(1);
 };
 

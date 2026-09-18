@@ -5,9 +5,18 @@
       :value="displayValue"
       :placeholder="placeholder || 'AAAA-MM-DD - AAAA-MM-DD'"
       readonly
-      class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200 cursor-pointer"
+      class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-4 pr-10 py-2.5 transition-all duration-200 cursor-pointer"
       @click="toggle"
     />
+    <button
+      v-if="hasValue"
+      type="button"
+      class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 transition-colors"
+      title="Limpiar este filtro"
+      @click.stop="clear"
+    >
+      <i class="fas fa-times-circle"></i>
+    </button>
     <div
       v-if="isOpen"
       class="absolute z-20 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-[min(340px,90vw)]"
@@ -92,6 +101,7 @@ const displayValue = computed(() => {
 
 const toggle = () => { isOpen.value = !isOpen.value; };
 const close = () => { isOpen.value = false; };
+const hasValue = computed(() => Boolean((localStart.value || '').trim()) || Boolean((localEnd.value || '').trim()));
 const clear = () => {
   localStart.value = '';
   localEnd.value = '';

@@ -43,6 +43,7 @@
                                 v-model="filters.company_id"
                                 :options="companies"
                                 allLabel="Todas"
+                                :allow-clear="true"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -55,7 +56,8 @@
                                 v-model="filters.equipment_id"
                                 :options="filteredEquipments"
                                 allLabel="Todos"
-                                @change="fetchComponents"
+                                :allow-clear="true"
+                                @change="() => fetchComponents(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -68,7 +70,8 @@
                                 v-model="filters.component_type_id"
                                 :options="componentTypes"
                                 allLabel="Todos"
-                                @change="fetchComponents"
+                                :allow-clear="true"
+                                @change="() => fetchComponents(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -81,7 +84,8 @@
                                 v-model="filters.brand_id"
                                 :options="brands"
                                 allLabel="Todas"
-                                @change="fetchComponents"
+                                :allow-clear="true"
+                                @change="() => fetchComponents(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>

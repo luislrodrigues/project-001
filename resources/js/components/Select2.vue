@@ -57,6 +57,10 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    allowClear: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);
@@ -90,6 +94,18 @@ const setValue = (value) => {
 };
 
 let select2LoadPromise = null;
+
+// Guardas para evitar que al pulsar la X de limpiar (allowClear) se abra el desplegable
+let clearGuards = [];
+
+const teardownClearGuards = () => {
+    clearGuards.forEach(({ el, handler }) => {
+        el.removeEventListener('mousedown', handler, true);
+        el.removeEventListener('touchstart', handler, true);
+    });
+    clearGuards = [];
+};
+
 const ensureSelect2 = async () => {
     if ($.fn && $.fn.select2) return;
     if (!select2LoadPromise) {
@@ -112,13 +128,15 @@ const init = async () => {
     await ensureSelect2();
     const $el = $(selectEl.value);
     $el.off('change.select2-vue');
+    $el.off('select2:opening.select2-vue');
+    teardownClearGuards();
     try {
         $el.select2('destroy');
     } catch (_) {}
 
     $el.select2({
         width: '100%',
-        allowClear: false,
+        allowClear: props.allowClear,
         placeholder: props.placeholder || (props.includeEmptyOption ? props.allLabel : undefined),
         minimumResultsForSearch: props.search ? 0 : Infinity,
         language: {
@@ -129,10 +147,35 @@ const init = async () => {
             maximumSelected: (args) => `Solo puede seleccionar ${args.maximum} elemento${args.maximum === 1 ? '' : 's'}`,
             noResults: () => 'No hay resultados',
             searching: () => 'Buscando…',
+            removeAllItems: () => 'Limpiar filtro',
         },
     });
 
     setValue(props.modelValue);
+
+    // Select2 dispara un 'toggle' interno al limpiar con la X, lo que abre el desplegable.
+    // Se detecta el clic sobre la X y se cancela esa apertura.
+    let clearClicked = false;
+    const containerEl = $el.data('select2')?.$container?.[0] ?? null;
+
+    if (containerEl) {
+        const onMouseDownCapture = (evt) => {
+            const target = evt.target;
+            clearClicked = Boolean(
+                target && typeof target.closest === 'function' && target.closest('.select2-selection__clear')
+            );
+        };
+        containerEl.addEventListener('mousedown', onMouseDownCapture, true);
+        containerEl.addEventListener('touchstart', onMouseDownCapture, true);
+        clearGuards.push({ el: containerEl, handler: onMouseDownCapture });
+    }
+
+    $el.on('select2:opening.select2-vue', (evt) => {
+        if (clearClicked) {
+            clearClicked = false;
+            evt.preventDefault();
+        }
+    });
 
     $el.on('change.select2-vue', () => {
         const val = $el.val();
@@ -151,6 +194,8 @@ onBeforeUnmount(() => {
     if (!selectEl.value) return;
     const $el = $(selectEl.value);
     $el.off('change.select2-vue');
+    $el.off('select2:opening.select2-vue');
+    teardownClearGuards();
     try {
         $el.select2('destroy');
     } catch (_) {}

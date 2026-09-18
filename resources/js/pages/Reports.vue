@@ -39,12 +39,13 @@
                                 <i class="fas fa-search mr-2 text-gray-400"></i>
                                 Buscar por informe
                             </label>
-                            <input
+                            <ClearableInput
                                 v-model="filters.consecutivo"
-                                type="text"
+                                :icon="false"
                                 placeholder="Ej: No: SS-0001 o 1"
-                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                @keyup.enter="fetchReports(1)"
+                                input-class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-4 pr-10 py-2.5 transition-all duration-200"
+                                @enter="() => fetchReports(1)"
+                                @clear="clearConsecutivo"
                             />
                         </div>
                         <div v-if="!authStore.hasRole('Cliente')">
@@ -56,6 +57,7 @@
                                 v-model="filters.company_id"
                                 :options="companies"
                                 placeholder="Todas"
+                                :allow-clear="true"
                                 @change="onCompanyChange"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -69,6 +71,7 @@
                                 v-model="filters.process_id"
                                 :options="processes"
                                 allLabel="Todos"
+                                :allow-clear="true"
                                 @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -96,6 +99,7 @@
                                 v-model="filters.equipment_id"
                                 :options="equipments"
                                 allLabel="Todos"
+                                :allow-clear="true"
                                 @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -109,6 +113,7 @@
                                 v-model="filters.condition_id"
                                 :options="conditions"
                                 allLabel="Todas"
+                                :allow-clear="true"
                                 @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -122,6 +127,7 @@
                                 v-model="filters.priority_id"
                                 :options="priorities"
                                 allLabel="Todas"
+                                :allow-clear="true"
                                 @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -135,6 +141,7 @@
                                 v-model="filters.mechanism_fail_id"
                                 :options="mechanismFails"
                                 allLabel="Todos"
+                                :allow-clear="true"
                                 @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -148,6 +155,7 @@
                                 v-model="filters.analist_id"
                                 :options="analists"
                                 allLabel="Todos"
+                                :allow-clear="true"
                                 @change="() => fetchReports(1)"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -366,6 +374,7 @@ import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
 import RangeDatePicker from '../components/RangeDatePicker.vue';
 import Select2 from '../components/Select2.vue';
+import ClearableInput from '../components/ClearableInput.vue';
 
 const STORAGE_KEY = 'reports-list-filters';
 
@@ -526,6 +535,12 @@ const loadCatalogs = async () => {
 const onCompanyChange = async () => {
     filters.equipment_id = '';
     await loadEquipments();
+    fetchReports(1);
+};
+
+// Limpia únicamente el filtro de búsqueda por informe
+const clearConsecutivo = () => {
+    filters.consecutivo = '';
     fetchReports(1);
 };
 
