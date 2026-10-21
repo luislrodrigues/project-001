@@ -1,6 +1,6 @@
 <template>
     <div class="container mx-auto px-4 sm:px-8">
-        <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
+        <div v-if="loading" class="pointer-events-none fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
@@ -43,8 +43,9 @@
                                 v-model="filters.company_id"
                                 :options="companies"
                                 allLabel="Todas"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchUsers(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -57,9 +58,10 @@
                                 v-model="filters.status"
                                 :options="statusOptions"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :search="false"
                                 :allow-clear="true"
-                                @change="() => fetchUsers(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -261,6 +263,7 @@ import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
 import Select2 from '../components/Select2.vue';
 import ClearableInput from '../components/ClearableInput.vue';
+import { cleanQuery, arrayQuery, readArrayQuery, debounce } from '../utils/filters';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -274,8 +277,8 @@ const route = useRoute();
 
 const filters = ref({
     search: route.query.search ?? '',
-    status: route.query.status ?? '',
-    company_id: route.query.company_id ?? ''
+    status: readArrayQuery(route.query, 'status'),
+    company_id: readArrayQuery(route.query, 'company_id')
 });
 
 const statusOptions = [
@@ -297,12 +300,13 @@ let searchTimeout = null;
 const STORAGE_KEY = 'users-list-filters';
 
 const syncQueryToUrl = (page = 1) => {
-    const q = {
+    const q = cleanQuery({
         page: String(page),
         sort_order: normalizeSortOrder(sortOrder.value),
-        ...filters.value
-    };
-    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+        search: filters.value.search,
+        ...arrayQuery('status', filters.value.status),
+        ...arrayQuery('company_id', filters.value.company_id)
+    });
     router.replace({ name: 'users', query: q });
     try {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q, sortOrder: sortOrder.value }));
@@ -319,21 +323,18 @@ const endLoading = () => {
     loading.value = pendingRequests.value > 0;
 };
 
+// El select múltiple emite un cambio por cada opción; se agrupa en una sola carga
+const refreshFromFilters = debounce(() => fetchUsers(1), 300);
+
 const fetchUsers = async (page = 1) => {
     beginLoading();
     try {
-        const params = {
+        const params = cleanQuery({
             page,
             per_page: 10,
             sort_by: sortBy.value,
             sort_order: normalizeSortOrder(sortOrder.value),
             ...filters.value
-        };
-
-        Object.keys(params).forEach(key => {
-            if (params[key] === '') {
-                delete params[key];
-            }
         });
 
         const response = await api.get('/users', { params });
@@ -374,8 +375,8 @@ const debounceSearch = () => {
 
 const clearFilters = () => {
     filters.value.search = '';
-    filters.value.status = '';
-    filters.value.company_id = '';
+    filters.value.status = [];
+    filters.value.company_id = [];
     fetchUsers(1);
 };
 
@@ -442,8 +443,8 @@ const applyQueryToFilters = () => {
     const hasQuery = Object.keys(route.query).length > 0;
     if (hasQuery) {
         filters.value.search = route.query.search ?? '';
-        filters.value.status = route.query.status ?? '';
-        filters.value.company_id = route.query.company_id ?? '';
+        filters.value.status = readArrayQuery(route.query, 'status');
+        filters.value.company_id = readArrayQuery(route.query, 'company_id');
         sortOrder.value = normalizeSortOrder(route.query.sort_order ?? 'desc');
     } else {
         try {
@@ -452,8 +453,8 @@ const applyQueryToFilters = () => {
                 const { query } = JSON.parse(saved);
                 if (query) {
                     filters.value.search = query.search ?? '';
-                    filters.value.status = query.status ?? '';
-                    filters.value.company_id = query.company_id ?? '';
+                    filters.value.status = readArrayQuery(query, 'status');
+                    filters.value.company_id = readArrayQuery(query, 'company_id');
                     sortOrder.value = normalizeSortOrder(query.sort_order ?? 'desc');
                 }
             }

@@ -1,6 +1,6 @@
 <template>
     <div class="container mx-auto px-4 sm:px-8">
-        <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
+        <div v-if="loading" class="pointer-events-none fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
@@ -43,8 +43,9 @@
                                 v-model="filters.company_id"
                                 :options="companies"
                                 allLabel="Todas"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchEquipment(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -57,8 +58,9 @@
                                 v-model="filters.process_id"
                                 :options="processes"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchEquipment(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -71,8 +73,9 @@
                                 v-model="filters.equipment_type_id"
                                 :options="equipmentTypes"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchEquipment(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -255,6 +258,7 @@ import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
 import Select2 from '../components/Select2.vue';
 import ClearableInput from '../components/ClearableInput.vue';
+import { setArrayParam, cleanQuery, arrayQuery, readArrayQuery, debounce } from '../utils/filters';
 
 const STORAGE_KEY = 'equipment-list-filters';
 
@@ -270,9 +274,9 @@ const loading = ref(false);
 const pendingRequests = ref(0);
 const search = ref(route.query.search ?? '');
 const filters = ref({
-    company_id: route.query.company_id ?? '',
-    equipment_type_id: route.query.equipment_type_id ?? '',
-    process_id: route.query.process_id ?? ''
+    company_id: readArrayQuery(route.query, 'company_id'),
+    equipment_type_id: readArrayQuery(route.query, 'equipment_type_id'),
+    process_id: readArrayQuery(route.query, 'process_id')
 });
 const pagination = ref(null);
 const sortBy = ref('id');
@@ -280,15 +284,14 @@ const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
 const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
 
 const syncQueryToUrl = (page = 1) => {
-    const q = {
+    const q = cleanQuery({
         page: String(page),
         sort_order: sortOrder.value,
         search: search.value,
-        company_id: filters.value.company_id,
-        equipment_type_id: filters.value.equipment_type_id,
-        process_id: filters.value.process_id
-    };
-    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+        ...arrayQuery('company_id', filters.value.company_id),
+        ...arrayQuery('equipment_type_id', filters.value.equipment_type_id),
+        ...arrayQuery('process_id', filters.value.process_id)
+    });
     router.replace({ name: 'equipment', query: q });
     try {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
@@ -299,9 +302,9 @@ const applyQueryToFilters = () => {
     const hasQuery = Object.keys(route.query).length > 0;
     if (hasQuery) {
         search.value = route.query.search ?? '';
-        filters.value.company_id = route.query.company_id ?? '';
-        filters.value.equipment_type_id = route.query.equipment_type_id ?? '';
-        filters.value.process_id = route.query.process_id ?? '';
+        filters.value.company_id = readArrayQuery(route.query, 'company_id');
+        filters.value.equipment_type_id = readArrayQuery(route.query, 'equipment_type_id');
+        filters.value.process_id = readArrayQuery(route.query, 'process_id');
         sortOrder.value = route.query.sort_order ?? 'desc';
     } else {
         try {
@@ -310,8 +313,9 @@ const applyQueryToFilters = () => {
                 const { query } = JSON.parse(saved);
                 if (query) {
                     search.value = query.search ?? '';
-                    filters.value.company_id = query.company_id ?? '';
-                    filters.value.equipment_type_id = query.equipment_type_id ?? '';
+                    filters.value.company_id = readArrayQuery(query, 'company_id');
+                    filters.value.equipment_type_id = readArrayQuery(query, 'equipment_type_id');
+                    filters.value.process_id = readArrayQuery(query, 'process_id');
                     sortOrder.value = query.sort_order ?? 'desc';
                 }
             }
@@ -333,6 +337,9 @@ const endLoading = () => {
     pendingRequests.value = Math.max(0, pendingRequests.value - 1);
     loading.value = pendingRequests.value > 0;
 };
+
+// El select múltiple emite un cambio por cada opción; se agrupa en una sola carga
+const refreshFromFilters = debounce(() => fetchEquipment(1), 300);
 
 onMounted(async () => {
     applyQueryToFilters();
@@ -379,9 +386,9 @@ const loadProcesses = async () => {
 
 const clearFilters = () => {
     search.value = '';
-    filters.value.company_id = '';
-    filters.value.equipment_type_id = '';
-    filters.value.process_id = '';
+    filters.value.company_id = [];
+    filters.value.equipment_type_id = [];
+    filters.value.process_id = [];
     fetchEquipment(1);
 };
 
@@ -396,9 +403,9 @@ const fetchEquipment = async (page = 1) => {
     try {
         const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
         if (search.value) params.search = search.value;
-        if (filters.value.company_id) params.company_id = filters.value.company_id;
-        if (filters.value.equipment_type_id) params.equipment_type_id = filters.value.equipment_type_id;
-        if (filters.value.process_id) params.process_id = filters.value.process_id;
+        setArrayParam(params, 'company_id', filters.value.company_id);
+        setArrayParam(params, 'equipment_type_id', filters.value.equipment_type_id);
+        setArrayParam(params, 'process_id', filters.value.process_id);
         const response = await api.get('/equipment', { params });
         equipments.value = response.data.data;
         pagination.value = {
@@ -427,9 +434,9 @@ const exportExcel = async () => {
             sort_order: normalizeSortOrder(sortOrder.value),
         };
         if (search.value) payload.search = search.value;
-        if (filters.value.company_id) payload.company_id = filters.value.company_id;
-        if (filters.value.equipment_type_id) payload.equipment_type_id = filters.value.equipment_type_id;
-        if (filters.value.process_id) payload.process_id = filters.value.process_id;
+        setArrayParam(payload, 'company_id', filters.value.company_id);
+        setArrayParam(payload, 'equipment_type_id', filters.value.equipment_type_id);
+        setArrayParam(payload, 'process_id', filters.value.process_id);
 
         const response = await api.post('/equipment/export', payload, { responseType: 'blob' });
         const url = window.URL.createObjectURL(new Blob([response.data]));

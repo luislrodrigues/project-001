@@ -37,16 +37,19 @@ class EquipmentController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->filled('company_id')) {
-            $query->where('company_id', (int) $request->company_id);
+        $companyIds = array_values(array_filter(array_map('intval', (array) $request->input('company_id'))));
+        if ($companyIds) {
+            $query->whereIn('company_id', $companyIds);
         }
 
-        if ($request->has('equipment_type_id')) {
-            $query->where('equipment_type_id', $request->equipment_type_id);
+        $equipmentTypeIds = array_values(array_filter(array_map('intval', (array) $request->input('equipment_type_id'))));
+        if ($equipmentTypeIds) {
+            $query->whereIn('equipment_type_id', $equipmentTypeIds);
         }
 
-        if ($request->filled('process_id')) {
-            $query->where('process_id', (int) $request->process_id);
+        $processIds = array_values(array_filter(array_map('intval', (array) $request->input('process_id'))));
+        if ($processIds) {
+            $query->whereIn('process_id', $processIds);
         }
 
         $sortByRaw = $request->get('sort_by', 'id');
@@ -264,8 +267,9 @@ class EquipmentController extends Controller
         $query = Equipment::with(['company', 'equipmentType'])
             ->where('status', 'active');
 
-        if ($request->filled('company_id')) {
-            $query->where('company_id', (int) $request->company_id);
+        $companyIds = array_values(array_filter(array_map('intval', (array) $request->input('company_id'))));
+        if ($companyIds) {
+            $query->whereIn('company_id', $companyIds);
         } elseif (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
             $query->where('company_id', auth()->user()->company_id);
         }
@@ -313,14 +317,17 @@ class EquipmentController extends Controller
         if ($request->has('search') && !empty($request->search)) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
-        if ($request->filled('company_id')) {
-            $query->where('company_id', (int) $request->company_id);
+        $companyIds = array_values(array_filter(array_map('intval', (array) $request->input('company_id'))));
+        if ($companyIds) {
+            $query->whereIn('company_id', $companyIds);
         }
-        if ($request->has('equipment_type_id') && $request->equipment_type_id !== '') {
-            $query->where('equipment_type_id', $request->equipment_type_id);
+        $equipmentTypeIds = array_values(array_filter(array_map('intval', (array) $request->input('equipment_type_id'))));
+        if ($equipmentTypeIds) {
+            $query->whereIn('equipment_type_id', $equipmentTypeIds);
         }
-        if ($request->filled('process_id')) {
-            $query->where('process_id', (int) $request->process_id);
+        $processIds = array_values(array_filter(array_map('intval', (array) $request->input('process_id'))));
+        if ($processIds) {
+            $query->whereIn('process_id', $processIds);
         }
         $sortByRaw = $request->get('sort_by', 'id');
         $allowedSort = ['id', 'name', 'created_at'];

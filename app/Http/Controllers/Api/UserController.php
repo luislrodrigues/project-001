@@ -22,12 +22,14 @@ class UserController extends Controller
 
         $query = User::with(['company', 'roles']);
 
-        if ($request->has('status') && $request->status !== '') {
-            $query->where('status', $request->status);
+        $statuses = array_values(array_filter((array) $request->input('status'), fn ($value) => $value !== '' && $value !== null));
+        if ($statuses) {
+            $query->whereIn('status', $statuses);
         }
 
-        if ($request->has('company_id') && $request->company_id !== '') {
-            $query->where('company_id', $request->company_id);
+        $companyIds = array_values(array_filter(array_map('intval', (array) $request->input('company_id'))));
+        if ($companyIds) {
+            $query->whereIn('company_id', $companyIds);
         }
 
         if ($request->has('search') && $request->search !== '') {

@@ -123,6 +123,15 @@ const ensureSelect2 = async () => {
     await select2LoadPromise;
 };
 
+const destroySelect2 = ($el) => {
+    if (!$el.data('select2')) return;
+    try {
+        // Cerrar antes de destruir evita dejar el desplegable abierto en el DOM
+        if ($el.select2('isOpen')) $el.select2('close');
+        $el.select2('destroy');
+    } catch (_) {}
+};
+
 const init = async () => {
     if (!selectEl.value) return;
     await ensureSelect2();
@@ -130,13 +139,12 @@ const init = async () => {
     $el.off('change.select2-vue');
     $el.off('select2:opening.select2-vue');
     teardownClearGuards();
-    try {
-        $el.select2('destroy');
-    } catch (_) {}
+    destroySelect2($el);
 
     $el.select2({
         width: '100%',
         allowClear: props.allowClear,
+        closeOnSelect: !props.multiple,
         placeholder: props.placeholder || (props.includeEmptyOption ? props.allLabel : undefined),
         minimumResultsForSearch: props.search ? 0 : Infinity,
         language: {
@@ -196,19 +204,20 @@ onBeforeUnmount(() => {
     $el.off('change.select2-vue');
     $el.off('select2:opening.select2-vue');
     teardownClearGuards();
-    try {
-        $el.select2('destroy');
-    } catch (_) {}
+    destroySelect2($el);
 });
 
-watch(
-    () => props.options,
-    async () => {
-        await nextTick();
-        await init();
-    },
-    { deep: true }
+// Re-inicializar solo cuando las opciones realmente cambian; evita destruir y
+// recrear Select2 (y su desplegable) por cada recarga del catálogo.
+const optionsSignature = computed(() =>
+    normalizedOptions.value.map((opt) => `${opt.value}\u0000${opt.label}`).join('\u0001')
 );
+
+watch(optionsSignature, async (value, oldValue) => {
+    if (value === oldValue) return;
+    await nextTick();
+    await init();
+});
 
 watch(
     () => props.modelValue,

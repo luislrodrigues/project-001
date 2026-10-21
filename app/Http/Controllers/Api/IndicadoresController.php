@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
  * Indicadores estadísticos a partir de los datos existentes (reportes, equipos, empresas, etc.)
  * Opcional: ?company_id=X para indicadores filtrados por empresa.
  * Opcional: ?process_id=X para indicadores filtrados por proceso (equipos del proceso).
+ * Opcional: ?measurement_date_start=AAAA-MM-DD&measurement_date_end=AAAA-MM-DD para filtrar por rango de fecha de medición.
  */
 class IndicadoresController extends Controller
 {
@@ -27,7 +28,19 @@ class IndicadoresController extends Controller
             $companyId = auth()->user()->company_id;
         }
 
+        $startRaw = (string) $request->input('measurement_date_start', '');
+        $endRaw = (string) $request->input('measurement_date_end', '');
+        $start = ($startRaw !== '' && strtotime($startRaw) !== false) ? date('Y-m-d', strtotime($startRaw)) : null;
+        $end = ($endRaw !== '' && strtotime($endRaw) !== false) ? date('Y-m-d', strtotime($endRaw)) : null;
+
         $reportsBase = Report::whereNull('reports.deleted_at');
+        if ($start && $end) {
+            $reportsBase->whereBetween('reports.measurement_date', [$start, $end]);
+        } elseif ($start) {
+            $reportsBase->whereDate('reports.measurement_date', '>=', $start);
+        } elseif ($end) {
+            $reportsBase->whereDate('reports.measurement_date', '<=', $end);
+        }
         if ($companyId || $processId) {
             $reportsBase->whereHas('equipment', function ($q) use ($companyId, $processId) {
                 $q->whereNull('deleted_at');
@@ -57,10 +70,19 @@ class IndicadoresController extends Controller
             'reportes_este_ano' => (clone $reportsBase)->whereYear('reports.created_at', now()->year)->count(),
         ];
 
-        // Reportes por mes (últimos 12 meses)
-        $reportesPorMes = (clone $reportsBase)
-            ->selectRaw('YEAR(reports.created_at) as anio, MONTH(reports.created_at) as mes, COUNT(*) as total')
-            ->where('reports.created_at', '>=', now()->subMonths(11)->startOfMonth())
+        // Reportes por mes: con rango de fechas de medición se agrupa por esa fecha;
+        // sin rango se mantiene la tendencia de los últimos 12 meses (por fecha de creación).
+        $reportesPorMesQuery = (clone $reportsBase);
+        if ($start || $end) {
+            $reportesPorMesQuery
+                ->selectRaw('YEAR(reports.measurement_date) as anio, MONTH(reports.measurement_date) as mes, COUNT(*) as total')
+                ->whereNotNull('reports.measurement_date');
+        } else {
+            $reportesPorMesQuery
+                ->selectRaw('YEAR(reports.created_at) as anio, MONTH(reports.created_at) as mes, COUNT(*) as total')
+                ->where('reports.created_at', '>=', now()->subMonths(11)->startOfMonth());
+        }
+        $reportesPorMes = $reportesPorMesQuery
             ->groupBy('anio', 'mes')
             ->orderBy('anio')->orderBy('mes')
             ->get()
@@ -245,6 +267,8 @@ class IndicadoresController extends Controller
         $data = [
             'company_id' => $companyId,
             'company_selected' => $companyId ? Company::find($companyId)?->only(['id', 'name']) : null,
+            'measurement_date_start' => $start,
+            'measurement_date_end' => $end,
             'totales' => $totales,
             'reportes_por_mes' => $reportesPorMes,
             'reportes_por_condicion' => $reportesPorCondicion,

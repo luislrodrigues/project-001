@@ -1,6 +1,6 @@
 <template>
     <div class="container mx-auto px-4 sm:px-8">
-        <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
+        <div v-if="loading" class="pointer-events-none fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
@@ -57,6 +57,7 @@
                                 v-model="filters.company_id"
                                 :options="companies"
                                 placeholder="Todas"
+                                :multiple="true"
                                 :allow-clear="true"
                                 @change="onCompanyChange"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
@@ -71,8 +72,9 @@
                                 v-model="filters.process_id"
                                 :options="processes"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchReports(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -99,8 +101,9 @@
                                 v-model="filters.equipment_id"
                                 :options="equipments"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchReports(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -113,8 +116,9 @@
                                 v-model="filters.condition_id"
                                 :options="conditions"
                                 allLabel="Todas"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchReports(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -127,8 +131,9 @@
                                 v-model="filters.priority_id"
                                 :options="priorities"
                                 allLabel="Todas"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchReports(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -141,8 +146,9 @@
                                 v-model="filters.mechanism_fail_id"
                                 :options="mechanismFails"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchReports(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -155,8 +161,9 @@
                                 v-model="filters.analist_id"
                                 :options="analists"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchReports(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -375,6 +382,7 @@ import Pagination from '../components/Pagination.vue';
 import RangeDatePicker from '../components/RangeDatePicker.vue';
 import Select2 from '../components/Select2.vue';
 import ClearableInput from '../components/ClearableInput.vue';
+import { toArray, setArrayParam, cleanQuery, arrayQuery, readArrayQuery, debounce } from '../utils/filters';
 
 const STORAGE_KEY = 'reports-list-filters';
 
@@ -397,13 +405,13 @@ const analists = ref([]);
 
 const filters = reactive({
     consecutivo: route.query.consecutivo ?? '',
-    equipment_id: route.query.equipment_id ?? '',
-    condition_id: route.query.condition_id ?? '',
-    priority_id: route.query.priority_id ?? '',
-    mechanism_fail_id: route.query.mechanism_fail_id ?? '',
-    company_id: route.query.company_id ?? '',
-    process_id: route.query.process_id ?? '',
-    analist_id: route.query.analist_id ?? '',
+    equipment_id: readArrayQuery(route.query, 'equipment_id'),
+    condition_id: readArrayQuery(route.query, 'condition_id'),
+    priority_id: readArrayQuery(route.query, 'priority_id'),
+    mechanism_fail_id: readArrayQuery(route.query, 'mechanism_fail_id'),
+    company_id: readArrayQuery(route.query, 'company_id'),
+    process_id: readArrayQuery(route.query, 'process_id'),
+    analist_id: readArrayQuery(route.query, 'analist_id'),
     measurement_date_start: route.query.measurement_date_start ?? '',
     measurement_date_end: route.query.measurement_date_end ?? ''
 });
@@ -413,21 +421,20 @@ const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
 const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
 
 const syncQueryToUrl = (page = 1) => {
-    const q = {
+    const q = cleanQuery({
         page: String(page),
         sort_order: sortOrder.value,
         consecutivo: filters.consecutivo,
-        equipment_id: filters.equipment_id,
-        condition_id: filters.condition_id,
-        priority_id: filters.priority_id,
-        mechanism_fail_id: filters.mechanism_fail_id,
-        company_id: filters.company_id,
-        process_id: filters.process_id,
-        analist_id: filters.analist_id,
+        ...arrayQuery('equipment_id', filters.equipment_id),
+        ...arrayQuery('condition_id', filters.condition_id),
+        ...arrayQuery('priority_id', filters.priority_id),
+        ...arrayQuery('mechanism_fail_id', filters.mechanism_fail_id),
+        ...arrayQuery('company_id', filters.company_id),
+        ...arrayQuery('process_id', filters.process_id),
+        ...arrayQuery('analist_id', filters.analist_id),
         measurement_date_start: filters.measurement_date_start,
         measurement_date_end: filters.measurement_date_end
-    };
-    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    });
     router.replace({ name: 'reports', query: q });
     try {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
@@ -438,13 +445,13 @@ const applyQueryToFilters = () => {
     const hasQuery = Object.keys(route.query).length > 0;
     if (hasQuery) {
         filters.consecutivo = route.query.consecutivo ?? '';
-        filters.equipment_id = route.query.equipment_id ?? '';
-        filters.condition_id = route.query.condition_id ?? '';
-        filters.priority_id = route.query.priority_id ?? '';
-        filters.mechanism_fail_id = route.query.mechanism_fail_id ?? '';
-        filters.company_id = route.query.company_id ?? '';
-        filters.process_id = route.query.process_id ?? '';
-        filters.analist_id = route.query.analist_id ?? '';
+        filters.equipment_id = readArrayQuery(route.query, 'equipment_id');
+        filters.condition_id = readArrayQuery(route.query, 'condition_id');
+        filters.priority_id = readArrayQuery(route.query, 'priority_id');
+        filters.mechanism_fail_id = readArrayQuery(route.query, 'mechanism_fail_id');
+        filters.company_id = readArrayQuery(route.query, 'company_id');
+        filters.process_id = readArrayQuery(route.query, 'process_id');
+        filters.analist_id = readArrayQuery(route.query, 'analist_id');
         filters.measurement_date_start = route.query.measurement_date_start ?? '';
         filters.measurement_date_end = route.query.measurement_date_end ?? '';
         sortOrder.value = normalizeSortOrder(route.query.sort_order ?? 'desc');
@@ -455,13 +462,13 @@ const applyQueryToFilters = () => {
                 const { query } = JSON.parse(saved);
                 if (query) {
                     filters.consecutivo = query.consecutivo ?? '';
-                    filters.equipment_id = query.equipment_id ?? '';
-                    filters.condition_id = query.condition_id ?? '';
-                    filters.priority_id = query.priority_id ?? '';
-                    filters.mechanism_fail_id = query.mechanism_fail_id ?? '';
-                    filters.company_id = query.company_id ?? '';
-                    filters.process_id = query.process_id ?? '';
-                    filters.analist_id = query.analist_id ?? '';
+                    filters.equipment_id = readArrayQuery(query, 'equipment_id');
+                    filters.condition_id = readArrayQuery(query, 'condition_id');
+                    filters.priority_id = readArrayQuery(query, 'priority_id');
+                    filters.mechanism_fail_id = readArrayQuery(query, 'mechanism_fail_id');
+                    filters.company_id = readArrayQuery(query, 'company_id');
+                    filters.process_id = readArrayQuery(query, 'process_id');
+                    filters.analist_id = readArrayQuery(query, 'analist_id');
                     filters.measurement_date_start = query.measurement_date_start ?? '';
                     filters.measurement_date_end = query.measurement_date_end ?? '';
                     sortOrder.value = normalizeSortOrder(query.sort_order ?? 'desc');
@@ -486,6 +493,9 @@ const endLoading = () => {
     loading.value = pendingRequests.value > 0;
 };
 
+// El select múltiple emite un cambio por cada opción; se agrupa en una sola carga
+const refreshFromFilters = debounce(() => fetchReports(1), 300);
+
 onMounted(async () => {
     applyQueryToFilters();
     await loadCatalogs();
@@ -497,12 +507,13 @@ onMounted(async () => {
 const loadEquipments = async () => {
     try {
         const params = {};
-        if (filters.company_id) params.company_id = filters.company_id;
+        setArrayParam(params, 'company_id', filters.company_id);
         const equipmentsRes = await api.get('/catalogs/equipment', { params });
         equipments.value = equipmentsRes.data.data ?? equipmentsRes.data ?? [];
     } catch (error) {
         console.error('Error al cargar equipos:', error);
     }
+    return equipments.value;
 };
 
 const loadCatalogs = async () => {
@@ -531,12 +542,18 @@ const loadCatalogs = async () => {
     }
 };
 
-// Al cambiar la empresa se recargan los equipos de esa empresa
-const onCompanyChange = async () => {
-    filters.equipment_id = '';
-    await loadEquipments();
+// Al cambiar la empresa se recargan sus equipos y se descartan los que ya no aplican.
+// Se agrupa con debounce porque el select múltiple emite un cambio por cada opción.
+const onCompanyChange = debounce(async () => {
+    const equipments = await loadEquipments();
+    const allowed = new Set(equipments.map((eq) => String(eq.id)));
+    const selected = toArray(filters.equipment_id);
+    const stillValid = selected.filter((id) => allowed.has(String(id)));
+    if (stillValid.length !== selected.length) {
+        filters.equipment_id = stillValid;
+    }
     fetchReports(1);
-};
+}, 300);
 
 // Limpia únicamente el filtro de búsqueda por informe
 const clearConsecutivo = () => {
@@ -546,13 +563,13 @@ const clearConsecutivo = () => {
 
 const clearFilters = () => {
     filters.consecutivo = '';
-    filters.equipment_id = '';
-    filters.condition_id = '';
-    filters.priority_id = '';
-    filters.mechanism_fail_id = '';
-    filters.company_id = '';
-    filters.process_id = '';
-    filters.analist_id = '';
+    filters.equipment_id = [];
+    filters.condition_id = [];
+    filters.priority_id = [];
+    filters.mechanism_fail_id = [];
+    filters.company_id = [];
+    filters.process_id = [];
+    filters.analist_id = [];
     filters.measurement_date_start = '';
     filters.measurement_date_end = '';
     loadEquipments();
@@ -585,13 +602,13 @@ const fetchReports = async (page = 1) => {
         const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
 
         if (filters.consecutivo) params.consecutivo = filters.consecutivo.trim();
-        if (filters.equipment_id) params.equipment_id = filters.equipment_id;
-        if (filters.condition_id) params.condition_id = filters.condition_id;
-        if (filters.priority_id) params.priority_id = filters.priority_id;
-        if (filters.mechanism_fail_id) params.mechanism_fail_id = filters.mechanism_fail_id;
-        if (filters.company_id) params.company_id = filters.company_id;
-        if (filters.process_id) params.process_id = filters.process_id;
-        if (filters.analist_id) params.analist_id = filters.analist_id;
+        setArrayParam(params, 'equipment_id', filters.equipment_id);
+        setArrayParam(params, 'condition_id', filters.condition_id);
+        setArrayParam(params, 'priority_id', filters.priority_id);
+        setArrayParam(params, 'mechanism_fail_id', filters.mechanism_fail_id);
+        setArrayParam(params, 'company_id', filters.company_id);
+        setArrayParam(params, 'process_id', filters.process_id);
+        setArrayParam(params, 'analist_id', filters.analist_id);
         if (filters.measurement_date_start) params.measurement_date_start = filters.measurement_date_start;
         if (filters.measurement_date_end) params.measurement_date_end = filters.measurement_date_end;
 
@@ -624,13 +641,13 @@ const exportExcel = async () => {
             sort_order: normalizeSortOrder(sortOrder.value)
         };
         if (filters.consecutivo) payload.consecutivo = filters.consecutivo.trim();
-        if (filters.equipment_id) payload.equipment_id = filters.equipment_id;
-        if (filters.condition_id) payload.condition_id = filters.condition_id;
-        if (filters.priority_id) payload.priority_id = filters.priority_id;
-        if (filters.mechanism_fail_id) payload.mechanism_fail_id = filters.mechanism_fail_id;
-        if (filters.company_id) payload.company_id = filters.company_id;
-        if (filters.process_id) payload.process_id = filters.process_id;
-        if (filters.analist_id) payload.analist_id = filters.analist_id;
+        setArrayParam(payload, 'equipment_id', filters.equipment_id);
+        setArrayParam(payload, 'condition_id', filters.condition_id);
+        setArrayParam(payload, 'priority_id', filters.priority_id);
+        setArrayParam(payload, 'mechanism_fail_id', filters.mechanism_fail_id);
+        setArrayParam(payload, 'company_id', filters.company_id);
+        setArrayParam(payload, 'process_id', filters.process_id);
+        setArrayParam(payload, 'analist_id', filters.analist_id);
         if (filters.measurement_date_start) payload.measurement_date_start = filters.measurement_date_start;
         if (filters.measurement_date_end) payload.measurement_date_end = filters.measurement_date_end;
         const response = await api.post('/reports/export', payload, { responseType: 'blob' });

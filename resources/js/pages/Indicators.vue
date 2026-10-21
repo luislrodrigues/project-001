@@ -11,45 +11,71 @@
         </div>
 
         <div v-else class="py-4 sm:py-6">
-            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
+            <div class="mb-6">
+                <div class="mb-4">
                     <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
                         <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
                         Indicadores
                     </h2>
                     <p class="text-gray-500 text-sm mt-1">Estadísticas a partir de los datos del sistema</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-4">
-                    <div v-if="!authStore.hasRole('Cliente')" class="flex items-center gap-2">
-                        <label for="empresa-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Ver detalle por empresa:</label>
-                        <Select2
-                            id="empresa-select"
-                            v-model="selectedCompanyId"
-                            :options="companies"
-                            allLabel="Todas las empresas"
-                            :allow-clear="true"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 min-w-[200px]"
-                        />
+
+                <!-- Filtros -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div v-if="!authStore.hasRole('Cliente')" class="flex-1 min-w-[200px]">
+                            <label for="empresa-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-building mr-2 text-gray-400"></i>
+                                Empresa
+                            </label>
+                            <Select2
+                                id="empresa-select"
+                                v-model="selectedCompanyId"
+                                :options="companies"
+                                allLabel="Todas las empresas"
+                                :allow-clear="true"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            />
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="process-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-project-diagram mr-2 text-gray-400"></i>
+                                Proceso
+                            </label>
+                            <Select2
+                                id="process-select"
+                                v-model="selectedProcessId"
+                                :options="processes"
+                                allLabel="Todos los procesos"
+                                :allow-clear="true"
+                                class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                            />
+                        </div>
+                        <div class="flex-1 min-w-[220px]">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calendar-alt mr-2 text-gray-400"></i>
+                                Fecha medición (rango)
+                            </label>
+                            <RangeDatePicker
+                                :start="measurementDateStart"
+                                :end="measurementDateEnd"
+                                placeholder="AAAA-MM-DD - AAAA-MM-DD"
+                                @update:start="val => { measurementDateStart = val; }"
+                                @update:end="val => { measurementDateEnd = val; }"
+                                @apply="reloadIndicadores"
+                            />
+                        </div>
+                        <div class="flex-shrink-0">
+                            <button
+                                type="button"
+                                @click="clearFilters"
+                                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                            >
+                                <i class="fas fa-times"></i>
+                                Limpiar filtros
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <label for="process-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Proceso:</label>
-                        <Select2
-                            id="process-select"
-                            v-model="selectedProcessId"
-                            :options="processes"
-                            allLabel="Todos los procesos"
-                            :allow-clear="true"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 min-w-[200px]"
-                        />
-                    </div>
-                    <button
-                        type="button"
-                        @click="clearFilters"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium flex items-center gap-2"
-                    >
-                        <i class="fas fa-times text-sm"></i>
-                        Limpiar filtros
-                    </button>
                 </div>
             </div>
 
@@ -117,7 +143,7 @@
                 <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/80">
                         <h4 class="font-semibold text-gray-800 text-base"><i class="fas fa-calendar-alt text-blue-500 mr-2"></i>Reportes por mes</h4>
-                        <p class="text-xs text-gray-500 mt-0.5">Últimos 12 meses</p>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ tendenciaLabel }}</p>
                     </div>
                     <div class="p-6">
                         <div v-if="reportesPorMes.length === 0" class="h-72 flex items-center justify-center text-gray-500">Sin datos</div>
@@ -520,6 +546,7 @@ import { useRouter } from 'vue-router';
 import api from '../services/api';
 import { useAuthStore } from '../stores/auth';
 import Select2 from '../components/Select2.vue';
+import RangeDatePicker from '../components/RangeDatePicker.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -529,6 +556,8 @@ const companies = ref([]);
 const processes = ref([]);
 const selectedCompanyId = ref(null);
 const selectedProcessId = ref(null);
+const measurementDateStart = ref('');
+const measurementDateEnd = ref('');
 const detailData = ref(null);
 const loadingDetail = ref(false);
 
@@ -553,6 +582,10 @@ const reportesPorMecanismoFalla = computed(() => data.value.reportes_por_mecanis
 const reportesPorComponenteFalla = computed(() => data.value.reportes_por_componente_falla ?? []);
 const topEquiposReportes = computed(() => data.value.top_equipos_reportes ?? []);
 const equiposPorEmpresa = computed(() => data.value.equipos_por_empresa ?? []);
+
+const tendenciaLabel = computed(() =>
+    measurementDateStart.value || measurementDateEnd.value ? 'Según fecha de medición' : 'Últimos 12 meses'
+);
 
 const maxPorMes = computed(() => {
     if (reportesPorMes.value.length === 0) return 1;
@@ -699,7 +732,15 @@ function buildParams() {
     const p = {};
     if (selectedCompanyId.value) p.company_id = selectedCompanyId.value;
     if (selectedProcessId.value) p.process_id = selectedProcessId.value;
+    if (measurementDateStart.value) p.measurement_date_start = measurementDateStart.value;
+    if (measurementDateEnd.value) p.measurement_date_end = measurementDateEnd.value;
     return p;
+}
+
+// Aplica el rango de fechas a los indicadores generales y al detalle por empresa
+function reloadIndicadores() {
+    loadIndicadores();
+    if (selectedCompanyId.value) loadDetail();
 }
 
 async function loadIndicadores() {
@@ -729,13 +770,26 @@ async function loadDetail() {
 }
 
 function clearFilters() {
+    const hadProcess = Boolean(selectedProcessId.value);
+    const clientCompanyId = authStore.hasRole('Cliente') ? (authStore.user?.company?.id ?? null) : null;
+
     selectedProcessId.value = null;
-    if (authStore.hasRole('Cliente') && authStore.user?.company?.id) {
-        selectedCompanyId.value = authStore.user.company.id;
+    measurementDateStart.value = '';
+    measurementDateEnd.value = '';
+
+    // Los watchers recargan cuando cambia empresa/proceso; si no cambian,
+    // se recarga aquí para aplicar la limpieza del rango de fechas.
+    if (clientCompanyId) {
+        const companyChanged = Number(selectedCompanyId.value) !== Number(clientCompanyId);
+        selectedCompanyId.value = clientCompanyId;
+        if (!companyChanged) reloadIndicadores();
         return;
     }
+
+    const companyChanged = Boolean(selectedCompanyId.value);
     selectedCompanyId.value = null;
     detailData.value = null;
+    if (!companyChanged && !hadProcess) loadIndicadores();
 }
 
 watch(selectedCompanyId, () => {

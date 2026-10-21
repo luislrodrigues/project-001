@@ -86,36 +86,43 @@ class ReportController extends Controller
             });
         }
 
-        if ($request->has('equipment_id') && $request->equipment_id !== '') {
-            $query->where('equipment_id', $request->equipment_id);
+        $equipmentIds = array_values(array_filter(array_map('intval', (array) $request->input('equipment_id'))));
+        if ($equipmentIds) {
+            $query->whereIn('equipment_id', $equipmentIds);
         }
 
-        if ($request->has('condition_id') && $request->condition_id !== '') {
-            $query->where('condition_id', $request->condition_id);
+        $conditionIds = array_values(array_filter(array_map('intval', (array) $request->input('condition_id'))));
+        if ($conditionIds) {
+            $query->whereIn('condition_id', $conditionIds);
         }
 
-        if ($request->has('priority_id') && $request->priority_id !== '') {
-            $query->where('priority_id', $request->priority_id);
+        $priorityIds = array_values(array_filter(array_map('intval', (array) $request->input('priority_id'))));
+        if ($priorityIds) {
+            $query->whereIn('priority_id', $priorityIds);
         }
 
-        if ($request->filled('mechanism_fail_id')) {
-            $query->where('mechanism_fail_id', (int) $request->mechanism_fail_id);
+        $mechanismFailIds = array_values(array_filter(array_map('intval', (array) $request->input('mechanism_fail_id'))));
+        if ($mechanismFailIds) {
+            $query->whereIn('mechanism_fail_id', $mechanismFailIds);
         }
 
-        if ($request->has('company_id') && $request->company_id !== '') {
-            $query->whereHas('equipment', function ($q) use ($request) {
-                $q->where('company_id', $request->company_id);
+        $companyIds = array_values(array_filter(array_map('intval', (array) $request->input('company_id'))));
+        if ($companyIds) {
+            $query->whereHas('equipment', function ($q) use ($companyIds) {
+                $q->whereIn('company_id', $companyIds);
             });
         }
 
-        if ($request->filled('process_id')) {
-            $query->whereHas('equipment', function ($q) use ($request) {
-                $q->where('process_id', (int) $request->process_id);
+        $processIds = array_values(array_filter(array_map('intval', (array) $request->input('process_id'))));
+        if ($processIds) {
+            $query->whereHas('equipment', function ($q) use ($processIds) {
+                $q->whereIn('process_id', $processIds);
             });
         }
 
-        if ($request->filled('analist_id')) {
-            $query->where('analist_id', (int) $request->analist_id);
+        $analistIds = array_values(array_filter(array_map('intval', (array) $request->input('analist_id'))));
+        if ($analistIds) {
+            $query->whereIn('analist_id', $analistIds);
         }
 
         if ($request->filled('consecutivo')) {
@@ -609,30 +616,37 @@ class ReportController extends Controller
                 $q->where('company_id', auth()->user()->company_id);
             });
         }
-        if ($request->filled('equipment_id')) {
-            $query->where('equipment_id', $request->equipment_id);
+        $equipmentIds = array_values(array_filter(array_map('intval', (array) $request->input('equipment_id'))));
+        if ($equipmentIds) {
+            $query->whereIn('equipment_id', $equipmentIds);
         }
-        if ($request->filled('condition_id')) {
-            $query->where('condition_id', $request->condition_id);
+        $conditionIds = array_values(array_filter(array_map('intval', (array) $request->input('condition_id'))));
+        if ($conditionIds) {
+            $query->whereIn('condition_id', $conditionIds);
         }
-        if ($request->filled('priority_id')) {
-            $query->where('priority_id', $request->priority_id);
+        $priorityIds = array_values(array_filter(array_map('intval', (array) $request->input('priority_id'))));
+        if ($priorityIds) {
+            $query->whereIn('priority_id', $priorityIds);
         }
-        if ($request->filled('mechanism_fail_id')) {
-            $query->where('mechanism_fail_id', (int) $request->mechanism_fail_id);
+        $mechanismFailIds = array_values(array_filter(array_map('intval', (array) $request->input('mechanism_fail_id'))));
+        if ($mechanismFailIds) {
+            $query->whereIn('mechanism_fail_id', $mechanismFailIds);
         }
-        if ($request->filled('company_id')) {
-            $query->whereHas('equipment', function ($q) use ($request) {
-                $q->where('company_id', $request->company_id);
+        $companyIds = array_values(array_filter(array_map('intval', (array) $request->input('company_id'))));
+        if ($companyIds) {
+            $query->whereHas('equipment', function ($q) use ($companyIds) {
+                $q->whereIn('company_id', $companyIds);
             });
         }
-        if ($request->filled('process_id')) {
-            $query->whereHas('equipment', function ($q) use ($request) {
-                $q->where('process_id', (int) $request->process_id);
+        $processIds = array_values(array_filter(array_map('intval', (array) $request->input('process_id'))));
+        if ($processIds) {
+            $query->whereHas('equipment', function ($q) use ($processIds) {
+                $q->whereIn('process_id', $processIds);
             });
         }
-        if ($request->filled('analist_id')) {
-            $query->where('analist_id', (int) $request->analist_id);
+        $analistIds = array_values(array_filter(array_map('intval', (array) $request->input('analist_id'))));
+        if ($analistIds) {
+            $query->whereIn('analist_id', $analistIds);
         }
         if ($request->filled('consecutivo')) {
             $raw = (string) $request->input('consecutivo', '');

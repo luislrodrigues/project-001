@@ -27,23 +27,26 @@ class ComponentController extends Controller
             });
         }
 
-        if ($request->has('equipment_id')) {
-            $query->where('equipment_id', $request->equipment_id);
+        $equipmentIds = array_values(array_filter(array_map('intval', (array) $request->input('equipment_id'))));
+        if ($equipmentIds) {
+            $query->whereIn('equipment_id', $equipmentIds);
         }
 
-        if ($request->has('component_type_id')) {
-            $query->where('component_type_id', $request->component_type_id);
+        $componentTypeIds = array_values(array_filter(array_map('intval', (array) $request->input('component_type_id'))));
+        if ($componentTypeIds) {
+            $query->whereIn('component_type_id', $componentTypeIds);
         }
 
-        if ($request->filled('company_id')) {
-            $companyId = (int) $request->company_id;
-            $query->whereHas('equipment', function ($q) use ($companyId) {
-                $q->where('company_id', $companyId);
+        $companyIds = array_values(array_filter(array_map('intval', (array) $request->input('company_id'))));
+        if ($companyIds) {
+            $query->whereHas('equipment', function ($q) use ($companyIds) {
+                $q->whereIn('company_id', $companyIds);
             });
         }
 
-        if ($request->has('brand_id')) {
-            $query->where('brand_id', $request->brand_id);
+        $brandIds = array_values(array_filter(array_map('intval', (array) $request->input('brand_id'))));
+        if ($brandIds) {
+            $query->whereIn('brand_id', $brandIds);
         }
 
         $sortByRaw = $request->get('sort_by', 'id');

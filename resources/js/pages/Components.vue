@@ -1,6 +1,6 @@
 <template>
     <div class="container mx-auto px-4 sm:px-8">
-        <div v-if="loading" class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
+        <div v-if="loading" class="pointer-events-none fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
             <div class="flex flex-col items-center justify-center h-full">
                 <svg class="animate-spin h-16 w-16 text-blue-600 mr-3 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke-width="2" stroke="currentColor" fill="none"></circle>
@@ -43,6 +43,7 @@
                                 v-model="filters.company_id"
                                 :options="companies"
                                 allLabel="Todas"
+                                :multiple="true"
                                 :allow-clear="true"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
@@ -56,8 +57,9 @@
                                 v-model="filters.equipment_id"
                                 :options="filteredEquipments"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchComponents(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -70,8 +72,9 @@
                                 v-model="filters.component_type_id"
                                 :options="componentTypes"
                                 allLabel="Todos"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchComponents(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -84,8 +87,9 @@
                                 v-model="filters.brand_id"
                                 :options="brands"
                                 allLabel="Todas"
+                                :multiple="true"
                                 :allow-clear="true"
-                                @change="() => fetchComponents(1)"
+                                @change="refreshFromFilters"
                                 class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
                             />
                         </div>
@@ -233,6 +237,7 @@ import api from '../services/api';
 import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
 import Select2 from '../components/Select2.vue';
+import { toArray, setArrayParam, cleanQuery, arrayQuery, readArrayQuery, debounce } from '../utils/filters';
 
 const STORAGE_KEY = 'components-list-filters';
 
@@ -253,24 +258,23 @@ const normalizeSortOrder = (v) => (v === 'asc' || v === 'desc' ? v : 'desc');
 const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
 
 const filters = reactive({
-    company_id: route.query.company_id ?? '',
-    equipment_id: route.query.equipment_id ?? '',
-    component_type_id: route.query.component_type_id ?? '',
-    brand_id: route.query.brand_id ?? '',
+    company_id: readArrayQuery(route.query, 'company_id'),
+    equipment_id: readArrayQuery(route.query, 'equipment_id'),
+    component_type_id: readArrayQuery(route.query, 'component_type_id'),
+    brand_id: readArrayQuery(route.query, 'brand_id'),
 });
 
 let isRestoringFilters = false;
 
 const syncQueryToUrl = (page = 1) => {
-    const q = {
+    const q = cleanQuery({
         page: String(page),
         sort_order: sortOrder.value,
-        company_id: filters.company_id,
-        equipment_id: filters.equipment_id,
-        component_type_id: filters.component_type_id,
-        brand_id: filters.brand_id
-    };
-    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+        ...arrayQuery('company_id', filters.company_id),
+        ...arrayQuery('equipment_id', filters.equipment_id),
+        ...arrayQuery('component_type_id', filters.component_type_id),
+        ...arrayQuery('brand_id', filters.brand_id)
+    });
     router.replace({ name: 'components', query: q });
     try {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
@@ -281,10 +285,10 @@ const applyQueryToFilters = () => {
     isRestoringFilters = true;
     const hasQuery = Object.keys(route.query).length > 0;
     if (hasQuery) {
-        filters.company_id = route.query.company_id ?? '';
-        filters.equipment_id = route.query.equipment_id ?? '';
-        filters.component_type_id = route.query.component_type_id ?? '';
-        filters.brand_id = route.query.brand_id ?? '';
+        filters.company_id = readArrayQuery(route.query, 'company_id');
+        filters.equipment_id = readArrayQuery(route.query, 'equipment_id');
+        filters.component_type_id = readArrayQuery(route.query, 'component_type_id');
+        filters.brand_id = readArrayQuery(route.query, 'brand_id');
         sortOrder.value = route.query.sort_order ?? 'desc';
     } else {
         try {
@@ -292,10 +296,10 @@ const applyQueryToFilters = () => {
             if (saved) {
                 const { query } = JSON.parse(saved);
                 if (query) {
-                    filters.company_id = query.company_id ?? '';
-                    filters.equipment_id = query.equipment_id ?? '';
-                    filters.component_type_id = query.component_type_id ?? '';
-                    filters.brand_id = query.brand_id ?? '';
+                    filters.company_id = readArrayQuery(query, 'company_id');
+                    filters.equipment_id = readArrayQuery(query, 'equipment_id');
+                    filters.component_type_id = readArrayQuery(query, 'component_type_id');
+                    filters.brand_id = readArrayQuery(query, 'brand_id');
                     sortOrder.value = query.sort_order ?? 'desc';
                 }
             }
@@ -306,11 +310,11 @@ const applyQueryToFilters = () => {
 
 // Equipos filtrados por empresa seleccionada; sin duplicados por nombre (muestra cada nombre una vez)
 const filteredEquipments = computed(() => {
+    const companyIds = toArray(filters.company_id).map(Number);
     let list = equipments.value;
-    if (filters.company_id) {
-        const companyId = Number(filters.company_id);
+    if (companyIds.length) {
         list = list.filter(
-            (eq) => Number(eq.company_id ?? eq.company?.id) === companyId
+            (eq) => companyIds.includes(Number(eq.company_id ?? eq.company?.id))
         );
     }
     const seen = new Set();
@@ -322,21 +326,26 @@ const filteredEquipments = computed(() => {
     });
 });
 
-// Al cambiar empresa, limpiar equipo si ya no aplica
+// El select múltiple emite un cambio por cada opción; se agrupa en una sola carga
+const reloadOnCompanyChange = debounce(() => fetchComponents(1), 300);
+
+// Al cambiar empresa, limpiar equipos que ya no aplican
 watch(
     () => filters.company_id,
     () => {
-        if (!filters.company_id) {
-            filters.equipment_id = '';
-            if (!isRestoringFilters) fetchComponents(1);
+        const companyIds = toArray(filters.company_id).map(Number);
+        if (!companyIds.length) {
+            filters.equipment_id = [];
+            if (!isRestoringFilters) reloadOnCompanyChange();
             return;
         }
-        const companyId = Number(filters.company_id);
-        const currentEq = equipments.value.find((e) => Number(e.id) === Number(filters.equipment_id));
-        if (currentEq && Number(currentEq.company_id ?? currentEq.company?.id) !== companyId) {
-            filters.equipment_id = '';
+        const allowed = new Set(filteredEquipments.value.map((eq) => Number(eq.id)));
+        const selected = toArray(filters.equipment_id);
+        const stillValid = selected.filter((id) => allowed.has(Number(id)));
+        if (stillValid.length !== selected.length) {
+            filters.equipment_id = stillValid;
         }
-        if (!isRestoringFilters) fetchComponents(1);
+        if (!isRestoringFilters) reloadOnCompanyChange();
     }
 );
 
@@ -372,10 +381,10 @@ const loadCatalogs = async () => {
 };
 
 const clearFilters = () => {
-    filters.company_id = '';
-    filters.equipment_id = '';
-    filters.component_type_id = '';
-    filters.brand_id = '';
+    filters.company_id = [];
+    filters.equipment_id = [];
+    filters.component_type_id = [];
+    filters.brand_id = [];
     fetchComponents(1);
 };
 
@@ -384,10 +393,10 @@ const fetchComponents = async (page = 1) => {
     try {
         const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
 
-        if (filters.company_id) params.company_id = filters.company_id;
-        if (filters.equipment_id) params.equipment_id = filters.equipment_id;
-        if (filters.component_type_id) params.component_type_id = filters.component_type_id;
-        if (filters.brand_id) params.brand_id = filters.brand_id;
+        setArrayParam(params, 'company_id', filters.company_id);
+        setArrayParam(params, 'equipment_id', filters.equipment_id);
+        setArrayParam(params, 'component_type_id', filters.component_type_id);
+        setArrayParam(params, 'brand_id', filters.brand_id);
 
         const response = await api.get('/components', { params });
         components.value = response.data.data;
