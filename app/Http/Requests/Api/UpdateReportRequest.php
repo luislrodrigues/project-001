@@ -31,14 +31,27 @@ class UpdateReportRequest extends FormRequest
                 'general_recommendations' => is_array($decoded) ? $decoded : []
             ]);
         }
+
+        // En multipart, los parámetros de medición llegan como JSON string
+        if ($this->has('measurement_values') && is_string($this->measurement_values)) {
+            $decoded = json_decode($this->measurement_values, true);
+            $this->merge([
+                'measurement_values' => is_array($decoded) ? $decoded : []
+            ]);
+        }
     }
 
     public function rules(): array
     {
         return [
             'equipment_id' => 'required|integer|exists:equipment,id',
+            'report_type' => 'nullable|string|in:vibration,thermography',
+            'measurement_values' => 'nullable|array',
+            'measurement_values.*' => 'nullable|array',
+            'measurement_values.*.*' => 'nullable',
             'measurement_date' => 'required|date',
             'condition_id' => 'required|integer|exists:conditions,id',
+            'condition_override_reason' => 'nullable|string|max:500',
             'mechanism_fail_id' => 'required|integer|exists:mechanism_fails,id',
             'component_fail_id' => 'required|integer|exists:component_fails,id',
             'priority_id' => 'required|integer|exists:priorities,id',

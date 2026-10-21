@@ -45,7 +45,7 @@
                         <p class="text-gray-500 text-sm mt-1">Completa el formulario para crear un nuevo equipo</p>
                     </div>
                     <router-link
-                        :to="{ name: 'equipment' }"
+                        :to="{ name: backRouteName }"
                         class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Volver"
                     >
@@ -433,7 +433,7 @@
                     <!-- Footer -->
                     <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <router-link
-                            :to="{ name: 'equipment' }"
+                            :to="{ name: backRouteName }"
                             class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
                         >
                             Cancelar
@@ -489,7 +489,7 @@
 
 <script setup>
 import { ref, onMounted, reactive, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
@@ -497,9 +497,15 @@ import CreateSelectModal from '../../components/CreateSelectModal.vue';
 import Select2 from '../../components/Select2.vue';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
+const normalizeReportType = (v) => (v === 'thermography' ? 'thermography' : 'vibration');
+const reportType = computed(() => normalizeReportType(route.query.report_type));
+const backRouteName = computed(() => (reportType.value === 'thermography' ? 'equipment.thermography' : 'equipment.vibration'));
+
 const form = reactive({
+    report_type: reportType.value,
     name: '',
     equipment_type_id: '',
     process_id: '',
@@ -557,7 +563,7 @@ const loadCatalogs = async () => {
             api.get('/catalogs/processes'),
             api.get('/catalogs/ubications'),
             api.get('/catalogs/companies'),
-            api.get('/catalogs/component-types'),
+            api.get('/catalogs/component-types', { params: { report_type: form.report_type } }),
             api.get('/catalogs/brands'),
         ]);
 
@@ -578,7 +584,7 @@ const loadCatalogs = async () => {
 
 const loadExistingEquipments = async () => {
     try {
-        const response = await api.get('/catalogs/equipment');
+        const response = await api.get('/catalogs/equipment', { params: { report_type: form.report_type } });
         existingEquipments.value = response.data?.data ?? response.data ?? [];
     } catch (error) {
         console.error('Error al cargar equipos:', error);
@@ -786,6 +792,7 @@ const saveEquipment = async () => {
         formData.append('process_id', form.process_id);
         formData.append('ubication_id', form.ubication_id);
         formData.append('equipment_type_id', form.equipment_type_id);
+        formData.append('report_type', form.report_type);
         if (imageFile.value) {
             formData.append('image', imageFile.value);
         }
@@ -802,7 +809,7 @@ const saveEquipment = async () => {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
         Swal.fire('Éxito', 'Equipo creado correctamente', 'success');
-        router.push({ name: 'equipment' });
+        router.push({ name: backRouteName.value });
     } catch (error) {
         if (error.response?.status === 422 && error.response?.data?.errors) {
             const e = error.response.data.errors;

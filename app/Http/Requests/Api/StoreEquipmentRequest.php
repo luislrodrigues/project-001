@@ -14,6 +14,7 @@ class StoreEquipmentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'report_type' => 'nullable|string|in:vibration,thermography',
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:255',
             'tag' => 'nullable|string|max:255',

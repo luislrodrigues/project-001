@@ -21,14 +21,23 @@
                         </h2>
                         <p class="text-gray-500 text-sm mt-1">Gestiona y visualiza los reportes del sistema</p>
                     </div>
-                    <router-link
-                        v-if="authStore.hasPermission('save report')"
-                        :to="{ name: 'reports.create' }"
-                        class="flex items-center justify-center w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 shadow-sm font-medium"
-                    >
-                        <i class="fas fa-plus mr-2"></i>
-                        Crear Reporte
-                    </router-link>
+                    <div class="flex items-center justify-end gap-2 w-full sm:w-auto">
+                        <router-link
+                            :to="{ name: 'reports' }"
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                            title="Volver"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </router-link>
+                        <router-link
+                            v-if="authStore.hasPermission('save report')"
+                            :to="{ name: 'reports.create', query: { report_type: reportTypeResolved } }"
+                            class="flex items-center justify-center flex-1 sm:flex-none px-5 py-3 sm:py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 shadow-sm font-medium"
+                        >
+                            <i class="fas fa-plus mr-2"></i>
+                            Crear Reporte
+                        </router-link>
+                    </div>
                 </div>
 
                 <!-- Search Section -->
@@ -169,7 +178,7 @@
                         </div>
                     </div>
                     <div class="mt-3 flex items-center justify-between gap-2">
-                        <div v-if="authStore.hasPermission('export report')">
+                        <div v-if="authStore.hasPermission('export report')" class="flex items-center gap-2">
                             <button
                                 type="button"
                                 @click="exportExcel"
@@ -332,7 +341,7 @@
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
                                             v-if="authStore.hasPermission('detalle report')"
-                                            :to="{ name: 'reports.show', params: { id: report.id } }"
+                                            :to="{ name: 'reports.show', params: { id: report.id }, query: { report_type: reportTypeResolved } }"
                                             class="text-green-600 hover:text-green-900 p-1.5 hover:bg-green-50 rounded-lg transition-colors"
                                             title="Ver detalles"
                                         >
@@ -340,7 +349,7 @@
                                         </router-link>
                                         <router-link
                                             v-if="authStore.hasPermission('edit report')"
-                                            :to="{ name: 'reports.edit', params: { id: report.id } }"
+                                            :to="{ name: 'reports.edit', params: { id: report.id }, query: { report_type: reportTypeResolved } }"
                                             class="text-blue-600 hover:text-blue-900 p-1.5 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="Editar"
                                         >
@@ -373,7 +382,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
@@ -384,11 +393,22 @@ import Select2 from '../components/Select2.vue';
 import ClearableInput from '../components/ClearableInput.vue';
 import { toArray, setArrayParam, cleanQuery, arrayQuery, readArrayQuery, debounce } from '../utils/filters';
 
-const STORAGE_KEY = 'reports-list-filters';
+const props = defineProps({
+    reportType: { type: String, default: null }
+});
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+
+const normalizeReportType = (v) => {
+    const s = (v ?? '').toString().trim().toLowerCase();
+    return s === 'thermography' ? 'thermography' : 'vibration';
+};
+
+const reportTypeResolved = computed(() => normalizeReportType(props.reportType ?? route.query.report_type));
+const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'reports.thermography' : 'reports.vibration'));
+const storageKey = computed(() => `reports-list-filters-${reportTypeResolved.value}`);
 
 const reports = ref([]);
 const loading = ref(false);
@@ -435,9 +455,10 @@ const syncQueryToUrl = (page = 1) => {
         measurement_date_start: filters.measurement_date_start,
         measurement_date_end: filters.measurement_date_end
     });
-    router.replace({ name: 'reports', query: q });
+    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    router.replace({ name: route.name, query: q });
     try {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
+        sessionStorage.setItem(storageKey.value, JSON.stringify({ query: q }));
     } catch (_) {}
 };
 
@@ -457,7 +478,7 @@ const applyQueryToFilters = () => {
         sortOrder.value = normalizeSortOrder(route.query.sort_order ?? 'desc');
     } else {
         try {
-            const saved = sessionStorage.getItem(STORAGE_KEY);
+            const saved = sessionStorage.getItem(storageKey.value);
             if (saved) {
                 const { query } = JSON.parse(saved);
                 if (query) {
@@ -503,11 +524,11 @@ onMounted(async () => {
     await fetchReports(page);
 });
 
-// Carga los equipos según la empresa seleccionada en el filtro
+// Carga los equipos según la empresa seleccionada y el tipo de reporte actual
 const loadEquipments = async () => {
     try {
         const params = {};
-        setArrayParam(params, 'company_id', filters.company_id);
+        if (filters.company_id) params.company_id = filters.company_id;
         const equipmentsRes = await api.get('/catalogs/equipment', { params });
         equipments.value = equipmentsRes.data.data ?? equipmentsRes.data ?? [];
     } catch (error) {
@@ -600,6 +621,7 @@ const fetchReports = async (page = 1) => {
     beginLoading();
     try {
         const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
+        params.report_type = reportTypeResolved.value;
 
         if (filters.consecutivo) params.consecutivo = filters.consecutivo.trim();
         setArrayParam(params, 'equipment_id', filters.equipment_id);
@@ -638,16 +660,17 @@ const exportExcel = async () => {
         exporting.value = true;
         const payload = {
             sort_by: sortBy.value,
-            sort_order: normalizeSortOrder(sortOrder.value)
+            sort_order: normalizeSortOrder(sortOrder.value),
+            report_type: reportTypeResolved.value
         };
         if (filters.consecutivo) payload.consecutivo = filters.consecutivo.trim();
-        setArrayParam(payload, 'equipment_id', filters.equipment_id);
-        setArrayParam(payload, 'condition_id', filters.condition_id);
-        setArrayParam(payload, 'priority_id', filters.priority_id);
-        setArrayParam(payload, 'mechanism_fail_id', filters.mechanism_fail_id);
-        setArrayParam(payload, 'company_id', filters.company_id);
-        setArrayParam(payload, 'process_id', filters.process_id);
-        setArrayParam(payload, 'analist_id', filters.analist_id);
+        if (filters.equipment_id) payload.equipment_id = filters.equipment_id;
+        if (filters.condition_id) payload.condition_id = filters.condition_id;
+        if (filters.priority_id) payload.priority_id = filters.priority_id;
+        if (filters.mechanism_fail_id) payload.mechanism_fail_id = filters.mechanism_fail_id;
+        if (filters.company_id) payload.company_id = filters.company_id;
+        if (filters.process_id) payload.process_id = filters.process_id;
+        if (filters.analist_id) payload.analist_id = filters.analist_id;
         if (filters.measurement_date_start) payload.measurement_date_start = filters.measurement_date_start;
         if (filters.measurement_date_end) payload.measurement_date_end = filters.measurement_date_end;
         const response = await api.post('/reports/export', payload, { responseType: 'blob' });
@@ -660,7 +683,7 @@ const exportExcel = async () => {
         const hh = String(nowJs.getHours()).padStart(2, '0');
         const mm = String(nowJs.getMinutes()).padStart(2, '0');
         const ss = String(nowJs.getSeconds()).padStart(2, '0');
-        const filename = `Informes_Listado_${y}_${m}_${d}_${hh}_${mm}_${ss}.xlsx`;
+        const filename = `Informes_${reportTypeResolved.value}_${y}_${m}_${d}_${hh}_${mm}_${ss}.xlsx`;
         link.href = url;
         link.setAttribute('download', filename);
         link.style.display = 'none';
@@ -680,7 +703,6 @@ const exportExcel = async () => {
 const changePage = (page) => {
     fetchReports(page);
 };
-
 const formatDate = (date) => {
     if (!date) return 'N/A';
     const str = String(date).trim();

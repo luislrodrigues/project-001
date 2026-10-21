@@ -45,7 +45,7 @@
                         <p class="text-gray-500 text-sm mt-1">Completa el formulario para crear un nuevo reporte</p>
                     </div>
                     <router-link
-                        :to="{ name: 'reports' }"
+                        :to="{ name: backRouteName }"
                         class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Volver"
                     >
@@ -242,6 +242,69 @@
                                     </h5>
                                 </div>
 
+                                <!-- Parámetros de la medición -->
+                                <div v-if="measurementFieldsFor(component).length" class="mb-4">
+                                    <label class="flex items-center mb-3 text-sm font-medium text-gray-700">
+                                        <i class="fas fa-thermometer-half mr-2 text-rose-600"></i>
+                                        Parámetros de la medición
+                                    </label>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div v-for="field in measurementFieldsFor(component)" :key="field.id">
+                                            <label class="block mb-1.5 text-xs font-medium text-gray-600">
+                                                {{ field.name }}<span v-if="field.unit" class="text-gray-400"> ({{ field.unit }})</span>
+                                                <span v-if="field.is_required" class="text-red-500 ml-0.5">*</span>
+                                            </label>
+
+                                            <select
+                                                v-if="field.type === 'select'"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            >
+                                                <option value="">Seleccione</option>
+                                                <option v-for="option in field.options" :key="option.id" :value="option.value">{{ option.label }}</option>
+                                            </select>
+
+                                            <textarea
+                                                v-else-if="field.type === 'textarea'"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                rows="2"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            ></textarea>
+
+                                            <label v-else-if="field.type === 'boolean'" class="flex items-center gap-2 text-sm text-gray-700">
+                                                <input
+                                                    type="checkbox"
+                                                    v-model="form.measurement_values[component.id][field.id]"
+                                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                Sí
+                                            </label>
+
+                                            <input
+                                                v-else-if="field.type === 'date' || field.type === 'datetime'"
+                                                :type="field.type === 'datetime' ? 'datetime-local' : 'date'"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            />
+
+                                            <input
+                                                v-else-if="field.type === 'numeric' || field.type === 'number'"
+                                                type="number"
+                                                step="any"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            />
+
+                                            <input
+                                                v-else
+                                                type="text"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Diagnóstico -->
                                 <div class="mb-4">
                                     <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -291,9 +354,25 @@
                                                     <input
                                                         @change="handleComponentImageChange(component.id, imgIndex, $event)"
                                                         type="file"
-                                                        accept="image/*"
+                                                        accept="image/jpeg,image/png"
                                                         class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
                                                     />
+                                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                                                        <select
+                                                            v-model="image.kind"
+                                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg px-3 py-2"
+                                                        >
+                                                            <option value="thermal">Térmica</option>
+                                                            <option value="visual">Visual</option>
+                                                        </select>
+                                                        <input
+                                                            v-model="image.caption"
+                                                            type="text"
+                                                            maxlength="255"
+                                                            placeholder="Pie de foto (opcional)"
+                                                            class="sm:col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg px-3 py-2"
+                                                        />
+                                                    </div>
                                                     <div v-if="image.preview" class="mt-2 cursor-pointer" @click="openImageModal(image.preview)">
                                                         <img :src="image.preview" alt="Preview" class="max-w-full h-32 object-contain rounded-lg border border-gray-200 pointer-events-none" />
                                                         <p class="text-xs text-gray-500 mt-1">Clic para ampliar</p>
@@ -522,7 +601,7 @@
                     <!-- Footer -->
                     <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <router-link
-                            :to="{ name: 'reports' }"
+                            :to="{ name: 'reports.vibration' }"
                             class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
                         >
                             <i class="fas fa-times mr-2"></i>
@@ -591,10 +670,17 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+const normalizeReportType = (v) => {
+    const s = (v ?? '').toString().trim().toLowerCase();
+    return s === 'thermography' ? 'thermography' : 'vibration';
+};
+
 const form = reactive({
     equipment_id: '',
+    report_type: normalizeReportType(route.query.report_type),
     measurement_date: '',
     condition_id: '',
+    condition_override_reason: '',
     mechanism_fail_id: '',
     component_fail_id: '',
     priority_id: '',
@@ -606,6 +692,7 @@ const form = reactive({
     diagnosis: {},
     recommendations: {},
     component_images: {},
+    measurement_values: {},
 });
 
 const equipmentData = reactive({
@@ -637,6 +724,12 @@ const reportsOfEquipment = ref([]);
 const copyFromReportId = ref('');
 const copyReportLoading = ref(false);
 
+const reportTypeResolved = computed(() => normalizeReportType(form.report_type ?? route.query.report_type));
+const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'reports.thermography' : 'reports.vibration'));
+
+// Campos que se capturan en cada medición según el tipo del componente
+const measurementFieldsFor = (component) => (component.component_type?.fields || []).filter((field) => field.scope === 'measurement');
+
 const formatDateShort = (dateStr) => {
     if (!dateStr) return '';
     const str = String(dateStr).trim();
@@ -648,18 +741,21 @@ const formatDateShort = (dateStr) => {
 };
 
 onMounted(async () => {
-    await loadCatalogs();
     const equipmentIdFromQuery = route.query.equipment_id;
     if (equipmentIdFromQuery) {
         const id = Number(equipmentIdFromQuery);
+        form.equipment_id = id;
+    }
+
+    await loadEquipmentData();
+    await loadCatalogs();
+
+    if (equipmentIdFromQuery) {
+        const id = Number(equipmentIdFromQuery);
         const equipment = equipments.value.find((e) => Number(e.id) === id);
-        if (equipment) {
-            const companyId = equipment.company_id ?? equipment.company?.id;
-            if (companyId) {
-                filterCompanyId.value = companyId;
-            }
-            form.equipment_id = id;
-            await loadEquipmentData();
+        const companyId = equipment?.company_id ?? equipment?.company?.id;
+        if (companyId) {
+            filterCompanyId.value = companyId;
         }
     }
 });
@@ -668,7 +764,7 @@ const loadCatalogs = async () => {
     catalogsLoading.value = true;
     try {
         const [equipmentsRes, companiesRes, conditionsRes, prioritiesRes, mechanismFailsRes, componentFailsRes, usersRes] = await Promise.all([
-            api.get('/catalogs/equipment'),
+            api.get('/catalogs/equipment', { params: { report_type: reportTypeResolved.value } }),
             api.get('/catalogs/companies'),
             api.get('/catalogs/conditions'),
             api.get('/catalogs/priorities'),
@@ -779,6 +875,7 @@ const onCompanyFilterChange = () => {
         form.diagnosis = {};
         form.recommendations = {};
         form.component_images = {};
+        form.measurement_values = {};
         reportsOfEquipment.value = [];
         copyFromReportId.value = '';
     }
@@ -812,6 +909,7 @@ const loadEquipmentData = async () => {
         form.diagnosis = {};
         form.recommendations = {};
         form.component_images = {};
+        form.measurement_values = {};
         reportsOfEquipment.value = [];
         copyFromReportId.value = '';
         return;
@@ -820,6 +918,9 @@ const loadEquipmentData = async () => {
     try {
         const response = await api.get(`/equipment/${form.equipment_id}`);
         const equipment = response.data.data;
+        if (equipment?.report_type) {
+            form.report_type = normalizeReportType(equipment.report_type);
+        }
 
         equipmentData.equipment_type = equipment.equipment_type?.name || '';
         equipmentData.location = equipment.ubication?.name || '';
@@ -839,6 +940,9 @@ const loadEquipmentData = async () => {
                 }
                 if (!form.component_images[component.id]) {
                     form.component_images[component.id] = [];
+                }
+                if (!form.measurement_values[component.id]) {
+                    form.measurement_values[component.id] = {};
                 }
             });
         } else {
@@ -919,10 +1023,13 @@ const copyFromReport = async () => {
                 ? recs.map((r) => (typeof r === 'string' ? r : (r?.text ?? r?.name ?? String(r))))
                 : [];
 
-            const imageUrls = (diag != null && typeof diag === 'object' && Array.isArray(diag.images)) ? diag.images : [];
+            const previousImages = Array.isArray(report.images)
+                ? report.images.filter((img) => String(img.component_id) === cid)
+                : [];
             newComponentImages[component.id] = [];
-            for (let i = 0; i < imageUrls.length; i++) {
-                const url = imageUrls[i];
+            for (let i = 0; i < previousImages.length; i++) {
+                const previous = previousImages[i];
+                const url = previous?.url;
                 if (!url) continue;
                 try {
                     const imgResponse = await fetch(url, { mode: 'cors', credentials: 'same-origin' });
@@ -932,7 +1039,9 @@ const copyFromReport = async () => {
                     const file = new File([blob], `imagen-${component.id}-${i}.${ext}`, { type: blob.type });
                     newComponentImages[component.id].push({
                         file,
-                        preview: url.startsWith('blob:') ? url : URL.createObjectURL(blob)
+                        preview: URL.createObjectURL(blob),
+                        kind: previous.kind || 'thermal',
+                        caption: previous.caption || ''
                     });
                 } catch (imgErr) {
                     console.warn('No se pudo copiar imagen:', url, imgErr);
@@ -985,7 +1094,7 @@ const addComponentImage = (componentId) => {
     if (!form.component_images[componentId]) {
         form.component_images[componentId] = [];
     }
-    form.component_images[componentId].push({ file: null, preview: null });
+    form.component_images[componentId].push({ file: null, preview: null, kind: 'thermal', caption: '' });
 };
 
 const handleComponentImageChange = (componentId, imgIndex, event) => {
@@ -996,7 +1105,9 @@ const handleComponentImageChange = (componentId, imgIndex, event) => {
         }
         form.component_images[componentId][imgIndex] = {
             file: file,
-            preview: URL.createObjectURL(file)
+            preview: URL.createObjectURL(file),
+            kind: form.component_images[componentId][imgIndex]?.kind || 'thermal',
+            caption: form.component_images[componentId][imgIndex]?.caption || ''
         };
     }
 };
@@ -1062,7 +1173,7 @@ const saveReport = async () => {
                         }
                     });
                 });
-            } else if (key === 'diagnosis' || key === 'recommendations' || key === 'general_recommendations') {
+            } else if (key === 'diagnosis' || key === 'recommendations' || key === 'general_recommendations' || key === 'measurement_values') {
                 formData.append(key, JSON.stringify(cleaned[key]));
             } else if (cleaned[key] !== null && cleaned[key] !== '') {
                 formData.append(key, cleaned[key]);
@@ -1072,21 +1183,62 @@ const saveReport = async () => {
         const componentImagesStructure = {};
         Object.keys(cleaned.component_images).forEach(componentId => {
             componentImagesStructure[componentId] = cleaned.component_images[componentId]
-                .map((img, idx) => img.file ? `component_images_${componentId}_${idx}` : null)
+                .map((img, idx) => img.file
+                    ? {
+                        key: `component_images_${componentId}_${idx}`,
+                        kind: img.kind || 'thermal',
+                        caption: img.caption || ''
+                    }
+                    : null)
                 .filter(Boolean);
         });
         if (Object.keys(componentImagesStructure).length > 0) {
             formData.append('component_images_structure', JSON.stringify(componentImagesStructure));
         }
 
-        await api.post('/reports', formData, {
+        const response = await api.post('/reports', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
 
-        Swal.fire('Éxito', 'Reporte creado correctamente', 'success');
-        router.push({ name: 'reports' });
+        const check = response.data?.data?.condition_check;
+        const newId = response.data?.data?.id;
+
+        if (check && check.matches === false && newId) {
+            const { value: reason, isConfirmed } = await Swal.fire({
+                icon: 'warning',
+                title: 'Condición fuera de norma',
+                html: `${check.warning}<br><br><span style="font-size:13px;color:#6b7280">Puedes dejar el reporte así, pero deja constancia del criterio del analista.</span>`,
+                input: 'textarea',
+                inputPlaceholder: 'Justificación (queda registrada en el informe)',
+                inputAttributes: { maxlength: 500 },
+                showCancelButton: true,
+                confirmButtonText: 'Guardar justificación',
+                cancelButtonText: 'Dejar pendiente',
+                confirmButtonColor: '#2563eb'
+            });
+
+            if (isConfirmed && reason && reason.trim() !== '') {
+                form.condition_override_reason = reason.trim();
+                const resend = new FormData();
+                for (const [key, value] of formData.entries()) {
+                    if (typeof value === 'string' && key !== 'component_images_structure' && !key.startsWith('component_images_')) {
+                        resend.append(key, value);
+                    }
+                }
+                resend.set('condition_override_reason', reason.trim());
+                await api.post(`/reports/${newId}`, resend, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                Swal.fire('Éxito', 'Reporte creado con la justificación registrada', 'success');
+            } else {
+                Swal.fire('Creado con observación', 'El reporte quedó guardado, pero sin justificación registrada.', 'warning');
+            }
+        } else {
+            Swal.fire('Éxito', 'Reporte creado correctamente', 'success');
+        }
+        router.push({ name: backRouteName.value });
     } catch (error) {
         if (error.response?.status === 422 && error.response?.data?.errors) {
             const e = error.response.data.errors;

@@ -56,7 +56,17 @@ const routes = [
             {
                 path: 'equipment',
                 name: 'equipment',
+                component: () => import('../pages/equipment/EquipmentHub.vue')
+            },
+            {
+                path: 'equipment/vibration',
+                name: 'equipment.vibration',
                 component: () => import('../pages/Equipment.vue')
+            },
+            {
+                path: 'equipment/thermography',
+                name: 'equipment.thermography',
+                component: () => import('../pages/equipment/EquipmentThermographyList.vue')
             },
             {
                 path: 'equipment/create',
@@ -78,12 +88,29 @@ const routes = [
             {
                 path: 'reports',
                 name: 'reports',
-                component: () => import('../pages/Reports.vue')
+                component: () => import('../pages/reports/ReportsHub.vue')
+            },
+            {
+                path: 'reports/vibration',
+                name: 'reports.vibration',
+                component: () => import('../pages/Reports.vue'),
+                props: { reportType: 'vibration' }
+            },
+            {
+                path: 'reports/thermography',
+                name: 'reports.thermography',
+                component: () => import('../pages/Reports.vue'),
+                props: { reportType: 'thermography' }
             },
             {
                 path: 'reports/create',
                 name: 'reports.create',
                 component: () => import('../pages/reports/ReportCreate.vue')
+            },
+            {
+                path: 'reports/groups',
+                name: 'report-groups',
+                component: () => import('../pages/reports/ReportGroups.vue')
             },
             {
                 path: 'reports/:id/edit',
@@ -122,7 +149,17 @@ const routes = [
             {
                 path: 'component-types',
                 name: 'component-types',
+                component: () => import('../pages/component-types/ComponentTypesHub.vue')
+            },
+            {
+                path: 'component-types/vibration',
+                name: 'component-types.vibration',
                 component: () => import('../pages/ComponentTypes.vue')
+            },
+            {
+                path: 'component-types/thermography',
+                name: 'component-types.thermography',
+                component: () => import('../pages/component-types/ComponentTypesThermographyList.vue')
             },
             {
                 path: 'component-types/create',

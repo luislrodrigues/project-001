@@ -527,7 +527,14 @@
 
                 @php
                     $images = ($componentImages ?? [])[$componentIdStr] ?? [];
-                    $images = is_array($images) ? array_values(array_filter($images, fn($url) => !empty($url))) : [];
+                    $images = is_array($images) ? array_values(array_filter($images, function ($image) {
+                        return is_array($image) ? !empty($image['url']) : !empty($image);
+                    })) : [];
+                    $images = array_map(function ($image) {
+                        return is_array($image)
+                            ? ['url' => $image['url'], 'caption' => $image['caption'] ?? '']
+                            : ['url' => $image, 'caption' => ''];
+                    }, $images);
                 @endphp
                 @if (!empty($images))
                     @php
@@ -537,9 +544,12 @@
                         <table class="image-container" cellpadding="0" cellspacing="0">
                             @foreach ($rows as $row)
                                 <tr>
-                                    @foreach ($row as $imageUrl)
+                                    @foreach ($row as $image)
                                         <td @if (count($row) === 1) colspan="2" @endif>
-                                            <img src="{{ $imageUrl }}" alt="Espectro" style="width: 100%; height: auto; max-height: 300px;" />
+                                            <img src="{{ $image['url'] }}" alt="Espectro" style="width: 100%; height: auto; max-height: 300px;" />
+                                            @if ($image['caption'] !== '')
+                                                <div style="font-size: 9px; color: #4b5563; padding-top: 2px;">{{ $image['caption'] }}</div>
+                                            @endif
                                         </td>
                                     @endforeach
                                 </tr>

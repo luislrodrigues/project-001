@@ -8,18 +8,24 @@ use App\Http\Requests\Api\StoreReportRequest;
 use App\Http\Requests\Api\UpdateReportRequest;
 use App\Http\Resources\ReportResource;
 use App\Models\Condition;
+use App\Models\Component;
 use App\Models\ComponentFail;
+use App\Models\ComponentTypeField;
 use App\Models\Priority;
 use App\Models\Equipment;
 use App\Models\MechanismFail;
 use App\Models\Report;
+use App\Models\ReportImage;
+use App\Models\ReportType;
 use App\Models\User;
 use App\Support\ReportNumberConverter;
 use PDF;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -84,6 +90,11 @@ class ReportController extends Controller
             $query->whereHas('equipment', function ($q) {
                 $q->where('company_id', auth()->user()->company_id);
             });
+        }
+
+        $reportType = $request->get('report_type', 'vibration');
+        if (is_string($reportType) && in_array($reportType, ['vibration', 'thermography'], true)) {
+            $query->where('report_type', $reportType);
         }
 
         $equipmentIds = array_values(array_filter(array_map('intval', (array) $request->input('equipment_id'))));
@@ -175,10 +186,19 @@ class ReportController extends Controller
     public function store(StoreReportRequest $request): JsonResponse
     {
         try {
+            $reportType = $request->get('report_type');
+            if (!is_string($reportType) || !in_array($reportType, ['vibration', 'thermography'], true)) {
+                $reportType = Equipment::whereKey((int) $request->equipment_id)->value('report_type') ?? 'vibration';
+            }
+
             $data = [
                 'equipment_id' => $request->equipment_id,
+                'report_type' => $reportType,
                 'measurement_date' => $request->measurement_date,
                 'condition_id' => $request->condition_id,
+                'condition_override_reason' => $request->filled('condition_override_reason')
+                    ? trim((string) $request->condition_override_reason)
+                    : null,
                 'priority_id' => $request->priority_id,
                 'mechanism_fail_id' => $request->mechanism_fail_id,
                 'component_fail_id' => $request->component_fail_id,
@@ -190,56 +210,30 @@ class ReportController extends Controller
             ];
 
             if ($request->has('diagnosis')) {
-                $data['diagnosis'] = is_array($request->diagnosis) ? $request->diagnosis : (json_decode($request->diagnosis, true) ?? []);
+                $data['diagnosis'] = self::stripImagesFromDiagnosis($request->diagnosis);
             }
 
             if ($request->has('recommendations')) {
                 $data['recommendations'] = is_array($request->recommendations) ? $request->recommendations : (json_decode($request->recommendations, true) ?? []);
             }
 
-            $componentImages = [];
-            if ($request->has('component_images_structure')) {
-                $structure = json_decode($request->input('component_images_structure'), true);
-                if (is_array($structure)) {
-                    foreach ($structure as $componentId => $imageKeys) {
-                        $componentImages[$componentId] = [];
-                        foreach ($imageKeys as $imageKey) {
-                            if ($request->hasFile($imageKey)) {
-                                $file = $request->file($imageKey);
-                                if ($file && $file->isValid()) {
-                                    $path = $file->store('images', 'public');
-                                    $componentImages[$componentId][] = $path;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            $componentImages = self::storeComponentImages($request, (int) $request->equipment_id);
 
+            $report = DB::transaction(function () use ($data, $request, $componentImages) {
+                $report = Report::create($data);
+                self::syncMeasurementValues($report, $request);
+                self::syncImages($report, $request, $componentImages);
 
-            if (!empty($componentImages)) {
-                $diagnosisData = $request->has('diagnosis') ? $request->diagnosis : [];
-                foreach ($componentImages as $componentId => $imagePaths) {
-                    if (!isset($diagnosisData[$componentId])) {
-                        $diagnosisData[$componentId] = [];
-                    }
-                    if (!is_array($diagnosisData[$componentId])) {
-                        $diagnosisData[$componentId] = ['text' => $diagnosisData[$componentId], 'images' => []];
-                    } else if (!isset($diagnosisData[$componentId]['images'])) {
-                        $diagnosisData[$componentId] = ['text' => $diagnosisData[$componentId]['text'] ?? '', 'images' => []];
-                    }
-                    $diagnosisData[$componentId]['images'] = $imagePaths;
-                }
-                $data['diagnosis'] = $diagnosisData;
-            }
-
-            $report = Report::create($data);
+                return $report;
+            });
 
             return ApiResponse::success(
-                new ReportResource($report->load(['equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist'])),
+                new ReportResource($report->load(['equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist', 'measurementValues.field', 'images'])),
                 'Se guardó el reporte correctamente',
                 201
             );
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return ApiResponse::error('Error al guardar el reporte', 500, ['detail' => [$e->getMessage()]]);
         }
@@ -262,7 +256,11 @@ class ReportController extends Controller
             'priority',
             'mechanismFail',
             'componentFail',
-            'analist'
+            'analist',
+            'measurementValues',
+            'measurementValues.field',
+            'images',
+            'equipment.components.componentType.componentTypeFields.allOptions'
         ])
         ->whereNull('deleted_at')
         ->findOrFail($id);
@@ -279,10 +277,20 @@ class ReportController extends Controller
         $report = Report::whereNull('deleted_at')->findOrFail($id);
 
         try {
+            $reportType = $request->get('report_type');
+            if (!is_string($reportType) || !in_array($reportType, ['vibration', 'thermography'], true)) {
+                $reportType = Equipment::whereKey((int) $request->equipment_id)->value('report_type')
+                    ?? ($report->report_type ?? 'vibration');
+            }
+
             $data = [
                 'equipment_id' => $request->equipment_id,
+                'report_type' => $reportType,
                 'measurement_date' => $request->measurement_date,
                 'condition_id' => $request->condition_id,
+                'condition_override_reason' => $request->filled('condition_override_reason')
+                    ? trim((string) $request->condition_override_reason)
+                    : null,
                 'priority_id' => $request->priority_id,
                 'mechanism_fail_id' => $request->mechanism_fail_id,
                 'component_fail_id' => $request->component_fail_id,
@@ -294,122 +302,27 @@ class ReportController extends Controller
             ];
 
             if ($request->has('diagnosis')) {
-                $data['diagnosis'] = is_array($request->diagnosis) ? $request->diagnosis : (json_decode($request->diagnosis, true) ?? []);
+                $data['diagnosis'] = self::stripImagesFromDiagnosis($request->diagnosis);
             }
 
             if ($request->has('recommendations')) {
                 $data['recommendations'] = is_array($request->recommendations) ? $request->recommendations : (json_decode($request->recommendations, true) ?? []);
             }
 
-            $componentImages = [];
-            if ($request->has('component_images_structure')) {
-                $structure = json_decode($request->input('component_images_structure'), true);
-                if (is_array($structure)) {
-                    foreach ($structure as $componentId => $imageKeys) {
-                        $componentImages[$componentId] = [];
-                        foreach ($imageKeys as $imageKey) {
-                            if ($request->hasFile($imageKey)) {
-                                $file = $request->file($imageKey);
-                                if ($file && $file->isValid()) {
-                                    $path = $file->store('images', 'public');
-                                    $componentImages[$componentId][] = $path;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            $componentImages = self::storeComponentImages($request, (int) $request->equipment_id);
 
-            $imagesToDelete = [];
-            if ($request->has('images_to_delete')) {
-                $imagesToDelete = json_decode($request->input('images_to_delete'), true);
-                if (is_array($imagesToDelete)) {
-                    foreach ($imagesToDelete as $componentId => $imageUrls) {
-                        foreach ($imageUrls as $imageUrl) {
-                            $path = str_replace(asset('storage/'), '', $imageUrl);
-                            if ($path && Storage::disk('public')->exists($path)) {
-                                Storage::disk('public')->delete($path);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Obtener diagnosis actual y actualizar con nuevas imágenes
-            $currentDiagnosis = self::decodeJsonField($report->diagnosis ?? []);
-            $diagnosisData = $request->has('diagnosis')
-                ? (is_string($request->diagnosis) ? json_decode($request->diagnosis, true) : $request->diagnosis)
-                : $currentDiagnosis;
-            if (!is_array($diagnosisData)) {
-                $diagnosisData = $currentDiagnosis;
-            }
-
-            // Normalizar URL o path a path relativo (ej: images/xxx.jpg) para comparar
-            $normalizeImagePath = function ($urlOrPath) {
-                $u = trim($urlOrPath);
-                if (strpos($u, 'http') === 0 || strpos($u, '//') === 0) {
-                    $u = preg_replace('#^https?://[^/]+/#', '', $u);
-                    $u = preg_replace('#^storage/#', '', $u);
-                }
-                return $u;
-            };
-
-            // Aplicar imágenes a eliminar a diagnosisData para todos los componentes en imagesToDelete
-            foreach ($imagesToDelete as $componentId => $urlsToDelete) {
-                $componentIdStr = (string)$componentId;
-                if (!is_array($urlsToDelete)) {
-                    continue;
-                }
-                $existing = $diagnosisData[$componentIdStr] ?? [];
-                $text = is_array($existing) ? ($existing['text'] ?? '') : (string)$existing;
-                $existingImages = is_array($existing) && isset($existing['images']) ? $existing['images'] : [];
-                $pathsToRemove = array_map($normalizeImagePath, $urlsToDelete);
-                $existingImages = array_values(array_filter($existingImages, function ($img) use ($pathsToRemove, $normalizeImagePath) {
-                    $imgPath = $normalizeImagePath($img);
-                    return !in_array($imgPath, $pathsToRemove, true);
-                }));
-                $diagnosisData[$componentIdStr] = ['text' => $text, 'images' => $existingImages];
-            }
-
-            foreach ($componentImages as $componentId => $newImagePaths) {
-                $componentIdStr = (string)$componentId;
-                if (!isset($diagnosisData[$componentIdStr])) {
-                    $diagnosisData[$componentIdStr] = '';
-                }
-
-                // Obtener imágenes existentes
-                $existingImages = [];
-                if (isset($currentDiagnosis[$componentIdStr]) && is_array($currentDiagnosis[$componentIdStr]) && isset($currentDiagnosis[$componentIdStr]['images'])) {
-                    $existingImages = $currentDiagnosis[$componentIdStr]['images'];
-                } else if (isset($currentDiagnosis[$componentIdStr]) && is_array($currentDiagnosis[$componentIdStr])) {
-                    $existingImages = $currentDiagnosis[$componentIdStr]['images'] ?? [];
-                }
-
-                if (isset($imagesToDelete[$componentIdStr]) && is_array($imagesToDelete[$componentIdStr])) {
-                    $pathsToDelete = array_map($normalizeImagePath, $imagesToDelete[$componentIdStr]);
-                    $existingImages = array_values(array_filter($existingImages, function ($img) use ($pathsToDelete, $normalizeImagePath) {
-                        return !in_array($normalizeImagePath($img), $pathsToDelete, true);
-                    }));
-                }
-
-                // Combinar imágenes existentes con nuevas
-                $allImages = array_merge($existingImages, $newImagePaths);
-
-                $text = is_string($diagnosisData[$componentIdStr]) ? $diagnosisData[$componentIdStr] : ($diagnosisData[$componentIdStr]['text'] ?? '');
-                $diagnosisData[$componentIdStr] = [
-                    'text' => $text,
-                    'images' => array_values($allImages)
-                ];
-            }
-
-            $data['diagnosis'] = $diagnosisData;
-
-            $report->update($data);
+            DB::transaction(function () use ($report, $data, $request, $componentImages) {
+                $report->update($data);
+                self::syncMeasurementValues($report, $request);
+                self::syncImages($report, $request, $componentImages);
+            });
 
             return ApiResponse::success(
-                new ReportResource($report->load(['equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist'])),
+                new ReportResource($report->load(['equipment.components', 'condition', 'mechanismFail', 'componentFail', 'analist', 'measurementValues.field', 'images'])),
                 'Se actualizó el reporte correctamente'
             );
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return ApiResponse::error('Error al actualizar el reporte', 500, ['detail' => [$e->getMessage()]]);
         }
@@ -457,107 +370,29 @@ class ReportController extends Controller
                 'priority',
                 'mechanismFail',
                 'componentFail',
-                'analist'
+                'analist',
+                'measurementValues.field',
+                'images'
             ])
             ->whereNull('deleted_at')
             ->findOrFail($id);
 
-            $diagnosis = [];
-            if ($report->diagnosis) {
-                $decoded = self::decodeJsonField($report->diagnosis);
-                if (is_array($decoded)) {
-                    $componentsList = $report->equipment ? $report->equipment->components : collect();
-                    $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
-                    if ($isNumericArray) {
-                        foreach ($decoded as $index => $data) {
-                            if ($componentsList->has($index)) {
-                                $componentId = (string) $componentsList->get($index)->id;
-                                if (is_array($data) && isset($data['text'])) {
-                                    $diagnosis[$componentId] = utf8_sanitize($data['text']);
-                                } elseif (is_string($data)) {
-                                    $diagnosis[$componentId] = utf8_sanitize($data);
-                                }
-                            }
-                        }
-                    } else {
-                        foreach ($decoded as $componentId => $data) {
-                            $componentId = (string) $componentId;
-                            if (is_array($data) && isset($data['text'])) {
-                                $diagnosis[$componentId] = utf8_sanitize($data['text'] ?? '');
-                            } elseif (is_string($data)) {
-                                $diagnosis[$componentId] = utf8_sanitize($data);
-                            }
-                        }
-                    }
-                }
+            $viewData = self::pdfViewData($report);
+
+            // La plantilla y el nombre del informe pueden variar por tipo de reporte
+            $reportTypeModel = $report->report_type
+                ? ReportType::where('code', $report->report_type)->first()
+                : null;
+
+            $view = 'reports.report-pdf';
+            $configuredView = $reportTypeModel?->pdf_view;
+            if (is_string($configuredView) && $configuredView !== '' && view()->exists($configuredView)) {
+                $view = $configuredView;
             }
 
-            // Procesar recomendaciones para el PDF (claves normalizadas a string)
-            $recommendations = [];
-            if ($report->recommendations) {
-                $decoded = self::decodeJsonField($report->recommendations);
-                if (is_array($decoded)) {
-                    $componentsList = $report->equipment ? $report->equipment->components : collect();
-                    $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
-                    if ($isNumericArray) {
-                        foreach ($decoded as $index => $data) {
-                            if ($componentsList->has($index)) {
-                                $componentId = (string) $componentsList->get($index)->id;
-                                $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
-                            }
-                        }
-                    } else {
-                        foreach ($decoded as $componentId => $data) {
-                            $componentId = (string) $componentId;
-                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
-                        }
-                    }
-                }
-            }
+            $reportTypeName = $reportTypeModel?->name ?? ($report->report_type ? '' : 'Vibraciones');
 
-            $componentImages = [];
-            if ($report->diagnosis) {
-                $decoded = self::decodeJsonField($report->diagnosis);
-                if (is_array($decoded)) {
-                    $componentsList = $report->equipment ? $report->equipment->components : collect();
-                    $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
-                    if ($isNumericArray) {
-                        foreach ($decoded as $index => $data) {
-                            if ($componentsList->has($index) && is_array($data) && !empty($data['images'])) {
-                                $componentId = (string) $componentsList->get($index)->id;
-                                $componentImages[$componentId] = array_values(array_filter(array_map(function ($path) {
-                                    return self::imageToBase64ForPdf($path);
-                                }, $data['images'])));
-                            }
-                        }
-                    } else {
-                        foreach ($decoded as $componentId => $data) {
-                            if (is_array($data) && !empty($data['images'])) {
-                                $componentId = (string) $componentId;
-                                $componentImages[$componentId] = array_values(array_filter(array_map(function ($path) {
-                                    return self::imageToBase64ForPdf($path);
-                                }, $data['images'])));
-                            }
-                        }
-                    }
-                }
-            }
-
-            $components = $report->equipment->components ?? collect();
-
-            $equipmentImage = null;
-            if ($report->equipment && !empty($report->equipment->image)) {
-                $equipmentImage = self::imageToBase64ForPdf($report->equipment->image);
-            }
-
-            $html = view('reports.report-pdf', [
-                'reportData' => $report,
-                'components' => $components,
-                'diagnosis' => $diagnosis,
-                'recommendations' => $recommendations,
-                'componentImages' => $componentImages,
-                'equipmentImage' => $equipmentImage,
-            ])->render();
+            $html = view($view, $viewData)->render();
 
             $html = utf8_sanitize_html($html);
 
@@ -577,7 +412,7 @@ class ReportController extends Controller
             $cleanEquipmentName = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $equipmentName)));
             $cleanConsecutivo = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $consecutivo)));
 
-            $filenameBase = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($cleanConsecutivo !== '' ? ($cleanConsecutivo . ' ') : '') . $cleanEquipmentName);
+            $filenameBase = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe ' . ($reportTypeName !== '' ? $reportTypeName . ' ' : '') . ($cleanConsecutivo !== '' ? ($cleanConsecutivo . ' ') : '') . $cleanEquipmentName);
             $filename = $filenameBase . '.pdf';
 
             return response()->streamDownload(function() use ($pdf) {
@@ -588,6 +423,139 @@ class ReportController extends Controller
         } catch (\Exception $e) {
             return ApiResponse::error('Error al generar el PDF', 500, ['detail' => [$e->getMessage()]]);
         }
+    }
+
+    /**
+     * Prepara las variables que consumen las plantillas de PDF de un reporte
+     * (diagnóstico, recomendaciones, imágenes y parámetros de medición por componente).
+     */
+    public static function pdfViewData(Report $report): array
+    {
+        $diagnosis = [];
+        if ($report->diagnosis) {
+            $decoded = self::decodeJsonField($report->diagnosis);
+            if (is_array($decoded)) {
+                $componentsList = $report->equipment ? $report->equipment->components : collect();
+                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                if ($isNumericArray) {
+                    foreach ($decoded as $index => $data) {
+                        if ($componentsList->has($index)) {
+                            $componentId = (string) $componentsList->get($index)->id;
+                            if (is_array($data) && isset($data['text'])) {
+                                $diagnosis[$componentId] = utf8_sanitize($data['text']);
+                            } elseif (is_string($data)) {
+                                $diagnosis[$componentId] = utf8_sanitize($data);
+                            }
+                        }
+                    }
+                } else {
+                    foreach ($decoded as $componentId => $data) {
+                        $componentId = (string) $componentId;
+                        if (is_array($data) && isset($data['text'])) {
+                            $diagnosis[$componentId] = utf8_sanitize($data['text'] ?? '');
+                        } elseif (is_string($data)) {
+                            $diagnosis[$componentId] = utf8_sanitize($data);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Recomendaciones con claves normalizadas a string
+        $recommendations = [];
+        if ($report->recommendations) {
+            $decoded = self::decodeJsonField($report->recommendations);
+            if (is_array($decoded)) {
+                $componentsList = $report->equipment ? $report->equipment->components : collect();
+                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                if ($isNumericArray) {
+                    foreach ($decoded as $index => $data) {
+                        if ($componentsList->has($index)) {
+                            $componentId = (string) $componentsList->get($index)->id;
+                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
+                        }
+                    }
+                } else {
+                    foreach ($decoded as $componentId => $data) {
+                        $componentId = (string) $componentId;
+                        $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
+                    }
+                }
+            }
+        }
+
+        // Imágenes: tabla report_images con tipo y pie de foto.
+        // Fallback al JSON histórico para informes que aún no fueron migrados.
+        $componentImages = [];
+
+        $images = $report->relationLoaded('images') ? $report->images : $report->images()->get();
+        foreach ($images as $image) {
+            $base64 = self::imageToBase64ForPdf($image->path);
+            if ($base64 === '') {
+                continue;
+            }
+
+            $componentImages[(string) $image->component_id][] = [
+                'url' => $base64,
+                'kind' => $image->kind_label,
+                'caption' => utf8_sanitize((string) ($image->caption ?? '')),
+            ];
+        }
+
+        if (empty($componentImages) && $report->diagnosis) {
+            $decoded = self::decodeJsonField($report->diagnosis);
+            if (is_array($decoded)) {
+                $componentsList = $report->equipment ? $report->equipment->components : collect();
+                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
+                foreach ($decoded as $index => $data) {
+                    if (!is_array($data) || empty($data['images'])) {
+                        continue;
+                    }
+
+                    $componentId = $isNumericArray
+                        ? ($componentsList->has($index) ? (string) $componentsList->get($index)->id : null)
+                        : (string) $index;
+
+                    if ($componentId === null) {
+                        continue;
+                    }
+
+                    $componentImages[$componentId] = array_values(array_filter(array_map(function ($path) {
+                        return self::imageToBase64ForPdf($path);
+                    }, $data['images'])));
+                }
+            }
+        }
+
+        $equipmentImage = null;
+        if ($report->equipment && !empty($report->equipment->image)) {
+            $equipmentImage = self::imageToBase64ForPdf($report->equipment->image);
+        }
+
+        // Parámetros capturados en cada medición, agrupados por componente y ordenados
+        $measurementValues = [];
+        foreach ($report->measurementValues as $value) {
+            $measurementValues[(string) $value->component_id][] = [
+                'name' => $value->field_name ?? $value->field->name ?? '',
+                'unit' => $value->field_unit ?? $value->field->unit ?? '',
+                'value' => $value->value,
+                'display_order' => (int) ($value->field_order ?? $value->field->display_order ?? 0),
+            ];
+        }
+        foreach ($measurementValues as $componentId => $values) {
+            usort($values, fn ($a, $b) => $a['display_order'] <=> $b['display_order']);
+            $measurementValues[$componentId] = $values;
+        }
+
+        return [
+            'reportData' => $report,
+            'components' => $report->equipment->components ?? collect(),
+            'diagnosis' => $diagnosis,
+            'recommendations' => $recommendations,
+            'componentImages' => $componentImages,
+            'equipmentImage' => $equipmentImage,
+            'measurementValues' => $measurementValues,
+        ];
     }
 
     public function export(Request $request)
@@ -610,6 +578,12 @@ class ReportController extends Controller
             'componentFail',
             'analist'
         ])->whereNull('deleted_at');
+
+        $reportType = $request->get('report_type', 'vibration');
+        if (!is_string($reportType) || !in_array($reportType, ['vibration', 'thermography'], true)) {
+            $reportType = 'vibration';
+        }
+        $query->where('report_type', $reportType);
 
         if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
             $query->whereHas('equipment', function ($q) {
@@ -1244,5 +1218,257 @@ class ReportController extends Controller
         $fullPath = Storage::disk('public')->path($path);
         $mime = @mime_content_type($fullPath) ?: 'image/jpeg';
         return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
+    }
+
+    /**
+     * Valida y guarda las imágenes de cada componente.
+     * El mapeo llega en "component_images_structure" => {componentId: [inputName, ...]}.
+     */
+    /**
+     * Sube los archivos enviados para cada componente.
+     *
+     * Estructura aceptada (clave => lista): la lista puede traer strings
+     * ("component_images_12_0") o mapas { key, kind, caption }.
+     *
+     * @return array<int, array<int, array{path: string, kind: string, caption: ?string}>>
+     */
+    private static function storeComponentImages(Request $request, ?int $equipmentId = null): array
+    {
+        if (!$request->has('component_images_structure')) {
+            return [];
+        }
+
+        $structure = json_decode((string) $request->input('component_images_structure'), true);
+        if (!is_array($structure)) {
+            return [];
+        }
+
+        $validComponentIds = $equipmentId !== null
+            ? Component::where('equipment_id', $equipmentId)->pluck('id')->map(fn ($id) => (int) $id)->all()
+            : null;
+
+        $maxBytes = 10 * 1024 * 1024;
+        $allowedMimes = ['image/jpeg', 'image/png'];
+
+        $pending = [];
+        $errors = [];
+
+        foreach ($structure as $componentId => $items) {
+            if ($validComponentIds !== null && !in_array((int) $componentId, $validComponentIds, true)) {
+                continue;
+            }
+            foreach ((array) $items as $item) {
+                $key = is_array($item) ? ($item['key'] ?? null) : $item;
+                if (!is_string($key) || !$request->hasFile($key)) {
+                    continue;
+                }
+
+                $file = $request->file($key);
+
+                if (!$file || !$file->isValid()) {
+                    $errors[$key] = 'No se pudo subir la imagen.';
+                    continue;
+                }
+
+                if ($file->getSize() > $maxBytes) {
+                    $errors[$key] = 'La imagen supera el tamaño máximo de 10 MB.';
+                    continue;
+                }
+
+                if (!in_array($file->getMimeType(), $allowedMimes, true)) {
+                    $errors[$key] = 'Formato no permitido. Usa JPG o PNG.';
+                    continue;
+                }
+
+                $kind = is_array($item) ? ($item['kind'] ?? null) : null;
+                $caption = is_array($item) ? ($item['caption'] ?? null) : null;
+
+                $pending[] = [
+                    (int) $componentId,
+                    $file,
+                    in_array($kind, [ReportImage::KIND_THERMAL, ReportImage::KIND_VISUAL], true) ? $kind : ReportImage::KIND_THERMAL,
+                    is_string($caption) ? mb_substr(trim($caption), 0, 255) : null,
+                ];
+            }
+        }
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        $componentImages = [];
+        foreach ($pending as [$componentId, $file, $kind, $caption]) {
+            $componentImages[$componentId][] = [
+                'path' => $file->store('images', 'public'),
+                'kind' => $kind,
+                'caption' => $caption !== '' ? $caption : null,
+            ];
+        }
+
+        return $componentImages;
+    }
+
+    /**
+     * Sincroniza la tabla report_images: elimina las marcadas y crea las nuevas.
+     *
+     * @param  array<int, array<int, array{path: string, kind: string, caption: ?string}>>  $uploads
+     */
+    private static function syncImages(Report $report, Request $request, array $uploads): void
+    {
+        if ($request->has('images_to_delete')) {
+            $toDelete = json_decode((string) $request->input('images_to_delete'), true);
+
+            if (is_array($toDelete)) {
+                $ids = [];
+
+                foreach ($toDelete as $values) {
+                    foreach ((array) $values as $value) {
+                        if (is_numeric($value)) {
+                            $ids[] = (int) $value;
+                            continue;
+                        }
+
+                        if (is_string($value) && trim($value) !== '') {
+                            $path = self::normalizeImagePath($value);
+                            $ids = array_merge(
+                                $ids,
+                                $report->images()->where('path', $path)->pluck('id')->all()
+                            );
+                        }
+                    }
+                }
+
+                if (!empty($ids)) {
+                    foreach ($report->images()->whereIn('id', array_unique($ids))->get() as $image) {
+                        if (preg_match('#^https?://#', (string) $image->path) !== 1
+                            && Storage::disk('public')->exists($image->path)) {
+                            Storage::disk('public')->delete($image->path);
+                        }
+
+                        $image->forceDelete();
+                    }
+                }
+            }
+        }
+
+        foreach ($uploads as $componentId => $items) {
+            $componentId = (int) $componentId;
+
+            // Solo componentes que pertenezcan al equipo del reporte
+            if (!Component::where('id', $componentId)->where('equipment_id', $report->equipment_id)->exists()) {
+                continue;
+            }
+
+            $order = (int) $report->images()->where('component_id', $componentId)->max('sort_order');
+
+            foreach ($items as $item) {
+                $report->images()->create([
+                    'component_id' => $componentId,
+                    'path' => $item['path'],
+                    'kind' => $item['kind'],
+                    'caption' => $item['caption'],
+                    'sort_order' => ++$order,
+                ]);
+            }
+        }
+    }
+
+    private static function normalizeImagePath(string $urlOrPath): string
+    {
+        $value = trim($urlOrPath);
+
+        if (str_starts_with($value, 'http') || str_starts_with($value, '//')) {
+            $value = preg_replace('#^https?://[^/]+/#', '', $value);
+            $value = preg_replace('#^storage/#', '', $value);
+        }
+
+        return ltrim((string) $value, '/');
+    }
+
+    /**
+     * El diagnóstico guarda solo texto; las imágenes viven en report_images.
+     */
+    private static function stripImagesFromDiagnosis($diagnosis): array
+    {
+        if (is_string($diagnosis)) {
+            $diagnosis = json_decode($diagnosis, true);
+        }
+
+        if (!is_array($diagnosis)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($diagnosis as $componentId => $data) {
+            $result[(string) $componentId] = is_array($data)
+                ? ['text' => (string) ($data['text'] ?? '')]
+                : (string) $data;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Guarda los valores de medición por componente (campos con scope = measurement).
+     * Solo se persisten campos que pertenezcan al tipo de componente del componente.
+     */
+    private static function syncMeasurementValues(Report $report, Request $request): void
+    {
+        if (!$request->has('measurement_values')) {
+            return;
+        }
+
+        $payload = $request->input('measurement_values');
+        if (!is_array($payload)) {
+            $payload = json_decode((string) $payload, true) ?: [];
+        }
+
+        $report->measurementValues()->forceDelete();
+
+        if (empty($payload)) {
+            return;
+        }
+
+        $components = Component::where('equipment_id', $report->equipment_id)
+            ->get(['id', 'component_type_id'])
+            ->keyBy('id');
+
+        if ($components->isEmpty()) {
+            return;
+        }
+
+        $measurementFields = ComponentTypeField::measurement()
+            ->whereIn('component_type_id', $components->pluck('component_type_id')->unique()->all())
+            ->get(['id', 'component_type_id', 'name', 'unit', 'display_order'])
+            ->groupBy('component_type_id');
+
+        foreach ($payload as $componentId => $fieldValues) {
+            $component = $components->get((int) $componentId);
+            if (!$component || !is_array($fieldValues)) {
+                continue;
+            }
+
+            $allowedFields = ($measurementFields->get($component->component_type_id) ?? collect())->keyBy('id');
+
+            foreach ($fieldValues as $fieldId => $value) {
+                $field = $allowedFields->get((int) $fieldId);
+                if (!$field) {
+                    continue;
+                }
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                $report->measurementValues()->create([
+                    'component_id' => $component->id,
+                    'component_type_field_id' => (int) $fieldId,
+                    'field_name' => $field->name,
+                    'field_unit' => $field->unit,
+                    'field_order' => $field->display_order,
+                    'value' => is_scalar($value) ? (string) $value : json_encode($value),
+                    'status' => 'active',
+                ]);
+            }
+        }
     }
 }

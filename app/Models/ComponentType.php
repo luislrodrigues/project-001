@@ -16,6 +16,7 @@ class ComponentType extends Model
     Protected $fillable = [
         'id',
         'name',
+        'report_type',
         'status',
     ];
 

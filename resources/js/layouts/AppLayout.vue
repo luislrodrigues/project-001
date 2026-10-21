@@ -305,8 +305,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useReportTypesStore } from '../stores/reportTypes';
 
 const authStore = useAuthStore();
+const reportTypesStore = useReportTypesStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -329,6 +331,7 @@ watch(() => route.path, () => {
 });
 
 onMounted(() => {
+    reportTypesStore.load();
     onResize();
     window.addEventListener('resize', onResize);
 });
@@ -346,15 +349,22 @@ const currentYear = computed(() => new Date().getFullYear());
 const pageTitles = {
     dashboard: 'Dashboard',
     reports: 'Informes',
+    'reports.vibration': 'Reportes de Vibraciones',
+    'reports.thermography': 'Reportes de Termografía',
     'reports.create': 'Crear Reporte',
     'reports.edit': 'Editar Reporte',
     'reports.show': 'Detalle del Reporte',
+    'report-groups': 'Informes de inspección',
     equipment: 'Equipos',
+    'equipment.vibration': 'Equipos (Vibraciones)',
+    'equipment.thermography': 'Equipos (Termografía)',
     'equipment.create': 'Crear Equipo',
     'equipment.edit': 'Editar Equipo',
     'equipment.show': 'Detalle del Equipo',
     components: 'Componentes',
     'component-types': 'Tipos de Componentes',
+    'component-types.vibration': 'Tipos de Componentes (Vibraciones)',
+    'component-types.thermography': 'Tipos de Componentes (Termografía)',
     'component-types.create': 'Crear Tipo de Componente',
     'component-types.edit': 'Editar Tipo de Componente',
     'component-types.show': 'Detalles del Tipo de Componente',
@@ -377,15 +387,22 @@ const pageTitles = {
 const pageDescriptions = {
     dashboard: 'Panel principal del sistema',
     reports: 'Gestiona y visualiza los informes del sistema',
+    'reports.vibration': 'Gestiona y visualiza los reportes de vibraciones',
+    'reports.thermography': 'Listado de informes térmicos',
     'reports.create': 'Completa el formulario para crear un nuevo reporte',
     'reports.edit': 'Modifica la información del reporte',
     'reports.show': 'Información completa del reporte',
+    'report-groups': 'Agrupa varios puntos en un solo documento con portada, índice y firmas',
     equipment: 'Gestiona el inventario de equipos',
+    'equipment.vibration': 'Gestiona los equipos para vibraciones',
+    'equipment.thermography': 'Gestiona los equipos para termografía',
     'equipment.create': 'Completa el formulario para registrar un nuevo equipo',
     'equipment.edit': 'Modifica la información del equipo',
     'equipment.show': 'Información completa del equipo',
     components: 'Gestiona los componentes del sistema',
     'component-types': 'Gestiona los tipos de componentes del sistema',
+    'component-types.vibration': 'Gestiona los tipos de componente para vibraciones',
+    'component-types.thermography': 'Gestiona los tipos de componente para termografía',
     'component-types.create': 'Completa el formulario para crear un nuevo tipo de componente',
     'component-types.edit': 'Modifica la información del tipo de componente',
     'component-types.show': 'Información completa del tipo de componente',
@@ -405,12 +422,42 @@ const pageDescriptions = {
     'not-found': 'La ruta solicitada no existe',
 };
 
+// Título y descripción de los tipos que no estén en los mapas de arriba,
+// para que un tipo nuevo no necesite tocar este archivo.
+const typeSectionMeta = {
+    reports: {
+        title: (name) => `Reportes de ${name}`,
+        description: (name) => `Gestiona y visualiza los informes de ${name.toLowerCase()}`,
+    },
+    equipment: {
+        title: (name) => `Equipos (${name})`,
+        description: (name) => `Gestiona los equipos para ${name.toLowerCase()}`,
+    },
+    'component-types': {
+        title: (name) => `Tipos de Componentes (${name})`,
+        description: (name) => `Gestiona los tipos de componente para ${name.toLowerCase()}`,
+    },
+};
+
+const dynamicTypePage = (routeName) => {
+    const [section, code] = String(routeName || '').split('.');
+    const meta = typeSectionMeta[section];
+    if (!meta || !code) return null;
+
+    const type = reportTypesStore.types.find((item) => item.code === code);
+    if (!type) return null;
+
+    return { title: meta.title(type.name), description: meta.description(type.name) };
+};
+
 const pageTitle = computed(() => {
-    return pageTitles[route.name] || route.name;
+    if (pageTitles[route.name]) return pageTitles[route.name];
+    return dynamicTypePage(route.name)?.title ?? route.name;
 });
 
 const pageDescription = computed(() => {
-    return pageDescriptions[route.name] || '';
+    if (pageDescriptions[route.name]) return pageDescriptions[route.name];
+    return dynamicTypePage(route.name)?.description ?? '';
 });
 
 const isActive = (routeName) => {
@@ -418,13 +465,15 @@ const isActive = (routeName) => {
         return route.name === 'components' || route.name === 'components.create' || route.name === 'components.edit' || route.name === 'components.show';
     }
     if (routeName === 'equipment') {
-        return route.name === 'equipment' || route.name === 'equipment.create' || route.name === 'equipment.edit' || route.name === 'equipment.show';
+        return route.name === routeName || String(route.name || '').startsWith('equipment.');
     }
     if (routeName === 'companies') {
         return route.name === 'companies' || route.name === 'companies.create' || route.name === 'companies.edit' || route.name === 'companies.show';
     }
     if (routeName === 'reports') {
-        return route.name === 'reports' || route.name === 'reports.create' || route.name === 'reports.edit' || route.name === 'reports.show';
+        return route.name === routeName
+            || route.name === 'report-groups'
+            || String(route.name || '').startsWith('reports.');
     }
     if (routeName === 'users') {
         return route.name === 'users' || route.name === 'users.create' || route.name === 'users.edit' || route.name === 'users.show';
@@ -433,7 +482,7 @@ const isActive = (routeName) => {
         return route.name === 'roles' || route.name === 'roles.create' || route.name === 'roles.edit';
     }
     if (routeName === 'component-types') {
-        return route.name === 'component-types' || route.name === 'component-types.create' || route.name === 'component-types.edit' || route.name === 'component-types.show';
+        return route.name === routeName || String(route.name || '').startsWith('component-types.');
     }
     if (routeName === 'indicators') {
         return route.name === 'indicators';

@@ -40,4 +40,13 @@ class Handler extends ExceptionHandler
             $exception->getMessage()
         );
     }
+
+    /**
+     * Las rutas de API siempre responden JSON: sin esto, un request sin "Accept: application/json"
+     * intenta redirigir a la ruta "login", que en esta SPA no existe, y termina en un error 500.
+     */
+    protected function shouldReturnJson($request, Throwable $e)
+    {
+        return $request->is('api/*') || parent::shouldReturnJson($request, $e);
+    }
 }

@@ -18,6 +18,7 @@ class ComponentTypeField extends Model
         'name',
         'slug',
         'type', 
+        'scope',
         'options', // Mantener por compatibilidad, se deprecará
         'unit',
         'display_order',
@@ -87,6 +88,42 @@ class ComponentTypeField extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('display_order', 'asc');
+    }
+
+    /**
+     * Campos que se capturan en cada medición (reporte) en lugar de en el componente.
+     */
+    public function scopeMeasurement($query)
+    {
+        return $query->where('scope', 'measurement');
+    }
+
+    /**
+     * Definiciones de campos listas para la API (incluye ámbito y opciones).
+     */
+    public static function definitions($fields): array
+    {
+        return collect($fields)
+            ->filter(fn ($field) => ($field->status ?? 'active') === 'active')
+            ->sortBy('display_order')
+            ->values()
+            ->map(fn ($field) => [
+                'id' => $field->id,
+                'name' => $field->name,
+                'type' => $field->type,
+                'unit' => $field->unit,
+                'scope' => $field->scope ?? 'component',
+                'is_required' => (bool) $field->is_required,
+                'display_order' => (int) $field->display_order,
+                'options' => $field->relationLoaded('allOptions')
+                    ? $field->allOptions->map(fn ($option) => [
+                        'id' => $option->id,
+                        'label' => $option->label,
+                        'value' => $option->value,
+                    ])->values()->all()
+                    : [],
+            ])
+            ->all();
     }
 
     /**

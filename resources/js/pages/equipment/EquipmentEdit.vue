@@ -46,7 +46,7 @@
                         <p class="text-gray-500 text-sm mt-1">Modifica la información del equipo</p>
                     </div>
                     <router-link
-                        :to="{ name: 'equipment' }"
+                        :to="{ name: backRouteName }"
                         class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Volver"
                     >
@@ -388,7 +388,7 @@
                     <!-- Footer -->
                     <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <router-link
-                            :to="{ name: 'equipment' }"
+                            :to="{ name: backRouteName }"
                             class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
                         >
                             Cancelar
@@ -447,7 +447,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
@@ -459,7 +459,10 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+const normalizeReportType = (v) => (v === 'thermography' ? 'thermography' : 'vibration');
+
 const form = reactive({
+    report_type: normalizeReportType(route.query.report_type),
     name: '',
     equipment_type_id: '',
     process_id: '',
@@ -470,6 +473,9 @@ const form = reactive({
     company_id: '',
     components: [],
 });
+
+const reportTypeResolved = computed(() => normalizeReportType(form.report_type ?? route.query.report_type));
+const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'equipment.thermography' : 'equipment.vibration'));
 
 const equipmentTypes = ref([]);
 const processes = ref([]);
@@ -511,7 +517,7 @@ const loadCatalogs = async () => {
             api.get('/catalogs/processes'),
             api.get('/catalogs/ubications'),
             api.get('/catalogs/companies'),
-            api.get('/catalogs/component-types'),
+            api.get('/catalogs/component-types', { params: { report_type: reportTypeResolved.value } }),
             api.get('/catalogs/brands'),
         ]);
 
@@ -531,6 +537,7 @@ const loadEquipment = async () => {
         const response = await api.get(`/equipment/${route.params.id}`);
         const equipment = response.data?.data ?? response.data;
 
+        form.report_type = normalizeReportType(equipment.report_type ?? route.query.report_type);
         form.name = equipment.name ?? '';
         form.equipment_type_id = equipment.equipment_type_id ?? (equipment.equipment_type?.id ?? '');
         form.process_id = equipment.process_id ?? (equipment.process?.id ?? '');
@@ -556,7 +563,7 @@ const loadEquipment = async () => {
         }
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el equipo', 'error');
-        router.push({ name: 'equipment' });
+        router.push({ name: backRouteName.value });
     }
 };
 
@@ -695,6 +702,7 @@ const updateEquipment = async () => {
         formData.append('process_id', form.process_id);
         formData.append('ubication_id', form.ubication_id);
         formData.append('equipment_type_id', form.equipment_type_id);
+        formData.append('report_type', form.report_type);
         if (imageFile.value) {
             formData.append('image', imageFile.value);
         }
@@ -711,7 +719,7 @@ const updateEquipment = async () => {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
         Swal.fire('Éxito', 'Equipo actualizado correctamente', 'success');
-        router.push({ name: 'equipment' });
+        router.push({ name: backRouteName.value });
     } catch (error) {
         if (error.response?.status === 422 && error.response?.data?.errors) {
             const e = error.response.data.errors;

@@ -14,10 +14,12 @@ class StoreComponentTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'report_type' => ['nullable', 'string', 'in:vibration,thermography'],
             'name' => ['required', 'string', 'max:255'],
             'fields' => ['required', 'array', 'min:1'],
             'fields.*.name' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', 'string', 'in:text,number,numeric,textarea,select,multiselect,date,datetime,boolean'],
+            'fields.*.scope' => ['nullable', 'string', 'in:component,measurement'],
             'fields.*.unit' => ['nullable', 'string', 'max:50'],
             'fields.*.is_required' => ['nullable', 'boolean'],
             'fields.*.options' => ['nullable', 'array'],

@@ -12,6 +12,7 @@ class ComponentTypeResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'report_type' => $this->report_type ?? 'vibration',
             'status' => $this->status,
             'fields' => ComponentTypeFieldResource::collection($this->whenLoaded('componentTypeFields')),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),

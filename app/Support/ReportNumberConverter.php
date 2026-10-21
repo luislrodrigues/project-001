@@ -20,6 +20,13 @@ class ReportNumberConverter
         return 'No. ' . static::$prefix . '-' . $numeric;
     }
 
+    public static function fromIdForReportType(int $id, ?string $reportType = null): string
+    {
+        $prefix = static::prefixForReportType($reportType);
+        $numeric = str_pad((string) $id, static::$padding, '0', STR_PAD_LEFT);
+        return 'No. ' . $prefix . '-' . $numeric;
+    }
+
     /**
      * Optional: include year in nomenclatura.
      * Example: id 1, year 2026 => "No: SS-2026-0001"
@@ -72,5 +79,14 @@ class ReportNumberConverter
         }
         $id = (int) $value;
         return $id >= 0 ? $id : null;
+    }
+
+    private static function prefixForReportType(?string $reportType): string
+    {
+        $reportType = is_string($reportType) ? strtolower(trim($reportType)) : '';
+        if ($reportType === 'thermography') {
+            return 'TH';
+        }
+        return static::$prefix;
     }
 }

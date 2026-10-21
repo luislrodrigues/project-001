@@ -40,15 +40,15 @@
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h2 class="text-3xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-cog text-blue-600 mr-3"></i>
-                            Detalle del Equipo
+                            <i :class="titleIconClass" class="fas mr-3"></i>
+                            {{ titleText }}
                         </h2>
-                        <p class="text-gray-500 text-sm mt-1">Información completa del equipo</p>
+                        <p class="text-gray-500 text-sm mt-1">{{ subtitleText }}</p>
                     </div>
                     <div class="flex items-center space-x-3">
                         <router-link
                             v-if="authStore.hasPermission('save report')"
-                            :to="{ name: 'reports.create', query: { equipment_id: equipment.id } }"
+                            :to="{ name: 'reports.create', query: { equipment_id: equipment.id, report_type: reportTypeResolved } }"
                             class="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                         >
                             <i class="fas fa-file-alt mr-2"></i>
@@ -56,14 +56,14 @@
                         </router-link>
                         <router-link
                             v-if="authStore.hasPermission('edit equipment')"
-                            :to="{ name: 'equipment.edit', params: { id: equipment.id } }"
+                            :to="{ name: 'equipment.edit', params: { id: equipment.id }, query: { report_type: reportTypeResolved } }"
                             class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                         >
                             <i class="fas fa-edit mr-2"></i>
                             Editar
                         </router-link>
                         <router-link
-                            :to="{ name: 'equipment' }"
+                            :to="{ name: backRouteName }"
                             class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Volver"
                         >
@@ -223,7 +223,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
@@ -237,6 +237,13 @@ const equipment = ref(null);
 const loading = ref(true);
 const imageModalUrl = ref(null);
 
+const normalizeReportType = (v) => (v === 'thermography' ? 'thermography' : 'vibration');
+const reportTypeResolved = computed(() => normalizeReportType(equipment.value?.report_type ?? route.query.report_type));
+const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'equipment.thermography' : 'equipment.vibration'));
+const titleText = computed(() => (reportTypeResolved.value === 'thermography' ? 'Detalle del Equipo (Termografía)' : 'Detalle del Equipo (Vibraciones)'));
+const subtitleText = computed(() => (reportTypeResolved.value === 'thermography' ? 'Información completa del equipo de termografía' : 'Información completa del equipo de vibraciones'));
+const titleIconClass = computed(() => (reportTypeResolved.value === 'thermography' ? 'fa-thermometer-half text-rose-600' : 'fa-wave-square text-blue-600'));
+
 const openImageModal = (url) => {
     imageModalUrl.value = url;
 };
@@ -247,7 +254,7 @@ const closeImageModal = () => {
 
 onMounted(async () => {
     if (!authStore.hasPermission('detalle equipment')) {
-        router.push({ name: 'equipment' });
+        router.push({ name: backRouteName.value });
         return;
     }
     await loadEquipment();
@@ -260,7 +267,7 @@ const loadEquipment = async () => {
         equipment.value = response.data.data;
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el equipo', 'error');
-        router.push({ name: 'equipment' });
+        router.push({ name: backRouteName.value });
     } finally {
         loading.value = false;
     }

@@ -21,6 +21,7 @@ class Equipment extends Model
         'process_id',
         'ubication_id',
         'equipment_type_id',
+        'report_type',
         'name',
         'code',
         'tag',

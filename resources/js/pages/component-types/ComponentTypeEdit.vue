@@ -16,13 +16,13 @@
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h2 class="text-3xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-snowplow text-blue-600 mr-3"></i>
-                            Editar Tipo de Componente
+                            <i :class="titleIconClass" class="fas mr-3"></i>
+                            {{ titleText }}
                         </h2>
-                        <p class="text-gray-500 text-sm mt-1">Modifica la información del tipo de componente</p>
+                        <p class="text-gray-500 text-sm mt-1">{{ subtitleText }}</p>
                     </div>
                     <router-link
-                        :to="{ name: 'component-types' }"
+                        :to="{ name: backRouteName }"
                         class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Volver"
                     >
@@ -165,6 +165,24 @@
                                         </p>
                                     </div>
 
+                                    <!-- Ámbito: valor fijo del componente o capturado en cada medición -->
+                                    <div>
+                                        <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                            <i class="fas fa-layer-group mr-2 text-gray-500 text-xs"></i>
+                                            Ámbito
+                                        </label>
+                                        <Select2
+                                            v-model="field.scope"
+                                            :options="scopeOptions"
+                                            allLabel="Seleccione"
+                                            :search="false"
+                                            class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            {{ field.scope === 'measurement' ? 'Se captura en cada reporte' : 'Valor fijo del componente' }}
+                                        </p>
+                                    </div>
+
                                     <!-- Unidad (solo para tipo numeric) -->
                                     <div v-if="field.type === 'numeric'">
                                         <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -243,7 +261,7 @@
                     <!-- Footer -->
                     <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <router-link
-                            :to="{ name: 'component-types' }"
+                            :to="{ name: backRouteName }"
                             class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
                         >
                             Cancelar
@@ -271,7 +289,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
@@ -283,10 +301,19 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+const normalizeReportType = (v) => (v === 'thermography' ? 'thermography' : 'vibration');
+
 const form = reactive({
     name: '',
+    report_type: normalizeReportType(route.query.report_type),
     fields: []
 });
+
+const reportTypeResolved = computed(() => normalizeReportType(form.report_type ?? route.query.report_type));
+const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'component-types.thermography' : 'component-types.vibration'));
+const titleText = computed(() => (reportTypeResolved.value === 'thermography' ? 'Editar Tipo de Componente (Termografía)' : 'Editar Tipo de Componente (Vibraciones)'));
+const subtitleText = computed(() => (reportTypeResolved.value === 'thermography' ? 'Modifica la información del tipo de componente de termografía' : 'Modifica la información del tipo de componente de vibraciones'));
+const titleIconClass = computed(() => (reportTypeResolved.value === 'thermography' ? 'fa-thermometer-half text-rose-600' : 'fa-wave-square text-blue-600'));
 
 const loading = ref(true);
 const saving = ref(false);
@@ -317,10 +344,12 @@ const loadComponentType = async () => {
         const componentType = response.data.data;
 
         form.name = componentType.name;
+        form.report_type = normalizeReportType(componentType.report_type ?? route.query.report_type);
         form.fields = (componentType.fields || []).map(field => ({
             id: field.id,
             name: field.name,
             type: field.type,
+            scope: field.scope || 'component',
             unit: field.unit || '',
             is_required: field.is_required || false,
             options: (field.options || []).map(opt => ({
@@ -333,16 +362,22 @@ const loadComponentType = async () => {
         }));
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el tipo de componente', 'error');
-        router.push({ name: 'component-types' });
+        router.push({ name: backRouteName.value });
     } finally {
         loading.value = false;
     }
 };
 
+const scopeOptions = [
+    { id: 'component', name: 'En el componente' },
+    { id: 'measurement', name: 'En cada medición' },
+];
+
 const addField = () => {
     form.fields.push({
         name: '',
         type: '',
+        scope: 'component',
         unit: '',
         is_required: false,
         options: []
@@ -401,7 +436,7 @@ const updateComponentType = async () => {
     try {
         await api.post(`/component-types/${route.params.id}`, form);
         Swal.fire('Éxito', 'Tipo de componente actualizado correctamente', 'success');
-        router.push({ name: 'component-types' });
+        router.push({ name: backRouteName.value });
     } catch (error) {
         if (error.response?.status === 422 && error.response?.data?.errors) {
             const e = error.response.data.errors;

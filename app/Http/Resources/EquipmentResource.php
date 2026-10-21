@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\ComponentTypeField;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +17,7 @@ class EquipmentResource extends JsonResource
             'code' => $this->code,
             'tag' => $this->tag,
             'description' => $this->description,
+            'report_type' => $this->report_type ?? 'vibration',
             'image' => $image,
             'image_url' => !empty($image) ? asset('storage/' . ltrim($image, '/')) : null,
             'status' => $this->status,
@@ -57,6 +59,9 @@ class EquipmentResource extends JsonResource
                         'component_type' => [
                             'id' => $component->componentType->id ?? null,
                             'name' => $component->componentType->name ?? null,
+                            'fields' => ($component->componentType && $component->componentType->relationLoaded('componentTypeFields'))
+                                ? ComponentTypeField::definitions($component->componentType->componentTypeFields)
+                                : [],
                         ],
                         'brand' => [
                             'id' => $component->brand->id ?? null,

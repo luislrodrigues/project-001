@@ -6,13 +6,13 @@
                             <div class="flex items-center justify-between mb-4">
                     <div>
                         <h2 class="text-3xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-snowplow text-blue-600 mr-3"></i>
-                            Crear Nuevo Tipo de Componente
+                            <i :class="titleIconClass" class="fas mr-3"></i>
+                            {{ titleText }}
                         </h2>
-                        <p class="text-gray-500 text-sm mt-1">Completa el formulario para crear un nuevo tipo de componente</p>
+                        <p class="text-gray-500 text-sm mt-1">{{ subtitleText }}</p>
                     </div>
                     <router-link
-                        :to="{ name: 'component-types' }"
+                        :to="{ name: backRouteName }"
                         class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Volver"
                     >
@@ -155,6 +155,24 @@
                                         </p>
                                     </div>
 
+                                    <!-- Ámbito: valor fijo del componente o capturado en cada medición -->
+                                    <div>
+                                        <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                            <i class="fas fa-layer-group mr-2 text-gray-500 text-xs"></i>
+                                            Ámbito
+                                        </label>
+                                        <Select2
+                                            v-model="field.scope"
+                                            :options="scopeOptions"
+                                            allLabel="Seleccione"
+                                            :search="false"
+                                            class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            {{ field.scope === 'measurement' ? 'Se captura en cada reporte' : 'Valor fijo del componente' }}
+                                        </p>
+                                    </div>
+
                                     <!-- Unidad (solo para tipo numeric) -->
                                     <div v-if="field.type === 'numeric'">
                                         <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -233,7 +251,7 @@
                     <!-- Footer -->
                     <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <router-link
-                            :to="{ name: 'component-types' }"
+                            :to="{ name: backRouteName }"
                             class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
                         >
                             Cancelar
@@ -261,8 +279,8 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
@@ -270,10 +288,19 @@ import FieldOptionsManager from '../../components/FieldOptionsManager.vue';
 import Select2 from '../../components/Select2.vue';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
+
+const normalizeReportType = (v) => (v === 'thermography' ? 'thermography' : 'vibration');
+const reportType = computed(() => normalizeReportType(route.query.report_type));
+const backRouteName = computed(() => (reportType.value === 'thermography' ? 'component-types.thermography' : 'component-types.vibration'));
+const titleText = computed(() => (reportType.value === 'thermography' ? 'Crear Tipo de Componente (Termografía)' : 'Crear Tipo de Componente (Vibraciones)'));
+const subtitleText = computed(() => (reportType.value === 'thermography' ? 'Completa el formulario para crear un tipo de componente de termografía' : 'Completa el formulario para crear un tipo de componente de vibraciones'));
+const titleIconClass = computed(() => (reportType.value === 'thermography' ? 'fa-thermometer-half text-rose-600' : 'fa-wave-square text-blue-600'));
 
 const form = reactive({
     name: '',
+    report_type: reportType.value,
     fields: []
 });
 
@@ -294,10 +321,16 @@ const fieldTypeOptions = [
     { id: 'boolean', name: '✓ Sí/No' },
 ];
 
+const scopeOptions = [
+    { id: 'component', name: 'En el componente' },
+    { id: 'measurement', name: 'En cada medición' },
+];
+
 const addField = () => {
     form.fields.push({
         name: '',
         type: '',
+        scope: 'component',
         unit: '',
         is_required: false,
         options: []
@@ -356,7 +389,7 @@ const saveComponentType = async () => {
     try {
         await api.post('/component-types', form);
         Swal.fire('Éxito', 'Tipo de componente creado correctamente', 'success');
-        router.push({ name: 'component-types' });
+        router.push({ name: backRouteName.value });
     } catch (error) {
         if (error.response?.status === 422 && error.response?.data?.errors) {
             const e = error.response.data.errors;

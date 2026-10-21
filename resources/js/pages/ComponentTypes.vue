@@ -16,19 +16,28 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                     <div class="mb-4 sm:mb-0">
                         <h2 class="text-xl sm:text-3xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-snowplow text-blue-600 mr-3"></i>
-                            Tipo de Componentes
+                            <i :class="titleIconClass" class="fas mr-3"></i>
+                            {{ titleText }}
                         </h2>
-                        <p class="text-gray-500 text-sm mt-1">Gestiona los tipos de componentes del sistema</p>
+                        <p class="text-gray-500 text-sm mt-1">{{ subtitleText }}</p>
                     </div>
-                    <router-link
-                        v-if="authStore.hasPermission('save equipment')"
-                        :to="{ name: 'component-types.create' }"
-                        class="flex items-center justify-center w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 shadow-sm font-medium"
-                    >
-                        <i class="fas fa-plus mr-2"></i>
-                        Crear Tipo de Componente
-                    </router-link>
+                    <div class="flex items-center justify-end gap-2 w-full sm:w-auto">
+                        <router-link
+                            :to="{ name: 'component-types' }"
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                            title="Volver"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </router-link>
+                        <router-link
+                            v-if="authStore.hasPermission('save equipment')"
+                            :to="{ name: 'component-types.create', query: { report_type: reportType } }"
+                            class="flex items-center justify-center flex-1 sm:flex-none px-5 py-3 sm:py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 shadow-sm font-medium"
+                        >
+                            <i class="fas fa-plus mr-2"></i>
+                            Crear Tipo de Componente
+                        </router-link>
+                    </div>
                 </div>
 
                 <!-- Search Section -->
@@ -127,7 +136,7 @@
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
                                             v-if="authStore.hasPermission('detalle component type')"
-                                            :to="{ name: 'component-types.show', params: { id: type.id } }"
+                                            :to="{ name: 'component-types.show', params: { id: type.id }, query: { report_type: reportType } }"
                                             class="inline-flex items-center px-3 py-2 bg-white border border-blue-100 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors duration-200"
                                             title="Ver detalles"
                                         >
@@ -136,7 +145,7 @@
                                         </router-link>
                                         <router-link
                                             v-if="authStore.hasPermission('edit component type')"
-                                            :to="{ name: 'component-types.edit', params: { id: type.id } }"
+                                            :to="{ name: 'component-types.edit', params: { id: type.id }, query: { report_type: reportType } }"
                                             class="inline-flex items-center px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors duration-200"
                                             title="Editar"
                                         >
@@ -172,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
@@ -180,11 +189,23 @@ import Swal from 'sweetalert2';
 import Pagination from '../components/Pagination.vue';
 import ClearableInput from '../components/ClearableInput.vue';
 
-const STORAGE_KEY = 'component-types-list-filters';
+const props = defineProps({
+    reportType: {
+        type: String,
+        default: 'vibration',
+    },
+});
+
+const reportType = computed(() => (props.reportType === 'thermography' ? 'thermography' : 'vibration'));
+const STORAGE_KEY = computed(() => `component-types-list-filters-${reportType.value}`);
 
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+
+const titleText = computed(() => (reportType.value === 'thermography' ? 'Tipos de Componentes (Termografía)' : 'Tipos de Componentes (Vibraciones)'));
+const subtitleText = computed(() => (reportType.value === 'thermography' ? 'Gestiona los tipos de componente para termografía' : 'Gestiona los tipos de componente para vibraciones'));
+const titleIconClass = computed(() => (reportType.value === 'thermography' ? 'fa-thermometer-half text-rose-600' : 'fa-wave-square text-blue-600'));
 
 const componentTypes = ref([]);
 const loading = ref(false);
@@ -197,9 +218,9 @@ const sortOrder = ref(normalizeSortOrder(route.query.sort_order ?? 'desc'));
 const syncQueryToUrl = (page = 1) => {
     const q = { page: String(page), sort_order: normalizeSortOrder(sortOrder.value), search: search.value };
     Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
-    router.replace({ name: 'component-types', query: q });
+    router.replace({ name: route.name, query: q });
     try {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
+        sessionStorage.setItem(STORAGE_KEY.value, JSON.stringify({ query: q }));
     } catch (_) {}
 };
 
@@ -210,7 +231,7 @@ const applyQueryToFilters = () => {
         sortOrder.value = route.query.sort_order ?? 'desc';
     } else {
         try {
-            const saved = sessionStorage.getItem(STORAGE_KEY);
+            const saved = sessionStorage.getItem(STORAGE_KEY.value);
             if (saved) {
                 const { query } = JSON.parse(saved);
                 if (query) {
@@ -237,6 +258,7 @@ const fetchComponentTypes = async (page = 1) => {
             per_page: 10,
             sort_by: sortBy.value,
             sort_order: normalizeSortOrder(sortOrder.value),
+            report_type: reportType.value,
         };
 
         if (search.value) {

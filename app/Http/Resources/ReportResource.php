@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\ComponentTypeField;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,6 +14,9 @@ class ReportResource extends JsonResource
             'id' => $this->id,
             'consecutivo' => $this->consecutivo,
             'equipment_id' => $this->equipment_id,
+            'report_group_id' => $this->report_group_id,
+            'report_type' => $this->report_type,
+            'measurement_values' => $this->relationLoaded('measurementValues') ? $this->measurementValuesList() : [],
             'equipment' => $this->equipment ? [
                 'id' => $this->equipment->id ?? null,
                 'name' => $this->equipment->name ?? null,
@@ -27,6 +31,9 @@ class ReportResource extends JsonResource
                 ] : null,
             ] : null,
             'measurement_date' => $this->measurement_date?->format('Y-m-d'),
+            'condition_check' => $this->conditionCheck(),
+            'condition_override_reason' => $this->condition_override_reason,
+            'images' => $this->imagesList(),
             'condition' => $this->condition ? [
                 'id' => $this->condition->id ?? null,
                 'name' => $this->condition->name ?? null,
@@ -57,9 +64,83 @@ class ReportResource extends JsonResource
             'general_recommendations' => $this->general_recommendations ?? [],
             'diagnosis' => $this->formatDiagnosis($this->diagnosis),
             'recommendations' => $this->formatRecommendations($this->recommendations),
-            'components' => $this->equipment ? ($this->equipment->components ?? []) : [],
+            'components' => $this->componentsForReport(),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    /**
+     * Componentes del equipo con las definiciones de su tipo de componente,
+     * necesarias para los parámetros que se capturan en cada medición.
+     */
+    private function componentsForReport(): array
+    {
+        if (!$this->equipment || !$this->equipment->components) {
+            return [];
+        }
+
+        return $this->equipment->components->map(function ($component) {
+            $data = $component->toArray();
+
+            $data['component_type'] = [
+                'id' => $component->componentType->id ?? null,
+                'name' => $component->componentType->name ?? null,
+                'fields' => ($component->componentType && $component->componentType->relationLoaded('componentTypeFields'))
+                    ? ComponentTypeField::definitions($component->componentType->componentTypeFields)
+                    : [],
+            ];
+
+            return $data;
+        })->values()->all();
+    }
+
+    /**
+     * Imágenes del reporte (tabla report_images), planas y ordenadas.
+     */
+    private function imagesList(): array
+    {
+        if (!$this->relationLoaded('images')) {
+            return [];
+        }
+
+        return $this->images->map(fn ($image) => [
+            'id' => $image->id,
+            'component_id' => $image->component_id,
+            'url' => $image->url,
+            'kind' => $image->kind,
+            'kind_label' => $image->kind_label,
+            'caption' => $image->caption,
+            'sort_order' => $image->sort_order,
+        ])->values()->all();
+    }
+
+    /**
+     * Cruce entre el ΔT medido y la condición declarada (solo termografía).
+     * Requiere que el llamador haya cargado condition + measurementValues.
+     */
+    private function conditionCheck(): ?array
+    {
+        if (($this->report_type ?? null) !== 'thermography'
+            || !$this->relationLoaded('measurementValues')
+            || !$this->relationLoaded('condition')) {
+            return null;
+        }
+
+        $evaluation = \App\Support\ThermographyClassifier::evaluate($this->resource);
+
+        if ($evaluation['classification'] === null) {
+            return null;
+        }
+
+        return [
+            'delta_t' => $evaluation['classification']['delta_t'],
+            'suggested_condition' => $evaluation['classification']['condition'],
+            'suggested_range' => $evaluation['classification']['range'],
+            'matches' => $evaluation['matches'],
+            'overridden' => $evaluation['overridden'],
+            'override_reason' => $evaluation['override_reason'],
+            'warning' => $evaluation['warning'],
         ];
     }
 

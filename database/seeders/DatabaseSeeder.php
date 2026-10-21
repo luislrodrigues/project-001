@@ -9,7 +9,7 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
-     * Solo roles, empresa (para usuarios) y usuarios.
+     * Solo roles, empresa (para usuarios), usuarios y tipos de reporte.
      */
     public function run(): void
     {
@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             CompanySeeder::class,
             UserSeeder::class,
+            ReportTypeSeeder::class,
         ]);
     }
 }

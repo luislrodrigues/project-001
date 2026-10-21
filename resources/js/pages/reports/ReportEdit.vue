@@ -49,7 +49,7 @@
                         <p class="text-gray-500 text-sm mt-1">Modifica la información del reporte</p>
                     </div>
                     <router-link
-                        :to="{ name: 'reports' }"
+                        :to="{ name: backRouteName }"
                         class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Volver"
                     >
@@ -202,6 +202,69 @@
                                     </h5>
                                 </div>
 
+                                <!-- Parámetros de la medición -->
+                                <div v-if="measurementFieldsFor(component).length" class="mb-4">
+                                    <label class="flex items-center mb-3 text-sm font-medium text-gray-700">
+                                        <i class="fas fa-thermometer-half mr-2 text-rose-600"></i>
+                                        Parámetros de la medición
+                                    </label>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div v-for="field in measurementFieldsFor(component)" :key="field.id">
+                                            <label class="block mb-1.5 text-xs font-medium text-gray-600">
+                                                {{ field.name }}<span v-if="field.unit" class="text-gray-400"> ({{ field.unit }})</span>
+                                                <span v-if="field.is_required" class="text-red-500 ml-0.5">*</span>
+                                            </label>
+
+                                            <select
+                                                v-if="field.type === 'select'"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            >
+                                                <option value="">Seleccione</option>
+                                                <option v-for="option in field.options" :key="option.id" :value="option.value">{{ option.label }}</option>
+                                            </select>
+
+                                            <textarea
+                                                v-else-if="field.type === 'textarea'"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                rows="2"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            ></textarea>
+
+                                            <label v-else-if="field.type === 'boolean'" class="flex items-center gap-2 text-sm text-gray-700">
+                                                <input
+                                                    type="checkbox"
+                                                    v-model="form.measurement_values[component.id][field.id]"
+                                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                Sí
+                                            </label>
+
+                                            <input
+                                                v-else-if="field.type === 'date' || field.type === 'datetime'"
+                                                :type="field.type === 'datetime' ? 'datetime-local' : 'date'"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            />
+
+                                            <input
+                                                v-else-if="field.type === 'numeric' || field.type === 'number'"
+                                                type="number"
+                                                step="any"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            />
+
+                                            <input
+                                                v-else
+                                                type="text"
+                                                v-model="form.measurement_values[component.id][field.id]"
+                                                class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2.5"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Diagnóstico -->
                                 <div class="mb-4">
                                     <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -238,19 +301,24 @@
                                     <!-- Imágenes existentes -->
                                     <div v-if="getComponentImages(component.id)?.length" class="mb-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                         <div
-                                            v-for="(imageUrl, imgIndex) in getComponentImages(component.id)"
-                                            :key="imgIndex"
+                                            v-for="(image, imgIndex) in getComponentImages(component.id)"
+                                            :key="image.id"
                                             class="relative group cursor-pointer"
-                                            @click="openImageModal(imageUrl)"
+                                            @click="openImageModal(image.url)"
                                         >
                                             <img
-                                                :src="imageUrl"
-                                                :alt="`Imagen ${imgIndex + 1}`"
+                                                :src="image.url"
+                                                :alt="image.caption || `Imagen ${imgIndex + 1}`"
                                                 class="w-full h-32 object-contain rounded-lg border-2 border-gray-200 hover:border-purple-500 transition-all bg-gray-100 pointer-events-none"
                                             />
+                                            <span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
+                                                :class="image.kind === 'visual' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'">
+                                                {{ image.kind === 'visual' ? 'Visual' : 'Térmica' }}
+                                            </span>
                                             <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 rounded-lg transition-all pointer-events-none">
                                                 <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 text-xl transition-opacity"></i>
                                             </div>
+                                            <p v-if="image.caption" class="text-xs text-gray-600 mt-1 truncate">{{ image.caption }}</p>
                                             <button
                                                 @click.stop="removeExistingImage(component.id, imgIndex)"
                                                 type="button"
@@ -280,9 +348,25 @@
                                                     <input
                                                         @change="handleComponentImageChange(component.id, imgIndex, $event)"
                                                         type="file"
-                                                        accept="image/*"
+                                                        accept="image/jpeg,image/png"
                                                         class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
                                                     />
+                                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                                                        <select
+                                                            v-model="imageObj.kind"
+                                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg px-3 py-2"
+                                                        >
+                                                            <option value="thermal">Térmica</option>
+                                                            <option value="visual">Visual</option>
+                                                        </select>
+                                                        <input
+                                                            v-model="imageObj.caption"
+                                                            type="text"
+                                                            maxlength="255"
+                                                            placeholder="Pie de foto (opcional)"
+                                                            class="sm:col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg px-3 py-2"
+                                                        />
+                                                    </div>
                                                     <div v-if="imageObj.preview" class="mt-2 cursor-pointer" @click="openImageModal(imageObj.preview)">
                                                         <img :src="imageObj.preview" alt="Preview" class="max-w-full h-32 object-contain rounded-lg border border-gray-200 pointer-events-none" />
                                                         <p class="text-xs text-gray-500 mt-1">Clic para ampliar</p>
@@ -387,6 +471,11 @@
                                     <button type="button" @click="showConditionModal = true" class="flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center" title="Gestionar condiciones"><i class="fas fa-cog text-sm"></i></button>
                                 </div>
                                 <p v-if="errors.condition_id" class="mt-1 text-sm text-red-600">{{ errors.condition_id }}</p>
+                                <p v-if="conditionWarning"
+                                    class="mt-2 text-xs rounded px-2 py-1 border"
+                                    :class="conditionWarning.type === 'info' ? 'text-sky-800 bg-sky-50 border-sky-300' : 'text-amber-800 bg-amber-50 border-amber-300'">
+                                    <i class="fas mr-1" :class="conditionWarning.type === 'info' ? 'fa-circle-info' : 'fa-triangle-exclamation'"></i>{{ conditionWarning.text }}
+                                </p>
                             </div>
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
@@ -512,7 +601,7 @@
                     <!-- Footer -->
                     <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <router-link
-                            :to="{ name: 'reports' }"
+                            :to="{ name: backRouteName }"
                             class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
                         >
                             <i class="fas fa-times mr-2"></i>
@@ -581,6 +670,17 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+const normalizeReportType = (v) => {
+    const s = (v ?? '').toString().trim().toLowerCase();
+    return s === 'thermography' ? 'thermography' : 'vibration';
+};
+
+const reportTypeResolved = computed(() => normalizeReportType(report.value?.report_type ?? route.query.report_type));
+const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'reports.thermography' : 'reports.vibration'));
+
+// Campos que se capturan en cada medición según el tipo del componente
+const measurementFieldsFor = (component) => (component.component_type?.fields || []).filter((field) => field.scope === 'measurement');
+
 const form = reactive({
     equipment_id: '',
     measurement_date: '',
@@ -595,7 +695,11 @@ const form = reactive({
     general_recommendations: [],
     diagnosis: {},
     recommendations: {},
+    condition_override_reason: '',
     component_images: {},
+    images: {},
+    imagesToDelete: {},
+    measurement_values: {},
 });
 
 const equipmentData = reactive({
@@ -624,11 +728,30 @@ const showComponentFailModal = ref(false);
 const report = ref(null);
 const imageModalUrl = ref(null);
 
+// Aviso cuando el ΔT medido no coincide con la condición declarada (ANSI/NETA)
+const conditionWarning = computed(() => {
+    const check = report.value?.condition_check;
+    if (!check) return null;
+
+    if (check.overridden) {
+        return {
+            type: 'info',
+            text: `Condición fuera de la norma para ΔT ${String(check.delta_t).replace('.', ',')} °C, justificada por el analista: ${check.override_reason}`
+        };
+    }
+
+    if (check.matches === false) {
+        return { type: 'warning', text: check.warning };
+    }
+
+    return null;
+});
+
 onMounted(async () => {
     loading.value = true;
     try {
-        await loadCatalogs();
         await loadReport();
+        await loadCatalogs();
     } finally {
         loading.value = false;
     }
@@ -637,7 +760,7 @@ onMounted(async () => {
 const loadCatalogs = async () => {
     try {
         const [equipmentsRes, companiesRes, conditionsRes, prioritiesRes, mechanismFailsRes, componentFailsRes, usersRes] = await Promise.all([
-            api.get('/catalogs/equipment'),
+            api.get('/catalogs/equipment', { params: { report_type: reportTypeResolved.value } }),
             api.get('/catalogs/companies'),
             api.get('/catalogs/conditions'),
             api.get('/catalogs/priorities'),
@@ -764,6 +887,7 @@ const loadReport = async () => {
         form.equipment_id = reportData.equipment_id;
         form.measurement_date = reportData.measurement_date;
         form.condition_id = reportData.condition?.id || '';
+        form.condition_override_reason = reportData.condition_override_reason || '';
         form.mechanism_fail_id = reportData.mechanism_fail?.id || '';
         form.component_fail_id = reportData.component_fail?.id || '';
         form.priority_id = reportData.priority?.id ?? reportData.priority_id ?? '';
@@ -858,6 +982,22 @@ const loadReport = async () => {
 
         form.component_images = {}; // Inicializar para nuevas imágenes
         form.imagesToDelete = {}; // Para marcar imágenes a eliminar
+        form.images = {}; // Imágenes ya guardadas (tabla report_images)
+        (reportData.images || []).forEach((image) => {
+            const componentId = String(image.component_id);
+            if (!form.images[componentId]) {
+                form.images[componentId] = [];
+            }
+            form.images[componentId].push({ ...image });
+        });
+        form.measurement_values = {}; // Valores de medición por componente
+        (reportData.measurement_values || []).forEach((item) => {
+            const componentId = String(item.component_id);
+            if (!form.measurement_values[componentId]) {
+                form.measurement_values[componentId] = {};
+            }
+            form.measurement_values[componentId][item.field_id] = item.value;
+        });
 
         // Si el reporte ya tiene componentes, usarlos; si no, cargar del equipo
         if (reportData.components && reportData.components.length > 0) {
@@ -877,6 +1017,9 @@ const loadReport = async () => {
                 if (form.component_images[componentId] === undefined) {
                     form.component_images[componentId] = [];
                 }
+                if (form.measurement_values[componentId] === undefined) {
+                    form.measurement_values[componentId] = {};
+                }
             });
         } else if (componentsList.length > 0) {
             // Si no hay componentes en reportData pero los tenemos de la lista, usarlos
@@ -895,6 +1038,9 @@ const loadReport = async () => {
                 if (form.component_images[componentId] === undefined) {
                     form.component_images[componentId] = [];
                 }
+                if (form.measurement_values[componentId] === undefined) {
+                    form.measurement_values[componentId] = {};
+                }
             });
         }
 
@@ -902,7 +1048,7 @@ const loadReport = async () => {
         await loadEquipmentData();
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el reporte', 'error');
-        router.push({ name: 'reports' });
+        router.push({ name: backRouteName.value });
     }
 };
 
@@ -972,12 +1118,7 @@ const updateDiagnosisText = (componentId, value) => {
 };
 
 const getComponentImages = (componentId) => {
-    const normalizedId = String(componentId);
-    const d = form.diagnosis[normalizedId];
-    if (typeof d === 'object' && d !== null && Array.isArray(d.images)) {
-        return d.images;
-    }
-    return [];
+    return form.images[String(componentId)] || [];
 };
 
 const addComponentImage = (componentId) => {
@@ -986,7 +1127,7 @@ const addComponentImage = (componentId) => {
     if (!form.component_images[normalizedId]) {
         form.component_images[normalizedId] = [];
     }
-    form.component_images[normalizedId].push({ file: null, preview: null });
+    form.component_images[normalizedId].push({ file: null, preview: null, kind: 'thermal', caption: '' });
 };
 
 const handleComponentImageChange = (componentId, imgIndex, event) => {
@@ -999,7 +1140,9 @@ const handleComponentImageChange = (componentId, imgIndex, event) => {
         }
         form.component_images[normalizedId][imgIndex] = {
             file: file,
-            preview: URL.createObjectURL(file)
+            preview: URL.createObjectURL(file),
+            kind: form.component_images[normalizedId][imgIndex]?.kind || 'thermal',
+            caption: form.component_images[normalizedId][imgIndex]?.caption || ''
         };
     }
 };
@@ -1017,19 +1160,15 @@ const removeComponentImage = (componentId, imgIndex) => {
 
 const removeExistingImage = (componentId, imgIndex) => {
     const normalizedId = String(componentId);
-    const d = form.diagnosis[normalizedId];
-    if (typeof d !== 'object' || !d || !Array.isArray(d.images)) return;
-    if (imgIndex < 0 || imgIndex >= d.images.length) return;
-    const urlToDelete = d.images[imgIndex];
-    // Marcar para que el backend borre el archivo
+    const list = form.images[normalizedId] || [];
+    const image = list[imgIndex];
+    if (!image) return;
+
     if (!form.imagesToDelete) form.imagesToDelete = {};
     if (!form.imagesToDelete[normalizedId]) form.imagesToDelete[normalizedId] = [];
-    form.imagesToDelete[normalizedId].push(urlToDelete);
-    // Quitar la imagen del diagnóstico para que el formulario y el envío sean correctos
-    form.diagnosis[normalizedId] = {
-        ...d,
-        images: d.images.filter((_, i) => i !== imgIndex)
-    };
+    form.imagesToDelete[normalizedId].push(image.id);
+
+    form.images[normalizedId] = list.filter((_, i) => i !== imgIndex);
 };
 
 const openImageModal = (url) => {
@@ -1115,7 +1254,7 @@ const updateReport = async () => {
                 if (Object.keys(cleaned.imagesToDelete).length > 0) {
                     formData.append('images_to_delete', JSON.stringify(cleaned.imagesToDelete));
                 }
-            } else if (key === 'diagnosis' || key === 'recommendations' || key === 'general_recommendations') {
+            } else if (key === 'diagnosis' || key === 'recommendations' || key === 'general_recommendations' || key === 'measurement_values') {
                 formData.append(key, JSON.stringify(cleaned[key]));
             } else if (cleaned[key] !== null && cleaned[key] !== '') {
                 formData.append(key, cleaned[key]);
@@ -1126,21 +1265,60 @@ const updateReport = async () => {
         const componentImagesStructure = {};
         Object.keys(cleaned.component_images).forEach(componentId => {
             componentImagesStructure[componentId] = cleaned.component_images[componentId]
-                .map((img, idx) => img.file ? `component_images_${componentId}_${idx}` : null)
+                .map((img, idx) => img.file
+                    ? {
+                        key: `component_images_${componentId}_${idx}`,
+                        kind: img.kind || 'thermal',
+                        caption: img.caption || ''
+                    }
+                    : null)
                 .filter(Boolean);
         });
         if (Object.keys(componentImagesStructure).length > 0) {
             formData.append('component_images_structure', JSON.stringify(componentImagesStructure));
         }
 
-        await api.post(`/reports/${route.params.id}`, formData, {
+        const response = await api.post(`/reports/${route.params.id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
 
-        Swal.fire('Éxito', 'Reporte actualizado correctamente', 'success');
-        router.push({ name: 'reports' });
+        const check = response.data?.data?.condition_check;
+        if (check && check.matches === false) {
+            const { value: reason, isConfirmed } = await Swal.fire({
+                icon: 'warning',
+                title: 'Condición fuera de norma',
+                html: `${check.warning}<br><br><span style="font-size:13px;color:#6b7280">Puedes dejar el reporte así, pero deja constancia del criterio del analista.</span>`,
+                input: 'textarea',
+                inputPlaceholder: 'Justificación (queda registrada en el informe)',
+                inputAttributes: { maxlength: 500 },
+                showCancelButton: true,
+                confirmButtonText: 'Guardar justificación',
+                cancelButtonText: 'Dejar pendiente',
+                confirmButtonColor: '#2563eb'
+            });
+
+            if (isConfirmed && reason && reason.trim() !== '') {
+                form.condition_override_reason = reason.trim();
+                const resend = new FormData();
+                for (const [key, value] of formData.entries()) {
+                    if (typeof value === 'string' && key !== 'component_images_structure' && !key.startsWith('component_images_')) {
+                        resend.append(key, value);
+                    }
+                }
+                resend.set('condition_override_reason', reason.trim());
+                await api.post(`/reports/${route.params.id}`, resend, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                Swal.fire('Éxito', 'Reporte actualizado con la justificación registrada', 'success');
+            } else {
+                Swal.fire('Guardado con observación', 'El reporte quedó guardado, pero sin justificación registrada.', 'warning');
+            }
+        } else {
+            Swal.fire('Éxito', 'Reporte actualizado correctamente', 'success');
+        }
+        router.push({ name: backRouteName.value });
     } catch (error) {
         if (error.response?.status === 422 && error.response?.data?.errors) {
             const e = error.response.data.errors;

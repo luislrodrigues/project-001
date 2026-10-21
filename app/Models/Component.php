@@ -36,7 +36,8 @@ class Component extends Model
      */
     public function fields()
     {
-        return $this->hasMany(ComponentTypeField::class, 'component_type_id', 'component_type_id');
+        return $this->hasMany(ComponentTypeField::class, 'component_type_id', 'component_type_id')
+            ->where('scope', 'component');
     }
 
     /**

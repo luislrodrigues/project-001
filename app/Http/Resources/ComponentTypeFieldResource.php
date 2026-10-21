@@ -13,6 +13,7 @@ class ComponentTypeFieldResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'type' => $this->type,
+            'scope' => $this->scope ?? 'component',
             'unit' => $this->unit,
             'is_required' => $this->is_required,
             'display_order' => $this->display_order,

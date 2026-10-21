@@ -71,12 +71,30 @@ class ApiResponse
 
     /**
      * Respuesta de error (4xx/5xx).
+     *
+     * Los detalles técnicos (mensaje de excepción, trace) solo se exponen en
+     * debug; en producción se registran en el log y se omite el detalle.
      */
     public static function error(
         string $message,
         int $status = 500,
         ?array $errors = null
     ): JsonResponse {
+        if (is_array($errors)) {
+            $sensitive = ['detail', 'details', 'exception', 'trace', 'file', 'line'];
+            $hasSensitive = count(array_intersect(array_keys($errors), $sensitive)) > 0;
+
+            if ($hasSensitive) {
+                if ($status >= 500) {
+                    \Log::error($message, ['errors' => $errors]);
+                }
+
+                if (!config('app.debug')) {
+                    $errors = array_diff_key($errors, array_flip($sensitive));
+                }
+            }
+        }
+
         $payload = [
             'success' => false,
             'message' => $message,

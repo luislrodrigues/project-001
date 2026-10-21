@@ -248,6 +248,7 @@ class ComponentController extends Controller
     {
         $fields = ComponentTypeField::with('options')
             ->where('component_type_id', $componentTypeId)
+            ->where('scope', 'component')
             ->ordered()
             ->get();
 

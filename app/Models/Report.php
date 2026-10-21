@@ -16,12 +16,14 @@ class Report extends Model
 
     protected $table = 'reports';
 
-    Protected $fillable = [
-        'id',
+    protected $fillable = [
         'equipment_id',
+        'report_group_id',
+        'report_type',
         'measurement_date',
         'diagnosis',
         'condition_id',
+        'condition_override_reason',
         'priority_id',
         'mechanism_fail_id',
         'component_fail_id',
@@ -46,6 +48,11 @@ class Report extends Model
     {
         return $this->belongsTo(Equipment::class);
     }
+
+    public function group()
+    {
+        return $this->belongsTo(ReportGroup::class, 'report_group_id');
+    }
     public function analist()
     {
         return $this->belongsTo(User::class);
@@ -69,11 +76,42 @@ class Report extends Model
         return $this->belongsTo(Priority::class);
     }
 
+    public function measurementValues()
+    {
+        return $this->hasMany(ReportComponentValue::class);
+    }
+
+    public function images()
+    {
+        return $this->hasMany(ReportImage::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /**
+     * Valores de medición como lista [{component_id, field_id, value}].
+     * No se usa un mapa con claves numéricas porque el pipeline de JsonResource
+     * las reindexa a un array plano al serializar.
+     */
+    public function measurementValuesList(): array
+    {
+        $values = $this->relationLoaded('measurementValues')
+            ? $this->measurementValues
+            : $this->measurementValues()->get();
+
+        return $values->map(fn ($value) => [
+            'component_id' => (int) $value->component_id,
+            'field_id' => (int) $value->component_type_field_id,
+            // El snapshot manda: refleja la etiqueta con la que se capturó el dato.
+            'name' => $value->field_name ?? $value->field->name ?? '',
+            'unit' => $value->field_unit ?? $value->field->unit ?? '',
+            'value' => $value->value,
+        ])->values()->all();
+    }
+
     /**
      * Consecutivo (nomenclatura) derived from id via ReportNumberConverter.
      */
     public function getConsecutivoAttribute(): string
     {
-        return ReportNumberConverter::fromId((int) $this->id);
+        return ReportNumberConverter::fromIdForReportType((int) $this->id, $this->report_type);
     }
 }

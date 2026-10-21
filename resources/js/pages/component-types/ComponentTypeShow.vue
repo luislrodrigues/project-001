@@ -12,7 +12,7 @@
 
         <div v-else-if="!componentType" class="py-10 text-center">
             <p class="text-gray-500">No se encontró la información solicitada.</p>
-            <router-link :to="{ name: 'component-types' }" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <router-link :to="{ name: backRouteName }" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Volver al listado
             </router-link>
@@ -24,22 +24,22 @@
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h2 class="text-3xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-snowplow text-blue-600 mr-3"></i>
-                            Detalles del Tipo de Componente
+                            <i :class="titleIconClass" class="fas mr-3"></i>
+                            {{ titleText }}
                         </h2>
-                        <p class="text-gray-500 text-sm mt-1">Información completa del tipo de componente</p>
+                        <p class="text-gray-500 text-sm mt-1">{{ subtitleText }}</p>
                     </div>
                     <div class="flex items-center space-x-2">
                         <router-link
                             v-if="authStore.hasPermission('edit component type')"
-                            :to="{ name: 'component-types.edit', params: { id: componentType.id } }"
+                            :to="{ name: 'component-types.edit', params: { id: componentType.id }, query: { report_type: reportTypeResolved } }"
                             class="text-yellow-600 hover:text-yellow-900 p-2 hover:bg-yellow-100 rounded-lg transition-colors"
                             title="Editar"
                         >
                             <i class="fas fa-edit text-xl"></i>
                         </router-link>
                         <router-link
-                            :to="{ name: 'component-types' }"
+                            :to="{ name: backRouteName }"
                             class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Volver"
                         >
@@ -196,6 +196,13 @@ const authStore = useAuthStore();
 const loading = ref(true);
 const componentType = ref(null);
 
+const normalizeReportType = (v) => (v === 'thermography' ? 'thermography' : 'vibration');
+const reportTypeResolved = computed(() => normalizeReportType(componentType.value?.report_type ?? route.query.report_type));
+const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'component-types.thermography' : 'component-types.vibration'));
+const titleText = computed(() => (reportTypeResolved.value === 'thermography' ? 'Detalles del Tipo de Componente (Termografía)' : 'Detalles del Tipo de Componente (Vibraciones)'));
+const subtitleText = computed(() => (reportTypeResolved.value === 'thermography' ? 'Información completa del tipo de componente de termografía' : 'Información completa del tipo de componente de vibraciones'));
+const titleIconClass = computed(() => (reportTypeResolved.value === 'thermography' ? 'fa-thermometer-half text-rose-600' : 'fa-wave-square text-blue-600'));
+
 const typeLabels = {
     text: 'Texto',
     numeric: 'Numérico',
@@ -240,7 +247,7 @@ const fetchComponentType = async () => {
         componentType.value = response.data.data;
     } catch (error) {
         Swal.fire('Error', 'No se pudo cargar el tipo de componente.', 'error');
-        router.push({ name: 'component-types' });
+        router.push({ name: backRouteName.value });
     } finally {
         loading.value = false;
     }
@@ -248,7 +255,7 @@ const fetchComponentType = async () => {
 
 onMounted(() => {
     if (!authStore.hasPermission('detalle component type')) {
-        router.push({ name: 'component-types' });
+        router.push({ name: backRouteName.value });
         return;
     }
     fetchComponentType();

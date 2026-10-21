@@ -33,6 +33,11 @@ class EquipmentController extends Controller
             $query->where('company_id', auth()->user()->company_id);
         }
 
+        $reportType = $request->get('report_type', 'vibration');
+        if (is_string($reportType) && in_array($reportType, ['vibration', 'thermography'], true)) {
+            $query->where('report_type', $reportType);
+        }
+
         if ($request->has('search') && !empty($request->search)) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
@@ -78,6 +83,7 @@ class EquipmentController extends Controller
                 'process_id' => $request->process_id,
                 'ubication_id' => $request->ubication_id,
                 'equipment_type_id' => $request->equipment_type_id,
+                'report_type' => $request->get('report_type', 'vibration'),
                 'status' => 'active',
             ];
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
@@ -153,6 +159,7 @@ class EquipmentController extends Controller
             'process',
             'ubication',
             'components.componentType',
+            'components.componentType.componentTypeFields.allOptions',
             'components.brand',
             'components.fieldValues.componentTypeField',
             'components.fieldValues.option',
@@ -173,6 +180,7 @@ class EquipmentController extends Controller
                 'process_id' => $request->process_id,
                 'ubication_id' => $request->ubication_id,
                 'equipment_type_id' => $request->equipment_type_id,
+                'report_type' => $request->get('report_type', $equipment->report_type ?? 'vibration'),
             ];
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 if ($equipment->image) {
@@ -274,6 +282,11 @@ class EquipmentController extends Controller
             $query->where('company_id', auth()->user()->company_id);
         }
 
+        $reportType = $request->get('report_type', 'vibration');
+        if (is_string($reportType) && in_array($reportType, ['vibration', 'thermography'], true)) {
+            $query->where('report_type', $reportType);
+        }
+
         $equipment = $query->orderBy('name')->get();
 
         return ApiResponse::success($equipment);
@@ -314,6 +327,12 @@ class EquipmentController extends Controller
         if (auth()->user()->hasRole('Cliente') && auth()->user()->company_id) {
             $query->where('company_id', auth()->user()->company_id);
         }
+
+        $reportType = $request->get('report_type', 'vibration');
+        if (is_string($reportType) && in_array($reportType, ['vibration', 'thermography'], true)) {
+            $query->where('report_type', $reportType);
+        }
+
         if ($request->has('search') && !empty($request->search)) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }

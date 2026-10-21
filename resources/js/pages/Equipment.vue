@@ -16,19 +16,28 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                     <div class="mb-4 sm:mb-0">
                         <h2 class="text-xl sm:text-3xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-cog text-blue-600 mr-3"></i>
-                            Equipos
+                            <i :class="titleIconClass" class="fas mr-3"></i>
+                            {{ titleText }}
                         </h2>
-                        <p class="text-gray-500 text-sm mt-1">Gestiona los equipos del sistema</p>
+                        <p class="text-gray-500 text-sm mt-1">{{ subtitleText }}</p>
                     </div>
-                    <router-link
-                        v-if="authStore.hasPermission('save equipment')"
-                        :to="{ name: 'equipment.create' }"
-                        class="flex items-center justify-center w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 shadow-sm font-medium"
-                    >
-                        <i class="fas fa-plus mr-2"></i>
-                        Crear Equipo
-                    </router-link>
+                    <div class="flex items-center justify-end gap-2 w-full sm:w-auto">
+                        <router-link
+                            :to="{ name: 'equipment' }"
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                            title="Volver"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </router-link>
+                        <router-link
+                            v-if="authStore.hasPermission('save equipment')"
+                            :to="{ name: 'equipment.create', query: { report_type: reportType } }"
+                            class="flex items-center justify-center flex-1 sm:flex-none px-5 py-3 sm:py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 shadow-sm font-medium"
+                        >
+                            <i class="fas fa-plus mr-2"></i>
+                            Crear Equipo
+                        </router-link>
+                    </div>
                 </div>
 
                 <!-- Search Section -->
@@ -209,7 +218,7 @@
                                     <div class="flex items-center justify-end space-x-2">
                                         <router-link
                                             v-if="authStore.hasPermission('detalle equipment')"
-                                            :to="{ name: 'equipment.show', params: { id: equipment.id } }"
+                                            :to="{ name: 'equipment.show', params: { id: equipment.id }, query: { report_type: reportType } }"
                                             class="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors"
                                             title="Ver detalles"
                                         >
@@ -217,7 +226,7 @@
                                         </router-link>
                                         <router-link
                                             v-if="authStore.hasPermission('edit equipment')"
-                                            :to="{ name: 'equipment.edit', params: { id: equipment.id } }"
+                                            :to="{ name: 'equipment.edit', params: { id: equipment.id }, query: { report_type: reportType } }"
                                             class="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="Editar"
                                         >
@@ -250,7 +259,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
@@ -260,11 +269,23 @@ import Select2 from '../components/Select2.vue';
 import ClearableInput from '../components/ClearableInput.vue';
 import { setArrayParam, cleanQuery, arrayQuery, readArrayQuery, debounce } from '../utils/filters';
 
-const STORAGE_KEY = 'equipment-list-filters';
+const props = defineProps({
+    reportType: {
+        type: String,
+        default: 'vibration',
+    },
+});
+
+const reportType = computed(() => (props.reportType === 'thermography' ? 'thermography' : 'vibration'));
+const STORAGE_KEY = computed(() => `equipment-list-filters-${reportType.value}`);
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+
+const titleText = computed(() => (reportType.value === 'thermography' ? 'Equipos de Termografía' : 'Equipos de Vibración'));
+const subtitleText = computed(() => (reportType.value === 'thermography' ? 'Gestiona los equipos de termografía' : 'Gestiona los equipos de vibración'));
+const titleIconClass = computed(() => (reportType.value === 'thermography' ? 'fa-thermometer-half text-rose-600' : 'fa-wave-square text-blue-600'));
 
 const equipments = ref([]);
 const companies = ref([]);
@@ -272,6 +293,7 @@ const equipmentTypes = ref([]);
 const processes = ref([]);
 const loading = ref(false);
 const pendingRequests = ref(0);
+const exporting = ref(false);
 const search = ref(route.query.search ?? '');
 const filters = ref({
     company_id: readArrayQuery(route.query, 'company_id'),
@@ -288,13 +310,14 @@ const syncQueryToUrl = (page = 1) => {
         page: String(page),
         sort_order: sortOrder.value,
         search: search.value,
-        ...arrayQuery('company_id', filters.value.company_id),
-        ...arrayQuery('equipment_type_id', filters.value.equipment_type_id),
-        ...arrayQuery('process_id', filters.value.process_id)
+        company_id: filters.value.company_id,
+        equipment_type_id: filters.value.equipment_type_id,
+        process_id: filters.value.process_id
     });
-    router.replace({ name: 'equipment', query: q });
+    Object.keys(q).forEach(key => { if (q[key] === '') delete q[key]; });
+    router.replace({ name: route.name, query: q });
     try {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ query: q }));
+        sessionStorage.setItem(STORAGE_KEY.value, JSON.stringify({ query: q }));
     } catch (_) {}
 };
 
@@ -308,7 +331,7 @@ const applyQueryToFilters = () => {
         sortOrder.value = route.query.sort_order ?? 'desc';
     } else {
         try {
-            const saved = sessionStorage.getItem(STORAGE_KEY);
+            const saved = sessionStorage.getItem(STORAGE_KEY.value);
             if (saved) {
                 const { query } = JSON.parse(saved);
                 if (query) {
@@ -402,6 +425,7 @@ const fetchEquipment = async (page = 1) => {
     beginLoading();
     try {
         const params = { page, per_page: 10, sort_by: sortBy.value, sort_order: normalizeSortOrder(sortOrder.value) };
+        params.report_type = reportType.value;
         if (search.value) params.search = search.value;
         setArrayParam(params, 'company_id', filters.value.company_id);
         setArrayParam(params, 'equipment_type_id', filters.value.equipment_type_id);
@@ -426,12 +450,15 @@ const fetchEquipment = async (page = 1) => {
 };
 
 const exportExcel = async () => {
+    if (exporting.value) return;
+    exporting.value = true;
     try {
         const payload = {
             page: 1,
             per_page: 10000,
             sort_by: sortBy.value,
             sort_order: normalizeSortOrder(sortOrder.value),
+            report_type: reportType.value,
         };
         if (search.value) payload.search = search.value;
         setArrayParam(payload, 'company_id', filters.value.company_id);
@@ -458,6 +485,8 @@ const exportExcel = async () => {
     } catch (error) {
         console.error('Error al exportar equipos:', error);
         Swal.fire('Error', 'No se pudo exportar el listado de equipos.', 'error');
+    } finally {
+        exporting.value = false;
     }
 };
 

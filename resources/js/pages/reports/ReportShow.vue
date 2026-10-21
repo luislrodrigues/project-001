@@ -60,7 +60,7 @@
                     <div class="flex items-center space-x-3">
                         <router-link
                             v-if="authStore.hasPermission('edit report')"
-                            :to="{ name: 'reports.edit', params: { id: report.id } }"
+                            :to="{ name: 'reports.edit', params: { id: report.id }, query: { report_type: reportTypeResolved } }"
                             class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                         >
                             <i class="fas fa-edit mr-2"></i>
@@ -95,7 +95,7 @@
                             {{ sendingEmail ? 'Enviando...' : 'Enviar correo' }}
                         </button>
                         <router-link
-                            :to="{ name: 'reports' }"
+                            :to="{ name: backRouteName }"
                             class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Volver"
                         >
@@ -213,6 +213,24 @@
                                 <h5 class="text-md font-semibold text-gray-800">
                                     {{ component.component_type?.name || 'Componente' }}
                                 </h5>
+                            </div>
+
+                            <!-- Parámetros de la medición -->
+                            <div v-if="getMeasurementValues(component.id).length" class="mb-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-thermometer-half mr-2 text-rose-600"></i>
+                                    Parámetros de la medición
+                                </label>
+                                <div class="bg-white border border-gray-300 rounded-lg p-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        <div v-for="item in getMeasurementValues(component.id)" :key="item.field_id" class="flex items-baseline gap-2 text-sm">
+                                            <span class="text-gray-500">{{ item.name }}:</span>
+                                            <span class="font-semibold text-gray-800">
+                                                {{ item.value }}<span v-if="item.unit" class="text-gray-500 font-normal"> {{ item.unit }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="mb-4">
@@ -500,7 +518,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../services/api';
@@ -510,12 +528,18 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+const normalizeReportType = (v) => {
+    const s = (v ?? '').toString().trim().toLowerCase();
+    return s === 'thermography' ? 'thermography' : 'vibration';
+};
+
 const report = ref(null);
 const loading = ref(true);
 const imageModalUrl = ref(null);
 const downloadingPdf = ref(false);
 const sendingEmail = ref(false);
 const diagnosisByComponent = ref({});
+const measurementValuesByComponent = ref([]);
 const recommendationsByComponent = ref({});
 
 const showEmailModal = ref(false);
@@ -525,9 +549,12 @@ const selectedUserIds = ref([]);
 const additionalEmailInput = ref('');
 const additionalEmailsList = ref([]);
 
+const reportTypeResolved = computed(() => normalizeReportType(report.value?.report_type ?? route.query.report_type));
+const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'reports.thermography' : 'reports.vibration'));
+
 onMounted(async () => {
     if (!authStore.hasPermission('detalle report')) {
-        router.push({ name: 'reports' });
+        router.push({ name: backRouteName.value });
         return;
     }
     await loadReport();
@@ -603,9 +630,10 @@ const loadReport = async () => {
         const { diagnosis, recommendations } = normalizeReportData(reportData);
         diagnosisByComponent.value = diagnosis;
         recommendationsByComponent.value = recommendations;
+        measurementValuesByComponent.value = reportData.measurement_values || [];
     } catch (error) {
         Swal.fire('Error', 'Error al cargar el reporte', 'error');
-        router.push({ name: 'reports' });
+        router.push({ name: 'reports.vibration' });
     } finally {
         loading.value = false;
     }
@@ -788,6 +816,11 @@ const getRecommendations = (componentId) => {
     const id = String(componentId);
     const recs = recommendationsByComponent.value[id];
     return Array.isArray(recs) ? recs : [];
+};
+
+const getMeasurementValues = (componentId) => {
+    const id = String(componentId);
+    return measurementValuesByComponent.value.filter((item) => String(item.component_id) === id);
 };
 
 const openImageModal = (url) => {

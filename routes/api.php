@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\EquipmentController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\ReportGroupController;
+use App\Http\Controllers\Api\ReportTypeController;
 use App\Http\Controllers\Api\ComponentController;
 use App\Http\Controllers\Api\ComponentTypeController;
 use App\Http\Controllers\Api\UserController;
@@ -74,6 +76,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/send-email', [ReportController::class, 'sendEmail'])->middleware('permission:send email report');
     });
 
+    // Informes agrupados (varios puntos en un solo documento)
+    Route::prefix('report-groups')->group(function () {
+        Route::get('/', [ReportGroupController::class, 'index'])->middleware('permission:consult report');
+        Route::post('/', [ReportGroupController::class, 'store'])->middleware('permission:save report');
+        Route::get('/{id}/pdf', [ReportGroupController::class, 'downloadPdf'])->middleware('permission:download pdf report');
+        Route::get('/{id}', [ReportGroupController::class, 'show'])->middleware('permission:detalle report');
+        Route::put('/{id}', [ReportGroupController::class, 'update'])->middleware('permission:edit report');
+        Route::post('/{id}', [ReportGroupController::class, 'update'])->middleware('permission:edit report');
+        Route::delete('/{id}', [ReportGroupController::class, 'destroy'])->middleware('permission:delete report');
+    });
+
     // Componentes (comentado - sin página de listado)
     // Route::post('components/{component}', [ComponentController::class, 'update'])->middleware('permission:consult equipment');
     // Route::apiResource('components', ComponentController::class)->middleware('permission:consult equipment');
@@ -120,6 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/catalogs/company-segments', [CompanyController::class, 'getCompanySegments']);
     Route::get('/catalogs/users', [UserController::class, 'getUsers']);
     Route::get('/catalogs/analists', [UserController::class, 'getAnalists']);
+    Route::get('/catalogs/report-types', [ReportTypeController::class, 'getReportTypes']);
 
     // CRUD para catálogos
     Route::prefix('catalogs')->group(function () {

@@ -16,9 +16,17 @@ use Illuminate\Http\Request;
 
 class ComponentTypeController extends Controller
 {
-    public function getComponentTypesForSelect(): JsonResponse
+    public function getComponentTypesForSelect(Request $request): JsonResponse
     {
         $types = ComponentType::where('status', 'active')
+            ->when($request->filled('report_type') || $request->has('report_type'), function ($q) use ($request) {
+                $reportType = $request->get('report_type', 'vibration');
+                if (is_string($reportType) && in_array($reportType, ['vibration', 'thermography'], true)) {
+                    $q->where('report_type', $reportType);
+                }
+            }, function ($q) {
+                $q->where('report_type', 'vibration');
+            })
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
@@ -33,6 +41,11 @@ class ComponentTypeController extends Controller
         }
 
         $query = ComponentType::where('status', 'active');
+
+        $reportType = $request->get('report_type', 'vibration');
+        if (is_string($reportType) && in_array($reportType, ['vibration', 'thermography'], true)) {
+            $query->where('report_type', $reportType);
+        }
 
         if ($request->has('search') && $request->search !== '') {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -57,6 +70,7 @@ class ComponentTypeController extends Controller
         try {
             $componentType = ComponentType::create([
                 'name' => $request->name,
+                'report_type' => $request->get('report_type', 'vibration'),
                 'status' => 'active',
             ]);
 
@@ -64,6 +78,7 @@ class ComponentTypeController extends Controller
                 $field = $componentType->componentTypeFields()->create([
                     'name' => $fieldData['name'],
                     'type' => $fieldData['type'],
+                    'scope' => $fieldData['scope'] ?? 'component',
                     'unit' => $fieldData['unit'] ?? null,
                     'display_order' => $index + 1,
                     'is_required' => $fieldData['is_required'] ?? false,
@@ -106,6 +121,7 @@ class ComponentTypeController extends Controller
         try {
             $componentType->update([
                 'name' => $request->name,
+                'report_type' => $request->get('report_type', $componentType->report_type ?? 'vibration'),
             ]);
 
             $existingFieldIds = $componentType->componentTypeFields()->pluck('id')->toArray();
@@ -121,6 +137,7 @@ class ComponentTypeController extends Controller
                         $field->update([
                             'name' => $fieldData['name'],
                             'type' => $fieldData['type'],
+                            'scope' => $fieldData['scope'] ?? $field->scope ?? 'component',
                             'unit' => $fieldData['unit'] ?? null,
                             'display_order' => $index + 1,
                             'is_required' => $fieldData['is_required'] ?? false,
@@ -173,6 +190,7 @@ class ComponentTypeController extends Controller
                     $field = $componentType->componentTypeFields()->create([
                         'name' => $fieldData['name'],
                         'type' => $fieldData['type'],
+                        'scope' => $fieldData['scope'] ?? 'component',
                         'unit' => $fieldData['unit'] ?? null,
                         'display_order' => $index + 1,
                         'is_required' => $fieldData['is_required'] ?? false,
