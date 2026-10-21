@@ -8,7 +8,7 @@
                 </h2>
                 <p class="text-gray-500 text-sm mt-1">Selecciona el tipo de informe</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <router-link
                     v-for="type in reportTypesStore.types"
                     :key="type.code"
@@ -26,22 +26,6 @@
                             </div>
                             <h3 class="text-xl font-bold text-gray-800 mb-2">Reportes de {{ type.name }}</h3>
                             <p class="text-gray-600 text-sm">Gestiona y visualiza los informes de {{ type.name.toLowerCase() }}</p>
-                        </div>
-                    </div>
-                </router-link>
-
-                <router-link :to="{ name: 'report-groups' }" class="group">
-                    <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden">
-                        <div class="h-2 bg-gradient-to-r from-slate-600 to-slate-700"></div>
-                        <div class="p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="w-14 h-14 rounded-xl flex items-center justify-center bg-slate-100 group-hover:bg-slate-600 transition-colors duration-300">
-                                    <i class="fas fa-folder-open text-2xl text-slate-600 group-hover:text-white transition-colors duration-300"></i>
-                                </div>
-                                <i class="fas fa-arrow-right text-gray-400 transform group-hover:translate-x-2 transition-all duration-300 group-hover:text-slate-600"></i>
-                            </div>
-                            <h3 class="text-xl font-bold text-gray-800 mb-2">Informes de inspección</h3>
-                            <p class="text-gray-600 text-sm">Agrupa varios puntos en un documento con portada, índice y firmas</p>
                         </div>
                     </div>
                 </router-link>

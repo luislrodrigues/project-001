@@ -108,18 +108,13 @@ const routes = [
                 component: () => import('../pages/reports/ReportCreate.vue')
             },
             {
-                path: 'reports/groups',
-                name: 'report-groups',
-                component: () => import('../pages/reports/ReportGroups.vue')
-            },
-            {
-                path: 'reports/:id/edit',
+                path: 'reports/:id(\\d+)/edit',
                 name: 'reports.edit',
                 component: () => import('../pages/reports/ReportEdit.vue'),
                 props: true
             },
             {
-                path: 'reports/:id',
+                path: 'reports/:id(\\d+)',
                 name: 'reports.show',
                 component: () => import('../pages/reports/ReportShow.vue'),
                 props: true

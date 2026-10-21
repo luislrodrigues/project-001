@@ -14,7 +14,6 @@ class ReportResource extends JsonResource
             'id' => $this->id,
             'consecutivo' => $this->consecutivo,
             'equipment_id' => $this->equipment_id,
-            'report_group_id' => $this->report_group_id,
             'report_type' => $this->report_type,
             'measurement_values' => $this->relationLoaded('measurementValues') ? $this->measurementValuesList() : [],
             'equipment' => $this->equipment ? [

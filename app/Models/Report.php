@@ -18,7 +18,6 @@ class Report extends Model
 
     protected $fillable = [
         'equipment_id',
-        'report_group_id',
         'report_type',
         'measurement_date',
         'diagnosis',
@@ -49,10 +48,6 @@ class Report extends Model
         return $this->belongsTo(Equipment::class);
     }
 
-    public function group()
-    {
-        return $this->belongsTo(ReportGroup::class, 'report_group_id');
-    }
     public function analist()
     {
         return $this->belongsTo(User::class);

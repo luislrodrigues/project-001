@@ -354,7 +354,6 @@ const pageTitles = {
     'reports.create': 'Crear Reporte',
     'reports.edit': 'Editar Reporte',
     'reports.show': 'Detalle del Reporte',
-    'report-groups': 'Informes de inspección',
     equipment: 'Equipos',
     'equipment.vibration': 'Equipos (Vibraciones)',
     'equipment.thermography': 'Equipos (Termografía)',
@@ -392,7 +391,6 @@ const pageDescriptions = {
     'reports.create': 'Completa el formulario para crear un nuevo reporte',
     'reports.edit': 'Modifica la información del reporte',
     'reports.show': 'Información completa del reporte',
-    'report-groups': 'Agrupa varios puntos en un solo documento con portada, índice y firmas',
     equipment: 'Gestiona el inventario de equipos',
     'equipment.vibration': 'Gestiona los equipos para vibraciones',
     'equipment.thermography': 'Gestiona los equipos para termografía',
@@ -472,7 +470,6 @@ const isActive = (routeName) => {
     }
     if (routeName === 'reports') {
         return route.name === routeName
-            || route.name === 'report-groups'
             || String(route.name || '').startsWith('reports.');
     }
     if (routeName === 'users') {
