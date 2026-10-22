@@ -20,4 +20,13 @@ class Condition extends Model
         'status',
     ];
 
+    /**
+     * Las opciones del campo "Condición" por punto salen de este catálogo:
+     * al crear, renombrar, recolorear o borrar, se sincronizan solas.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Support\ThermographyFieldTemplate::syncCatalog('conditions'));
+        static::deleted(fn () => \App\Support\ThermographyFieldTemplate::syncCatalog('conditions'));
+    }
 }

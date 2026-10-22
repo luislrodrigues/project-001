@@ -74,7 +74,7 @@
                             </button>
                         </div>
 
-                        <div v-if="form.fields.length === 0" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                        <div v-if="componentAttributesCount === 0" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
                             <i class="fas fa-info-circle text-yellow-600 text-2xl mb-2"></i>
                             <p class="text-gray-600">No hay atributos agregados. Haz clic en "Agregar Atributo" para comenzar.</p>
                         </div>
@@ -83,6 +83,7 @@
                             <div
                                 v-for="(field, index) in form.fields"
                                 :key="field.id || index"
+                                v-show="(field.scope ?? 'component') !== 'measurement'"
                                 class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200"
                             >
                                 <div class="flex items-center justify-between mb-4">
@@ -310,6 +311,12 @@ const form = reactive({
 });
 
 const reportTypeResolved = computed(() => normalizeReportType(form.report_type ?? route.query.report_type));
+
+// Solo los atributos del componente se editan aquí; los campos con scope
+// 'measurement' se capturan en cada informe y se mantienen intactos.
+const componentAttributesCount = computed(
+    () => form.fields.filter((field) => (field.scope ?? 'component') !== 'measurement').length
+);
 const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'component-types.thermography' : 'component-types.vibration'));
 const titleText = computed(() => (reportTypeResolved.value === 'thermography' ? 'Editar Tipo de Componente (Termografía)' : 'Editar Tipo de Componente (Vibraciones)'));
 const subtitleText = computed(() => (reportTypeResolved.value === 'thermography' ? 'Modifica la información del tipo de componente de termografía' : 'Modifica la información del tipo de componente de vibraciones'));

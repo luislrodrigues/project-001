@@ -173,6 +173,40 @@ class ThermographyFieldTemplate
     }
 
     /**
+     * Vuelve a copiar las opciones de los catálogos a los campos de termografía.
+     * Se llama automáticamente cuando cambia un catálogo (condiciones,
+     * mecanismos de falla o prioridades), y también desde el seeder/plantilla.
+     */
+    public static function syncCatalog(string $catalog): void
+    {
+        $slugs = [];
+
+        foreach (self::fields() as $definition) {
+            if ($definition['source'] === $catalog) {
+                $slugs[] = $definition['slug'];
+            }
+        }
+
+        if ($slugs === []) {
+            return;
+        }
+
+        $types = ComponentType::where('report_type', self::REPORT_TYPE)->pluck('id');
+
+        if ($types->isEmpty()) {
+            return;
+        }
+
+        $fields = ComponentTypeField::whereIn('component_type_id', $types)
+            ->whereIn('slug', $slugs)
+            ->get();
+
+        foreach ($fields as $field) {
+            self::syncOptions($field, $catalog);
+        }
+    }
+
+    /**
      * Copia las opciones del catálogo al campo, manteniéndolas sincronizadas.
      */
     private static function syncOptions(ComponentTypeField $field, string $source): void

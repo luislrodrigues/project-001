@@ -18,4 +18,13 @@ class Priority extends Model
         'text_color',
         'status',
     ];
+
+    /**
+     * El campo "Prioridad" por punto copia este catálogo; se sincroniza solo.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Support\ThermographyFieldTemplate::syncCatalog('priorities'));
+        static::deleted(fn () => \App\Support\ThermographyFieldTemplate::syncCatalog('priorities'));
+    }
 }

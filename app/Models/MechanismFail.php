@@ -18,4 +18,12 @@ class MechanismFail extends Model
         'status',
     ];
 
+    /**
+     * El campo "Mecanismo de Falla" por punto copia este catálogo; se sincroniza solo.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Support\ThermographyFieldTemplate::syncCatalog('mechanism_fails'));
+        static::deleted(fn () => \App\Support\ThermographyFieldTemplate::syncCatalog('mechanism_fails'));
+    }
 }

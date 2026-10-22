@@ -125,7 +125,7 @@
 
                     <div v-else class="space-y-4">
                         <div
-                            v-for="(field, index) in componentType.fields"
+                            v-for="(field, index) in attributes"
                             :key="field.id"
                             class="bg-gray-50 rounded-lg p-4 border border-gray-200"
                         >
@@ -214,7 +214,13 @@ const typeLabels = {
     boolean: 'Sí / No',
 };
 
-const attributesCount = computed(() => componentType.value?.fields?.length ?? 0);
+// Los campos con scope 'measurement' se capturan en cada informe (por punto),
+// no son atributos del componente: no se listan aquí.
+const attributes = computed(() =>
+    (componentType.value?.fields ?? []).filter((field) => (field.scope ?? 'component') === 'component')
+);
+
+const attributesCount = computed(() => attributes.value.length);
 
 const statusLabel = computed(() => {
     if (!componentType.value) return '';
