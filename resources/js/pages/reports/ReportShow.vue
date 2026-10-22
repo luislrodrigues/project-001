@@ -743,9 +743,6 @@ const downloadPdf = async (event) => {
         const response = await api.get(`/reports/${route.params.id}/pdf`, {
             responseType: 'blob'
         });
-        const consecutivo = report.value?.consecutivo ? sanitizeFilename(report.value.consecutivo) : `reporte-${route.params.id}`;
-        const eqName = report.value?.equipment?.name;
-        const baseName = sanitizeFilename(eqName) || `reporte-${route.params.id}`;
         const measurementRaw = report.value?.measurement_date;
         let datePart = '';
         if (measurementRaw) {
@@ -763,12 +760,19 @@ const downloadPdf = async (event) => {
             }
         }
         const datePrefix = datePart ? datePart.replace(/-/g, '') : '';
-        const parts = [];
-        if (datePrefix) parts.push(datePrefix);
-        parts.push('Informe Vibraciones');
-        if (consecutivo) parts.push(consecutivo);
-        parts.push(baseName);
-        const filename = `${parts.join(' ')}.pdf`;
+        const typeName = normalizeReportType(report.value?.report_type) === 'thermography' ? 'Termografía' : 'Vibraciones';
+        const fileNameParts = [
+            datePrefix,
+            'Informe',
+            'Inspección',
+            typeName,
+            report.value?.equipment?.location,
+            report.value?.equipment?.process,
+            report.value?.equipment?.company?.name,
+        ]
+            .map((part) => sanitizeFilename(part))
+            .filter((part) => part !== '');
+        const filename = `${fileNameParts.join(' ')}.pdf`;
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
