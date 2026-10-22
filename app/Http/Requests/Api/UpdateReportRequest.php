@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Models\Equipment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateReportRequest extends FormRequest
@@ -39,10 +40,33 @@ class UpdateReportRequest extends FormRequest
                 'measurement_values' => is_array($decoded) ? $decoded : []
             ]);
         }
+
+        $this->resolveReportType();
+    }
+
+    /**
+     * El tipo de informe puede venir del formulario o del equipo seleccionado;
+     * se resuelve antes de validar porque las reglas dependen de él.
+     */
+    private function resolveReportType(): void
+    {
+        $reportType = $this->input('report_type');
+
+        if (!is_string($reportType) || !in_array($reportType, ['vibration', 'thermography'], true)) {
+            $reportType = $this->filled('equipment_id')
+                ? Equipment::whereKey((int) $this->input('equipment_id'))->value('report_type')
+                : null;
+        }
+
+        if ($reportType !== null) {
+            $this->merge(['report_type' => $reportType]);
+        }
     }
 
     public function rules(): array
     {
+        $isThermography = $this->input('report_type') === 'thermography';
+
         return [
             'equipment_id' => 'required|integer|exists:equipment,id',
             'report_type' => 'nullable|string|in:vibration,thermography',
@@ -50,11 +74,16 @@ class UpdateReportRequest extends FormRequest
             'measurement_values.*' => 'nullable|array',
             'measurement_values.*.*' => 'nullable',
             'measurement_date' => 'required|date',
-            'condition_id' => 'required|integer|exists:conditions,id',
+            // En termografía la condición, el mecanismo y la prioridad se capturan
+            // por punto y la cabecera se deriva del punto más crítico.
+            'condition_id' => ($isThermography ? 'nullable' : 'required') . '|integer|exists:conditions,id',
             'condition_override_reason' => 'nullable|string|max:500',
-            'mechanism_fail_id' => 'required|integer|exists:mechanism_fails,id',
-            'component_fail_id' => 'required|integer|exists:component_fails,id',
-            'priority_id' => 'required|integer|exists:priorities,id',
+            'mechanism_fail_id' => ($isThermography ? 'nullable' : 'required') . '|integer|exists:mechanism_fails,id',
+            'component_fail_id' => ($isThermography ? 'nullable' : 'required') . '|integer|exists:component_fails,id',
+            'priority_id' => ($isThermography ? 'nullable' : 'required') . '|integer|exists:priorities,id',
+            'emissivity' => ($isThermography ? 'required' : 'nullable') . '|numeric|between:0,1',
+            'distance_m' => ($isThermography ? 'required' : 'nullable') . '|numeric|between:0,9999',
+            'ambient_temp' => ($isThermography ? 'required' : 'nullable') . '|numeric|between:-50,200',
             'analist_id' => 'required|integer|exists:users,id',
             'ot_created' => 'nullable|string|max:255',
             'status_ot' => 'nullable|string|max:255',

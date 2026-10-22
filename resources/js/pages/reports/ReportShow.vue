@@ -194,6 +194,43 @@
                     </div>
                 </div>
 
+                <!-- Datos de la medición (solo termografía) -->
+                <div v-if="report.report_type === 'thermography'" class="mb-8">
+                    <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                        <i class="fas fa-thermometer-half text-blue-600 mr-2"></i>
+                        <h4 class="text-lg font-semibold text-gray-800">Datos de la medición</h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-adjust mr-2 text-blue-600"></i>
+                                Emisividad
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.emissivity ?? '—' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-ruler-horizontal mr-2 text-blue-600"></i>
+                                Distancia Medición (m)
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.distance_m ?? '—' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                <i class="fas fa-temperature-low mr-2 text-blue-600"></i>
+                                Temperatura Ambiente (°C)
+                            </label>
+                            <div class="text-sm font-semibold text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200">
+                                {{ report.ambient_temp ?? '—' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Diagnósticos y Recomendaciones -->
                 <div v-if="report.components && report.components.length > 0" class="mb-8">
                     <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
@@ -252,22 +289,27 @@
                                 </label>
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                     <div
-                                        v-for="(imageUrl, imgIndex) in getComponentImages(component.id)"
+                                        v-for="(image, imgIndex) in getComponentImages(component.id)"
                                         :key="imgIndex"
                                         class="relative group cursor-pointer"
                                         role="button"
                                         tabindex="0"
-                                        @click="openImageModal(imageUrl)"
-                                        @keydown.enter="openImageModal(imageUrl)"
+                                        @click="openImageModal(image.url)"
+                                        @keydown.enter="openImageModal(image.url)"
                                     >
                                         <img
-                                            :src="imageUrl"
-                                            :alt="`Imagen ${imgIndex + 1}`"
+                                            :src="image.url"
+                                            :alt="image.caption || `Imagen ${imgIndex + 1}`"
                                             class="w-full h-32 object-contain rounded-lg border-2 border-gray-200 hover:border-purple-500 transition-all bg-gray-100 pointer-events-none"
                                         />
+                                        <span
+                                            class="absolute top-1 left-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white pointer-events-none"
+                                            :class="image.kind === 'visual' ? 'bg-blue-600' : 'bg-purple-600'"
+                                        >{{ image.kindLabel }}</span>
                                         <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
                                             <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 text-xl"></i>
                                         </div>
+                                        <p v-if="image.caption" class="text-xs text-gray-600 mt-1 truncate">{{ image.caption }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -552,6 +594,23 @@ const additionalEmailsList = ref([]);
 const reportTypeResolved = computed(() => normalizeReportType(report.value?.report_type ?? route.query.report_type));
 const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'reports.thermography' : 'reports.vibration'));
 
+const reportImagesByComponent = computed(() => {
+    const grouped = {};
+    (report.value?.images || []).forEach((image) => {
+        const id = String(image.component_id);
+        if (!grouped[id]) grouped[id] = [];
+        grouped[id].push({
+            url: image.url,
+            kind: image.kind || 'thermal',
+            kindLabel: image.kind_label || (image.kind === 'visual' ? 'Visual' : 'Térmica'),
+            caption: image.caption || '',
+            sortOrder: Number(image.sort_order ?? 0),
+        });
+    });
+    Object.values(grouped).forEach((list) => list.sort((a, b) => a.sortOrder - b.sortOrder));
+    return grouped;
+});
+
 onMounted(async () => {
     if (!authStore.hasPermission('detalle report')) {
         router.push({ name: backRouteName.value });
@@ -807,9 +866,12 @@ const getDiagnosisText = (componentId) => {
 
 const getComponentImages = (componentId) => {
     const id = String(componentId);
+    const fromTable = reportImagesByComponent.value[id];
+    if (fromTable && fromTable.length) return fromTable;
+
     const d = diagnosisByComponent.value[id];
     if (!d || typeof d !== 'object' || !Array.isArray(d.images)) return [];
-    return d.images;
+    return d.images.map((url) => ({ url, kind: 'thermal', kindLabel: 'Térmica', caption: '', sortOrder: 0 }));
 };
 
 const getRecommendations = (componentId) => {

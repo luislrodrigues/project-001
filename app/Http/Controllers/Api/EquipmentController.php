@@ -76,9 +76,9 @@ class EquipmentController extends Controller
         try {
             $data = [
                 'name' => $request->name,
-                'code' => $request->code,
-                'tag' => $request->tag,
-                'description' => $request->description,
+                'code' => (string) ($request->code ?? ''),
+                'tag' => (string) ($request->tag ?? ''),
+                'description' => (string) ($request->description ?? ''),
                 'company_id' => $request->company_id,
                 'process_id' => $request->process_id,
                 'ubication_id' => $request->ubication_id,
@@ -173,9 +173,9 @@ class EquipmentController extends Controller
         try {
             $data = [
                 'name' => $request->name,
-                'code' => $request->code,
-                'tag' => $request->tag,
-                'description' => $request->description,
+                'code' => (string) ($request->code ?? ''),
+                'tag' => (string) ($request->tag ?? ''),
+                'description' => (string) ($request->description ?? ''),
                 'company_id' => $request->company_id,
                 'process_id' => $request->process_id,
                 'ubication_id' => $request->ubication_id,

@@ -20,6 +20,9 @@ class Report extends Model
         'equipment_id',
         'report_type',
         'measurement_date',
+        'emissivity',
+        'distance_m',
+        'ambient_temp',
         'diagnosis',
         'condition_id',
         'condition_override_reason',
@@ -41,6 +44,9 @@ class Report extends Model
         'general_recommendations' => 'array',
         'measurement_date' => 'date',
         'execution_date' => 'date',
+        'emissivity' => 'float',
+        'distance_m' => 'float',
+        'ambient_temp' => 'float',
     ];
 
     public function equipment()

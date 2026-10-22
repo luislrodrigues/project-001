@@ -13,25 +13,31 @@
     @include('reports.partials.thermography-header-footer')
 
     <div class="report-content">
-        <table class="report-meta" cellpadding="0" cellspacing="0">
+        <table class="info-grid report-meta-row" cellpadding="0" cellspacing="0">
             <tr>
-                <td class="data-cell">
-                    <div class="data-line"><span class="label">INFORME:</span> {{ utf8_sanitize($reportData->consecutivo ?? '—') }}</div>
-                    <div class="data-line"><span class="label">PLANTA:</span> {{ utf8_sanitize($reportData->equipment?->company?->name ?? '—') }}</div>
-                    <div class="data-line"><span class="label">EQUIPO:</span> {{ utf8_sanitize($reportData->equipment?->name ?? '—') }}</div>
-                    <div class="data-line"><span class="label">PLACA/ID:</span> {{ utf8_sanitize($reportData->equipment?->code ?? $reportData->equipment?->tag ?? '—') }}</div>
-                    <div class="data-line"><span class="label">UBICACIÓN:</span> {{ utf8_sanitize($reportData->equipment?->ubication?->name ?? '—') }}</div>
-                    <div class="data-line"><span class="label">ÁREA:</span> {{ utf8_sanitize($reportData->equipment?->process?->name ?? '—') }}</div>
-                    <div class="data-line"><span class="label">FECHA MEDICIÓN:</span> {{ $reportData->measurement_date?->format('d/m/Y') ?? '—' }}</div>
-                    <div class="data-line"><span class="label">ANALISTA:</span> {{ utf8_sanitize($reportData->analist?->name ?? '—') }}</div>
-                </td>
-                <td class="image-cell">
-                    @if (!empty($equipmentImage))
-                        <img src="{{ $equipmentImage }}" alt="Equipo" class="equipment-image" />
-                    @endif
+                <td class="g-title" colspan="4">Datos generales del informe</td>
+            </tr>
+            <tr>
+                <td class="g-label">Informe</td>
+                <td class="g-value">{{ utf8_sanitize($reportData->consecutivo ?? '—') }}</td>
+                <td class="g-label">Planta</td>
+                <td class="g-value">{{ utf8_sanitize($reportData->equipment?->company?->name ?? '—') }}</td>
+            </tr>
+            <tr>
+                <td class="g-label">Analista</td>
+                <td class="g-value">{{ utf8_sanitize($reportData->analist?->name ?? '—') }}</td>
+                <td class="g-label">OT / Estado</td>
+                <td class="g-value">
+                    {{ utf8_sanitize(trim(($reportData->ot_created ?? '') . ' ' . ($reportData->status_ot ?? '')) ?: '—') }}
                 </td>
             </tr>
         </table>
+
+        @if (!empty($equipmentImage))
+            <div style="text-align: right; margin-bottom: 12px;">
+                <img src="{{ $equipmentImage }}" alt="Equipo" class="equipment-image" />
+            </div>
+        @endif
 
         @foreach ($components as $component)
             @include('reports.partials.thermography-card')
@@ -42,9 +48,9 @@
             $generalRecs = is_array($generalRecs) ? array_values(array_filter($generalRecs, fn ($r) => trim((string) $r) !== '')) : [];
         @endphp
         @if (!empty($generalRecs))
-            <div class="card">
-                <div class="card-body">
-                    <p class="section-title">RECOMENDACIONES GENERALES:</p>
+            <div class="note-box">
+                <div class="note-title">Recomendaciones generales:</div>
+                <div class="note-body">
                     <ul class="rec-list">
                         @foreach ($generalRecs as $rec)
                             @php

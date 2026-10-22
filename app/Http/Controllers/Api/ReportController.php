@@ -202,12 +202,19 @@ class ReportController extends Controller
                 'priority_id' => $request->priority_id,
                 'mechanism_fail_id' => $request->mechanism_fail_id,
                 'component_fail_id' => $request->component_fail_id,
+                'emissivity' => $request->filled('emissivity') ? $request->emissivity : null,
+                'distance_m' => $request->filled('distance_m') ? $request->distance_m : null,
+                'ambient_temp' => $request->filled('ambient_temp') ? $request->ambient_temp : null,
                 'ot_created' => $request->ot_created,
                 'status_ot' => $request->status_ot,
                 'execution_date' => $request->execution_date,
                 'general_recommendations' => self::normalizeGeneralRecommendations($request->general_recommendations ?? []),
                 'analist_id' => $request->analist_id,
             ];
+
+            if ($reportType === 'thermography') {
+                $data = array_merge($data, self::deriveThermographyHeader($request, (int) $request->equipment_id));
+            }
 
             if ($request->has('diagnosis')) {
                 $data['diagnosis'] = self::stripImagesFromDiagnosis($request->diagnosis);
@@ -287,19 +294,33 @@ class ReportController extends Controller
                 'equipment_id' => $request->equipment_id,
                 'report_type' => $reportType,
                 'measurement_date' => $request->measurement_date,
-                'condition_id' => $request->condition_id,
+                'condition_id' => $request->condition_id ?? $report->condition_id,
                 'condition_override_reason' => $request->filled('condition_override_reason')
                     ? trim((string) $request->condition_override_reason)
                     : null,
-                'priority_id' => $request->priority_id,
-                'mechanism_fail_id' => $request->mechanism_fail_id,
-                'component_fail_id' => $request->component_fail_id,
-                'ot_created' => $request->ot_created,
-                'status_ot' => $request->status_ot,
-                'execution_date' => $request->execution_date,
+                'priority_id' => $request->priority_id ?? $report->priority_id,
+                'mechanism_fail_id' => $request->mechanism_fail_id ?? $report->mechanism_fail_id,
+                'component_fail_id' => $request->component_fail_id ?? $report->component_fail_id,
+                'emissivity' => $request->filled('emissivity') ? $request->emissivity : $report->emissivity,
+                'distance_m' => $request->filled('distance_m') ? $request->distance_m : $report->distance_m,
+                'ambient_temp' => $request->filled('ambient_temp') ? $request->ambient_temp : $report->ambient_temp,
+                'ot_created' => $request->ot_created ?? $report->ot_created,
+                'status_ot' => $request->status_ot ?? $report->status_ot,
+                'execution_date' => $request->execution_date ?? $report->execution_date,
                 'general_recommendations' => self::normalizeGeneralRecommendations($request->general_recommendations ?? []),
                 'analist_id' => $request->analist_id,
             ];
+
+            if ($reportType === 'thermography') {
+                // Si la actualización no trae mediciones (por ejemplo, solo imágenes),
+                // se conserva la cabecera ya calculada en lugar de vaciarla.
+                $derived = array_filter(
+                    self::deriveThermographyHeader($request, (int) $request->equipment_id),
+                    fn ($value) => $value !== null
+                );
+
+                $data = array_merge($data, $derived);
+            }
 
             if ($request->has('diagnosis')) {
                 $data['diagnosis'] = self::stripImagesFromDiagnosis($request->diagnosis);
@@ -499,6 +520,7 @@ class ReportController extends Controller
                 'url' => $base64,
                 'kind' => $image->kind_label,
                 'caption' => utf8_sanitize((string) ($image->caption ?? '')),
+                'dimensions' => self::pdfImageDimensions($image->path),
             ];
         }
 
@@ -537,6 +559,7 @@ class ReportController extends Controller
         foreach ($report->measurementValues as $value) {
             $measurementValues[(string) $value->component_id][] = [
                 'name' => $value->field_name ?? $value->field->name ?? '',
+                'slug' => $value->field->slug ?? '',
                 'unit' => $value->field_unit ?? $value->field->unit ?? '',
                 'value' => $value->value,
                 'display_order' => (int) ($value->field_order ?? $value->field->display_order ?? 0),
@@ -547,6 +570,13 @@ class ReportController extends Controller
             $measurementValues[$componentId] = $values;
         }
 
+        $conditionStyles = Condition::all()->mapWithKeys(fn ($condition) => [
+            $condition->name => [
+                'color' => $condition->color ?? '#e5e7eb',
+                'text_color' => $condition->text_color ?? '#111827',
+            ],
+        ])->all();
+
         return [
             'reportData' => $report,
             'components' => $report->equipment->components ?? collect(),
@@ -555,6 +585,7 @@ class ReportController extends Controller
             'componentImages' => $componentImages,
             'equipmentImage' => $equipmentImage,
             'measurementValues' => $measurementValues,
+            'conditionStyles' => $conditionStyles,
         ];
     }
 
@@ -1182,6 +1213,40 @@ class ReportController extends Controller
     }
 
     /**
+     * Tamaño con el que la imagen se debe imprimir en el PDF (mPDF no respeta
+     * width/max-height en CSS sobre imágenes grandes, así que se calcula acá).
+     * Se normaliza la altura para que las imágenes queden alineadas entre sí.
+     *
+     * @return array{width: int, height: int}
+     */
+    private static function pdfImageDimensions(string $path, int $maxWidth = 250, int $targetHeight = 150): array
+    {
+        $relative = ltrim(str_replace('\\', '/', trim($path)), '/');
+        if (str_starts_with($relative, 'storage/')) {
+            $relative = substr($relative, 8);
+        }
+
+        $absolute = Storage::disk('public')->path($relative);
+        $size = is_file($absolute) ? @getimagesize($absolute) : false;
+
+        if (!is_array($size) || empty($size[0]) || empty($size[1])) {
+            return ['width' => $targetHeight, 'height' => $targetHeight];
+        }
+
+        [$width, $height] = $size;
+
+        $scaledWidth = (int) round($targetHeight * $width / $height);
+        $scaledHeight = $targetHeight;
+
+        if ($scaledWidth > $maxWidth) {
+            $scaledWidth = $maxWidth;
+            $scaledHeight = (int) round($maxWidth * $height / $width);
+        }
+
+        return ['width' => $scaledWidth, 'height' => $scaledHeight];
+    }
+
+    /**
      * Convierte ruta de imagen en storage a data URI base64 para el PDF.
      * Acepta ruta relativa (ej. images/equipo.jpg), URL con /storage/ (ej. http://site.com/storage/images/x.jpg)
      * o ruta con barras invertidas; usa el disco 'public' de Laravel para resolver.
@@ -1406,6 +1471,112 @@ class ReportController extends Controller
         }
 
         return $result;
+    }
+
+    /**
+     * Cabecera del informe de termografía: se deriva del punto más crítico,
+     * porque Condición, Mecanismo de Falla y Prioridad ahora se capturan
+     * por componente (no se digitan a nivel de informe).
+     *
+     * @return array{condition_id: ?int, mechanism_fail_id: ?int, priority_id: ?int, component_fail_id: ?int}
+     */
+    private static function deriveThermographyHeader(Request $request, int $equipmentId): array
+    {
+        $defaults = [
+            'condition_id' => null,
+            'mechanism_fail_id' => null,
+            'priority_id' => null,
+            'component_fail_id' => ComponentFail::where('name', 'No Aplica')->value('id'),
+        ];
+
+        $payload = $request->input('measurement_values');
+        if (is_string($payload)) {
+            $payload = json_decode($payload, true) ?: [];
+        }
+        if (!is_array($payload) || $payload === []) {
+            return $defaults;
+        }
+
+        $components = Component::where('equipment_id', $equipmentId)
+            ->get(['id', 'component_type_id'])
+            ->keyBy('id');
+
+        if ($components->isEmpty()) {
+            return $defaults;
+        }
+
+        $fields = ComponentTypeField::whereIn('component_type_id', $components->pluck('component_type_id')->unique()->all())
+            ->whereIn('slug', ['condicion', 'mecanismo-falla', 'prioridad', 'delta-t'])
+            ->get(['id', 'slug'])
+            ->keyBy('id');
+
+        $severity = ['peligro' => 4, 'alarma' => 3, 'seguimiento' => 2, 'normal' => 1, 'fuera de servicio' => 0];
+
+        $critical = null;
+
+        foreach ($payload as $componentId => $values) {
+            if (!$components->has((int) $componentId) || !is_array($values)) {
+                continue;
+            }
+
+            $point = ['condition' => null, 'mechanism' => null, 'priority' => null, 'delta_t' => 0.0];
+
+            foreach ($values as $fieldId => $value) {
+                $field = $fields->get((int) $fieldId);
+                if (!$field || !is_scalar($value) || trim((string) $value) === '') {
+                    continue;
+                }
+
+                $value = trim((string) $value);
+
+                if ($field->slug === 'delta-t') {
+                    $point['delta_t'] = (float) str_replace(',', '.', preg_replace('/[^0-9.,\-]/', '', $value));
+                    continue;
+                }
+
+                $point[$field->slug === 'condicion' ? 'condition' : ($field->slug === 'mecanismo-falla' ? 'mechanism' : 'priority')] = $value;
+            }
+
+            $rank = $point['condition'] !== null
+                ? ($severity[self::normalizeCatalogValue($point['condition'])] ?? 1)
+                : -1;
+
+            $currentRank = $critical !== null
+                ? ($severity[self::normalizeCatalogValue((string) $critical['condition'])] ?? 1)
+                : null;
+
+            if ($critical === null
+                || $rank > $currentRank
+                || ($rank === $currentRank && $point['delta_t'] > $critical['delta_t'])) {
+                $critical = $point;
+            }
+        }
+
+        if ($critical === null) {
+            return $defaults;
+        }
+
+        return [
+            'condition_id' => $critical['condition'] !== null
+                ? Condition::where('name', $critical['condition'])->value('id')
+                : null,
+            'mechanism_fail_id' => $critical['mechanism'] !== null
+                ? MechanismFail::where('name', $critical['mechanism'])->value('id')
+                : null,
+            'priority_id' => $critical['priority'] !== null
+                ? Priority::where('name', $critical['priority'])->value('id')
+                : null,
+            'component_fail_id' => $defaults['component_fail_id'],
+        ];
+    }
+
+    private static function normalizeCatalogValue(string $value): string
+    {
+        return strtolower(str_replace(
+            ['á', 'é', 'í', 'ó', 'ú', 'ñ', ' '],
+            ['a', 'e', 'i', 'o', 'u', 'n', ''],
+            trim($value)
+        ));
     }
 
     /**

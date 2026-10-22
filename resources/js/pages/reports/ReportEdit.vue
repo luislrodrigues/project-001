@@ -181,6 +181,64 @@
                         </div>
                     </div>
 
+                    <!-- Datos de la medición (solo termografía) -->
+                    <div v-if="isThermography">
+                        <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
+                            <i class="fas fa-thermometer-half text-blue-600 mr-2"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Datos de la medición</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-adjust mr-2 text-blue-600"></i>
+                                    Emisividad
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    v-model="form.emissivity"
+                                    type="number"
+                                    step="0.001"
+                                    min="0"
+                                    max="1"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2.5"
+                                    placeholder="0.95"
+                                />
+                                <p v-if="errors.emissivity" class="mt-1 text-sm text-red-600">{{ errors.emissivity }}</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-ruler-horizontal mr-2 text-blue-600"></i>
+                                    Distancia Medición (m)
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    v-model="form.distance_m"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2.5"
+                                    placeholder="1.0"
+                                />
+                                <p v-if="errors.distance_m" class="mt-1 text-sm text-red-600">{{ errors.distance_m }}</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-temperature-low mr-2 text-blue-600"></i>
+                                    Temperatura Ambiente (°C)
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <input
+                                    v-model="form.ambient_temp"
+                                    type="number"
+                                    step="0.01"
+                                    class="block w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2.5"
+                                    placeholder="28.5"
+                                />
+                                <p v-if="errors.ambient_temp" class="mt-1 text-sm text-red-600">{{ errors.ambient_temp }}</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Diagnósticos y Recomendaciones (igual que Create) -->
                     <div v-if="components.length > 0">
                         <div class="flex items-center mb-4 pb-2 border-b border-gray-200">
@@ -455,7 +513,7 @@
                             <h4 class="text-lg font-semibold text-gray-800">Otros datos</h4>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div class="bg-gray-50 rounded-lg p-4">
+                            <div v-if="!isThermography" class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                     <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>
                                     Condición <span class="text-red-500 ml-1">*</span>
@@ -477,7 +535,7 @@
                                     <i class="fas mr-1" :class="conditionWarning.type === 'info' ? 'fa-circle-info' : 'fa-triangle-exclamation'"></i>{{ conditionWarning.text }}
                                 </p>
                             </div>
-                            <div class="bg-gray-50 rounded-lg p-4">
+                            <div v-if="!isThermography" class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                     <i class="fas fa-wrench mr-2 text-blue-600"></i>
                                     Mecanismo Falla <span class="text-red-500 ml-1">*</span>
@@ -494,7 +552,7 @@
                                 </div>
                                 <p v-if="errors.mechanism_fail_id" class="mt-1 text-sm text-red-600">{{ errors.mechanism_fail_id }}</p>
                             </div>
-                            <div class="bg-gray-50 rounded-lg p-4">
+                            <div v-if="!isThermography" class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                     <i class="fas fa-cog mr-2 text-blue-600"></i>
                                     Componente Falla <span class="text-red-500 ml-1">*</span>
@@ -511,7 +569,7 @@
                                 </div>
                                 <p v-if="errors.component_fail_id" class="mt-1 text-sm text-red-600">{{ errors.component_fail_id }}</p>
                             </div>
-                            <div class="bg-gray-50 rounded-lg p-4">
+                            <div v-if="!isThermography" class="bg-gray-50 rounded-lg p-4">
                                 <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                     <i class="fas fa-flag mr-2 text-blue-600"></i>
                                     Prioridad <span class="text-red-500 ml-1">*</span>
@@ -676,6 +734,7 @@ const normalizeReportType = (v) => {
 };
 
 const reportTypeResolved = computed(() => normalizeReportType(report.value?.report_type ?? route.query.report_type));
+const isThermography = computed(() => reportTypeResolved.value === 'thermography');
 const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'reports.thermography' : 'reports.vibration'));
 
 // Campos que se capturan en cada medición según el tipo del componente
@@ -684,6 +743,9 @@ const measurementFieldsFor = (component) => (component.component_type?.fields ||
 const form = reactive({
     equipment_id: '',
     measurement_date: '',
+    emissivity: '',
+    distance_m: '',
+    ambient_temp: '',
     condition_id: '',
     mechanism_fail_id: '',
     component_fail_id: '',
@@ -728,8 +790,12 @@ const showComponentFailModal = ref(false);
 const report = ref(null);
 const imageModalUrl = ref(null);
 
-// Aviso cuando el ΔT medido no coincide con la condición declarada (ANSI/NETA)
+// Aviso cuando el ΔT medido no coincide con la condición declarada (ANSI/NETA).
+// En termografía la condición se captura por punto y la cabecera se deriva,
+// así que no aplica el aviso.
 const conditionWarning = computed(() => {
+    if (isThermography.value) return null;
+
     const check = report.value?.condition_check;
     if (!check) return null;
 
@@ -886,6 +952,9 @@ const loadReport = async () => {
         filterCompanyId.value = reportData.equipment?.company?.id || '';
         form.equipment_id = reportData.equipment_id;
         form.measurement_date = reportData.measurement_date;
+        form.emissivity = reportData.emissivity ?? '';
+        form.distance_m = reportData.distance_m ?? '';
+        form.ambient_temp = reportData.ambient_temp ?? '';
         form.condition_id = reportData.condition?.id || '';
         form.condition_override_reason = reportData.condition_override_reason || '';
         form.mechanism_fail_id = reportData.mechanism_fail?.id || '';
@@ -1285,7 +1354,7 @@ const updateReport = async () => {
         });
 
         const check = response.data?.data?.condition_check;
-        if (check && check.matches === false) {
+        if (check && check.matches === false && !isThermography.value) {
             const { value: reason, isConfirmed } = await Swal.fire({
                 icon: 'warning',
                 title: 'Condición fuera de norma',

@@ -11,6 +11,7 @@ use App\Models\ComponentType;
 use App\Models\ComponentTypeField;
 use App\Models\ComponentTypeFieldOption;
 use App\Models\ComponentTypeValue;
+use App\Support\ThermographyFieldTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -95,6 +96,10 @@ class ComponentTypeController extends Controller
                         ]);
                     }
                 }
+            }
+
+            if ($componentType->report_type === ThermographyFieldTemplate::REPORT_TYPE) {
+                ThermographyFieldTemplate::applyTo($componentType);
             }
 
             return ApiResponse::success(

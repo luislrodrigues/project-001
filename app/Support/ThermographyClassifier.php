@@ -68,12 +68,15 @@ class ThermographyClassifier
 
     /**
      * ΔT del reporte, leído de los valores de medición (campo "Delta T").
+     * En termografía hay un ΔT por punto: se toma el mayor.
      */
     public static function deltaTForReport(Report $report): ?float
     {
         $values = $report->relationLoaded('measurementValues')
             ? $report->measurementValues
             : $report->measurementValues()->get();
+
+        $max = null;
 
         foreach ($values as $value) {
             $name = $value->field_name ?? $value->field->name ?? '';
@@ -94,10 +97,11 @@ class ThermographyClassifier
                 continue;
             }
 
-            return (float) $raw;
+            $number = (float) $raw;
+            $max = $max === null ? $number : max($max, $number);
         }
 
-        return null;
+        return $max;
     }
 
     /**
