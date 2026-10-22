@@ -433,8 +433,7 @@ class ReportController extends Controller
             $cleanEquipmentName = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $equipmentName)));
             $cleanConsecutivo = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $consecutivo)));
 
-            $filenameBase = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe ' . ($reportTypeName !== '' ? $reportTypeName . ' ' : '') . ($cleanConsecutivo !== '' ? ($cleanConsecutivo . ' ') : '') . $cleanEquipmentName);
-            $filename = $filenameBase . '.pdf';
+            $filename = self::pdfFilename($report);
 
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
@@ -444,6 +443,41 @@ class ReportController extends Controller
         } catch (\Exception $e) {
             return ApiResponse::error('Error al generar el PDF', 500, ['detail' => [$e->getMessage()]]);
         }
+    }
+
+    /**
+     * Nombre del archivo del informe, con el patrón usado por la empresa:
+     *   {YYYYMMDD} Informe Inspección {Tipo} {Ubicación} {Proceso} {Empresa}.pdf
+     * Ej.: 20260219 Informe Inspección Termografía Sub-Estación # 2 Utilidades Cargill Caribe.pdf
+     */
+    private static function pdfFilename(Report $report, string $extension = '.pdf', bool $withDate = true): string
+    {
+        $typeName = ReportType::where('code', $report->report_type)->value('name')
+            ?? ($report->report_type === 'thermography' ? 'Termografía' : 'Vibraciones');
+
+        $parts = [];
+
+        if ($withDate && $report->measurement_date) {
+            $parts[] = $report->measurement_date->format('Ymd');
+        }
+
+        $parts[] = 'Informe';
+        $parts[] = 'Inspección';
+        $parts[] = $typeName;
+        $parts[] = $report->equipment?->ubication?->name;
+        $parts[] = $report->equipment?->process?->name;
+        $parts[] = $report->equipment?->company?->name;
+
+        $clean = [];
+
+        foreach ($parts as $part) {
+            $part = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', (string) $part)));
+            if ($part !== '') {
+                $clean[] = $part;
+            }
+        }
+
+        return implode(' ', $clean) . $extension;
     }
 
     /**
@@ -1020,31 +1054,23 @@ class ReportController extends Controller
             $pdf->save($pdfPath);
 
             $equipmentName = $report->equipment?->name ?? 'N/A';
-            $consecutivo = trim((string) ($report->consecutivo ?? ''));
-            $datePrefix = $report->measurement_date?->format('Ymd') ?? '';
 
-            $cleanEquipmentName = trim(preg_replace('/\s+/', ' ', $equipmentName));
-            $cleanConsecutivo = trim(preg_replace('/\s+/', ' ', $consecutivo));
-
-            $subject = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($cleanConsecutivo !== '' ? ($cleanConsecutivo . ' ') : '') . $cleanEquipmentName);
-
-            $safeEquipmentName = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $equipmentName)));
-            $safeConsecutivo = trim(preg_replace('/\s+/', ' ', preg_replace('/[\\\\\/:*?"<>|]+/', ' ', $consecutivo)));
-            $pdfFilenameBase = trim(($datePrefix !== '' ? ($datePrefix . ' ') : '') . 'Informe Vibraciones ' . ($safeConsecutivo !== '' ? ($safeConsecutivo . ' ') : '') . $safeEquipmentName);
-            $pdfFilename = $pdfFilenameBase . '.pdf';
+            $subject = self::pdfFilename($report, '', false);
+            $pdfFilename = self::pdfFilename($report);
+            $bodyIntro = 'Adjunto envío ' . mb_strtolower(self::pdfFilename($report, '', false)) . '.';
 
             $firmaPath = public_path('images/firma_correo.jpeg');
 
             $analistName = $report->analist?->name ?? '—';
             $analistWorkstation = $report->analist?->workstation ?? '—';
 
-            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $pdfFilename, $firmaPath, $analistName, $analistWorkstation) {
+            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $pdfFilename, $firmaPath, $analistName, $analistWorkstation, $bodyIntro) {
                 $firmaCid = file_exists($firmaPath)
                     ? $message->embed($firmaPath)
                     : null;
 
                 $htmlBody = '<p>Buen día Estimado Ingeniero, Cordial saludo,</p>
-                    <p>Adjunto envío informe de análisis vibraciones ' . e($equipmentName) . '.</p>
+                    <p>' . e($bodyIntro) . '</p>
                     <p>Posterior medición y análisis de vibraciones mecánicas, se realizan las recomendaciones más apropiadas en función de los hallazgos encontrados.</p>
                     <p>Cualquier duda e inquietud estaré atento.</p>
                     <p>Saludos!</p>
