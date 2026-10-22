@@ -345,7 +345,7 @@
                         <h4 class="text-lg font-semibold text-gray-800">Otros datos</h4>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="bg-gray-50 rounded-lg p-4">
+                        <div v-if="!isThermography" class="bg-gray-50 rounded-lg p-4">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>
                                 Condición
@@ -360,7 +360,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="bg-gray-50 rounded-lg p-4">
+                        <div v-if="!isThermography" class="bg-gray-50 rounded-lg p-4">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-wrench mr-2 text-blue-600"></i>
                                 Mecanismo Falla
@@ -369,7 +369,7 @@
                                 {{ report.mechanism_fail?.name || 'N/A' }}
                             </div>
                         </div>
-                        <div class="bg-gray-50 rounded-lg p-4">
+                        <div v-if="!isThermography" class="bg-gray-50 rounded-lg p-4">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-cog mr-2 text-blue-600"></i>
                                 Componente Falla
@@ -378,7 +378,7 @@
                                 {{ report.component_fail?.name || 'N/A' }}
                             </div>
                         </div>
-                        <div class="bg-gray-50 rounded-lg p-4">
+                        <div v-if="!isThermography" class="bg-gray-50 rounded-lg p-4">
                             <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
                                 <i class="fas fa-flag mr-2 text-blue-600"></i>
                                 Prioridad
@@ -592,6 +592,10 @@ const additionalEmailInput = ref('');
 const additionalEmailsList = ref([]);
 
 const reportTypeResolved = computed(() => normalizeReportType(report.value?.report_type ?? route.query.report_type));
+
+// En termografía, Condición, Mecanismo de Falla, Componente en Falla y Prioridad
+// se capturan por punto (no a nivel de informe), así que no se muestran aquí.
+const isThermography = computed(() => reportTypeResolved.value === 'thermography');
 const backRouteName = computed(() => (reportTypeResolved.value === 'thermography' ? 'reports.thermography' : 'reports.vibration'));
 
 const reportImagesByComponent = computed(() => {
