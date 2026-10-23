@@ -166,23 +166,8 @@
                                         </p>
                                     </div>
 
-                                    <!-- Ámbito: valor fijo del componente o capturado en cada medición -->
-                                    <div>
-                                        <label class="flex items-center mb-2 text-sm font-medium text-gray-700">
-                                            <i class="fas fa-layer-group mr-2 text-gray-500 text-xs"></i>
-                                            Ámbito
-                                        </label>
-                                        <Select2
-                                            v-model="field.scope"
-                                            :options="scopeOptions"
-                                            allLabel="Seleccione"
-                                            :search="false"
-                                            class="block w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 transition-all duration-200"
-                                        />
-                                        <p class="mt-1 text-xs text-gray-500">
-                                            {{ field.scope === 'measurement' ? 'Se captura en cada reporte' : 'Valor fijo del componente' }}
-                                        </p>
-                                    </div>
+                                    <!-- Ámbito oculto: aquí solo se editan atributos del componente.
+                                         Los campos por reporte los administra la plantilla de termografía. -->
 
                                     <!-- Unidad (solo para tipo numeric) -->
                                     <div v-if="field.type === 'numeric'">
@@ -375,16 +360,11 @@ const loadComponentType = async () => {
     }
 };
 
-const scopeOptions = [
-    { id: 'component', name: 'En el componente' },
-    { id: 'measurement', name: 'En cada medición' },
-];
-
 const addField = () => {
     form.fields.push({
         name: '',
         type: '',
-        scope: 'component',
+        scope: 'component', // los campos nuevos siempre son atributos del componente
         unit: '',
         is_required: false,
         options: []
