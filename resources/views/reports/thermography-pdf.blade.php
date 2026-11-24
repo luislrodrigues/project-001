@@ -13,26 +13,6 @@
     @include('reports.partials.thermography-header-footer')
 
     <div class="report-content">
-        <table class="info-grid report-meta-row" cellpadding="0" cellspacing="0">
-            <tr>
-                <td class="g-title" colspan="4">Datos generales del informe</td>
-            </tr>
-            <tr>
-                <td class="g-label">Informe</td>
-                <td class="g-value">{{ utf8_sanitize($reportData->consecutivo ?? '—') }}</td>
-                <td class="g-label">Planta</td>
-                <td class="g-value">{{ utf8_sanitize($reportData->equipment?->company?->name ?? '—') }}</td>
-            </tr>
-            <tr>
-                <td class="g-label">Analista</td>
-                <td class="g-value">{{ utf8_sanitize($reportData->analist?->name ?? '—') }}</td>
-                <td class="g-label">OT / Estado</td>
-                <td class="g-value">
-                    {{ utf8_sanitize(trim(($reportData->ot_created ?? '') . ' ' . ($reportData->status_ot ?? '')) ?: '—') }}
-                </td>
-            </tr>
-        </table>
-
         @if (!empty($equipmentImage))
             <div style="text-align: right; margin-bottom: 12px;">
                 <img src="{{ $equipmentImage }}" alt="Equipo" class="equipment-image" />
@@ -65,6 +45,28 @@
                 </div>
             </div>
         @endif
+
+        @include('reports.partials.thermography-norm')
+
+        <table class="info-grid report-meta-row" cellpadding="0" cellspacing="0">
+            <tr>
+                <td class="g-title" colspan="4">Datos generales del informe</td>
+            </tr>
+            <tr>
+                <td class="g-label">Informe</td>
+                <td class="g-value">{{ utf8_sanitize($reportData->consecutivo ?? '—') }}</td>
+                <td class="g-label">Planta</td>
+                <td class="g-value">{{ utf8_sanitize($reportData->equipment?->company?->name ?? '—') }}</td>
+            </tr>
+            <tr>
+                <td class="g-label">Analista</td>
+                <td class="g-value">{{ utf8_sanitize($reportData->analist?->name ?? '—') }}</td>
+                <td class="g-label">OT / Estado</td>
+                <td class="g-value">
+                    {{ utf8_sanitize(trim(($reportData->ot_created ?? '') . ' ' . ($reportData->status_ot ?? '')) ?: '—') }}
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 

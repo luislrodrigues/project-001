@@ -551,6 +551,7 @@ const loadEquipment = async () => {
         const components = equipment.components ?? [];
         const savedFieldValues = components.map((c) => ({ ...(c.field_values || {}) }));
         form.components = components.map((c) => ({
+            id: c.id,
             component_type_id: c.component_type_id ?? (c.component_type?.id ?? ''),
             brand_id: c.brand_id ?? (c.brand?.id ?? ''),
             field_values: {},
@@ -709,6 +710,7 @@ const updateEquipment = async () => {
         const componentsPayload = form.components
             .filter((c) => c.component_type_id && c.brand_id)
             .map((c, index) => ({
+                id: c.id || null,
                 component_type_id: c.component_type_id,
                 brand_id: c.brand_id,
                 display_order: index,

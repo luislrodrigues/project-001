@@ -118,10 +118,10 @@
                 @foreach (array_chunk($images, 2) as $imageRow)
                     <tr>
                         @foreach ($imageRow as $image)
-                            <td @if (count($imageRow) === 1) colspan="2" @endif>
+                            <td class="image-cell" @if (count($imageRow) === 1) colspan="2" @endif>
                                 <img src="{{ $image['url'] }}" width="{{ $image['width'] }}" height="{{ $image['height'] }}" alt="Imagen {{ $image['kind'] ?: 'térmica' }}" />
                                 @if ($image['kind'] !== '' || $image['caption'] !== '')
-                                    <div style="font-size: 8.5px; color: #4b5563; padding-top: 2px;">
+                                    <div class="image-caption">
                                         @if ($image['kind'] !== '')
                                             <span style="display: inline-block; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">{{ $image['kind'] }}</span>
                                         @endif
@@ -224,28 +224,5 @@
                 @endif
             </div>
         </div>
-
-        <p class="norm-title">ANSI/NETA AST-2013 – Tabla 100.18 Acción Sugerida Basada en el Aumento de la Temperatura</p>
-        <table class="norm-table" cellpadding="0" cellspacing="0">
-            <thead>
-                <tr>
-                    <th>Diferencia de temperatura (ΔT) entre componentes similares bajo cargas similares</th>
-                    <th>Clasificación</th>
-                    <th>Acción Recomendada</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (array_slice(\App\Support\ThermographyClassifier::SCALE, 1) as $range)
-                    @php
-                        $rangeStyle = ($conditionStyles ?? [])[$range['condition']] ?? null;
-                    @endphp
-                    <tr>
-                        <td>{{ $range['range'] }}</td>
-                        <td style="text-align: center; font-weight: bold;@if ($rangeStyle) color: {{ $rangeStyle['text_color'] }}; background: {{ $rangeStyle['color'] }};@endif">{{ $range['condition'] }}</td>
-                        <td>{{ $range['action'] }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
     </div>
 </div>

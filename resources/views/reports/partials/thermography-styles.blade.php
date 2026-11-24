@@ -85,7 +85,7 @@ body {
 .info-grid .g-empty { background-color: #ffffff; }
 
 /* Fila con los datos generales del informe (pares etiqueta/valor) */
-.report-meta-row { margin-bottom: 12px; }
+.report-meta-row { margin-bottom: 12px; page-break-inside: avoid; }
 .report-meta-row .g-label { width: 16%; font-size: 8pt; }
 .report-meta-row .g-value { width: 34%; font-size: 8pt; }
 
@@ -138,13 +138,17 @@ body {
 .rec-list { margin: 0 0 8px 16px; padding: 0; }
 .rec-list li { margin-bottom: 2px; }
 
-.images-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-.images-table td { padding: 4px; text-align: center; vertical-align: top; }
+.images-table { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; }
+.images-table td { padding: 4px; text-align: center; vertical-align: middle; }
+.images-table .image-cell { height: 150px; }
 .images-table img { max-width: 100%; }
+.images-table .image-caption { font-size: 8.5px; color: #4b5563; padding-top: 2px; text-align: center; }
 
 .norm-title { font-size: 8.5pt; font-weight: bold; color: #374151; margin: 10px 0 4px 0; }
+.norm-block { page-break-inside: avoid; margin: 0 0 14px 0; }
 .norm-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
-.norm-table th, .norm-table td { border: 1px solid #e5e7eb; padding: 4px 6px; text-align: left; }
+.norm-table th, .norm-table td { border: 1px solid #94a3b8; padding: 4px 6px; text-align: left; }
 .norm-table th { background-color: #f8fafc; }
+.norm-table .norm-col-range { text-align: center; vertical-align: middle; }
 
 .report-footer { text-align: center; font-size: 8pt; color: #6b7280; }

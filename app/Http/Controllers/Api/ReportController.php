@@ -34,6 +34,13 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class ReportController extends Controller
 {
+    /**
+     * Caja fija en la que se encuadran las imágenes de termografía en el PDF.
+     * Se rellenan con fondo blanco para que todas queden centradas y del mismo tamaño.
+     */
+    private const PDF_IMAGE_BOX_WIDTH = 250;
+    private const PDF_IMAGE_BOX_HEIGHT = 150;
+
     public function getConditions(): JsonResponse
     {
         $conditions = Condition::where('status', 'active')
@@ -400,18 +407,8 @@ class ReportController extends Controller
 
             $viewData = self::pdfViewData($report);
 
-            // La plantilla y el nombre del informe pueden variar por tipo de reporte
-            $reportTypeModel = $report->report_type
-                ? ReportType::where('code', $report->report_type)->first()
-                : null;
-
-            $view = 'reports.report-pdf';
-            $configuredView = $reportTypeModel?->pdf_view;
-            if (is_string($configuredView) && $configuredView !== '' && view()->exists($configuredView)) {
-                $view = $configuredView;
-            }
-
-            $reportTypeName = $reportTypeModel?->name ?? ($report->report_type ? '' : 'Vibraciones');
+            // La plantilla del PDF varía por tipo de reporte
+            $view = self::pdfViewForReport($report);
 
             $html = view($view, $viewData)->render();
 
@@ -543,9 +540,13 @@ class ReportController extends Controller
         // Fallback al JSON histórico para informes que aún no fueron migrados.
         $componentImages = [];
 
+        $isThermography = $report->report_type === 'thermography';
+
         $images = $report->relationLoaded('images') ? $report->images : $report->images()->get();
         foreach ($images as $image) {
-            $base64 = self::imageToBase64ForPdf($image->path);
+            $base64 = $isThermography
+                ? self::imageToBase64FittedForPdf($image->path)
+                : self::imageToBase64ForPdf($image->path);
             if ($base64 === '') {
                 continue;
             }
@@ -554,7 +555,9 @@ class ReportController extends Controller
                 'url' => $base64,
                 'kind' => $image->kind_label,
                 'caption' => utf8_sanitize((string) ($image->caption ?? '')),
-                'dimensions' => self::pdfImageDimensions($image->path),
+                'dimensions' => $isThermography
+                    ? ['width' => self::PDF_IMAGE_BOX_WIDTH, 'height' => self::PDF_IMAGE_BOX_HEIGHT]
+                    : self::pdfImageDimensions($image->path),
             ];
         }
 
@@ -576,9 +579,16 @@ class ReportController extends Controller
                         continue;
                     }
 
-                    $componentImages[$componentId] = array_values(array_filter(array_map(function ($path) {
-                        return self::imageToBase64ForPdf($path);
-                    }, $data['images'])));
+                    $componentImages[$componentId] = array_values(array_filter(array_map(function ($path) use ($isThermography) {
+                        return $isThermography
+                            ? [
+                                'url' => self::imageToBase64FittedForPdf($path),
+                                'dimensions' => ['width' => self::PDF_IMAGE_BOX_WIDTH, 'height' => self::PDF_IMAGE_BOX_HEIGHT],
+                            ]
+                            : self::imageToBase64ForPdf($path);
+                    }, $data['images']), function ($image) {
+                        return is_array($image) ? $image['url'] !== '' : $image !== '';
+                    }));
                 }
             }
         }
@@ -1003,6 +1013,8 @@ class ReportController extends Controller
                 'mechanismFail',
                 'componentFail',
                 'analist',
+                'measurementValues.field',
+                'images',
             ])
                 ->whereNull('deleted_at')
                 ->findOrFail($id);
@@ -1064,14 +1076,18 @@ class ReportController extends Controller
             $analistName = $report->analist?->name ?? '—';
             $analistWorkstation = $report->analist?->workstation ?? '—';
 
-            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $pdfFilename, $firmaPath, $analistName, $analistWorkstation, $bodyIntro) {
+            $analysisPhrase = $report->report_type === 'thermography'
+                ? 'análisis termográfico'
+                : 'análisis de vibraciones mecánicas';
+
+            Mail::send([], [], function ($message) use ($pdfPath, $recipients, $subject, $equipmentName, $pdfFilename, $firmaPath, $analistName, $analistWorkstation, $bodyIntro, $analysisPhrase) {
                 $firmaCid = file_exists($firmaPath)
                     ? $message->embed($firmaPath)
                     : null;
 
                 $htmlBody = '<p>Buen día Estimado Ingeniero, Cordial saludo,</p>
                     <p>' . e($bodyIntro) . '</p>
-                    <p>Posterior medición y análisis de vibraciones mecánicas, se realizan las recomendaciones más apropiadas en función de los hallazgos encontrados.</p>
+                    <p>Posterior medición y ' . e($analysisPhrase) . ', se realizan las recomendaciones más apropiadas en función de los hallazgos encontrados.</p>
                     <p>Cualquier duda e inquietud estaré atento.</p>
                     <p>Saludos!</p>
                     <p><strong>' . e($analistName) . '</strong><br>
@@ -1109,93 +1125,7 @@ class ReportController extends Controller
         ini_set('pcre.backtrack_limit', '10000000');
         ini_set('pcre.recursion_limit', '10000000');
 
-        $diagnosis = [];
-        if ($report->diagnosis) {
-            $decoded = self::decodeJsonField($report->diagnosis);
-            if (is_array($decoded) && !empty($decoded)) {
-                $componentsList = $report->equipment ? $report->equipment->components : collect();
-                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
-                if ($isNumericArray) {
-                    foreach ($decoded as $index => $data) {
-                        if ($componentsList->has($index)) {
-                            $componentId = (string) $componentsList->get($index)->id;
-                            $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? utf8_sanitize($data['text']) : (is_string($data) ? utf8_sanitize($data) : '');
-                        }
-                    }
-                } else {
-                    foreach ($decoded as $componentId => $data) {
-                        $componentId = (string) $componentId;
-                        $diagnosis[$componentId] = is_array($data) && isset($data['text']) ? utf8_sanitize($data['text']) : (is_string($data) ? utf8_sanitize($data) : '');
-                    }
-                }
-            }
-        }
-
-        $recommendations = [];
-        if ($report->recommendations) {
-            $decoded = self::decodeJsonField($report->recommendations);
-            if (is_array($decoded) && !empty($decoded)) {
-                $componentsList = $report->equipment ? $report->equipment->components : collect();
-                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
-                if ($isNumericArray) {
-                    foreach ($decoded as $index => $data) {
-                        if ($componentsList->has($index)) {
-                            $componentId = (string) $componentsList->get($index)->id;
-                            $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
-                        }
-                    }
-                } else {
-                    foreach ($decoded as $componentId => $data) {
-                        $componentId = (string) $componentId;
-                        $recommendations[$componentId] = is_array($data) ? array_values(array_filter(array_map(fn ($r) => utf8_sanitize($r), $data), fn ($r) => trim($r) !== '')) : [];
-                    }
-                }
-            }
-        }
-
-        $componentImages = [];
-        if ($report->diagnosis) {
-            $decoded = self::decodeJsonField($report->diagnosis);
-            if (is_array($decoded) && !empty($decoded)) {
-                $componentsList = $report->equipment ? $report->equipment->components : collect();
-                $isNumericArray = $componentsList->isNotEmpty() && array_keys($decoded) === range(0, count($decoded) - 1);
-                if ($isNumericArray) {
-                    foreach ($decoded as $index => $data) {
-                        if ($componentsList->has($index) && is_array($data) && !empty($data['images'])) {
-                            $componentId = (string) $componentsList->get($index)->id;
-                            $componentImages[$componentId] = array_values(array_filter(array_map(
-                                fn ($path) => self::imageToBase64ForPdf($path),
-                                $data['images']
-                            )));
-                        }
-                    }
-                } else {
-                    foreach ($decoded as $componentId => $data) {
-                        if (is_array($data) && !empty($data['images'])) {
-                            $componentId = (string) $componentId;
-                            $componentImages[$componentId] = array_values(array_filter(array_map(
-                                fn ($path) => self::imageToBase64ForPdf($path),
-                                $data['images']
-                            )));
-                        }
-                    }
-                }
-            }
-        }
-
-        $components = $report->equipment->components ?? [];
-        $equipmentImage = ($report->equipment && !empty($report->equipment->image))
-            ? self::imageToBase64ForPdf($report->equipment->image)
-            : null;
-
-        $html = view('reports.report-pdf', [
-            'reportData' => $report,
-            'components' => $components,
-            'diagnosis' => $diagnosis,
-            'recommendations' => $recommendations,
-            'componentImages' => $componentImages,
-            'equipmentImage' => $equipmentImage,
-        ])->render();
+        $html = view(self::pdfViewForReport($report), self::pdfViewData($report))->render();
 
         $html = utf8_sanitize_html($html);
 
@@ -1207,6 +1137,22 @@ class ReportController extends Controller
             'margin_footer'         => 10,
             'ignore_invalid_utf8'   => true,
         ]);
+    }
+
+    /**
+     * Plantilla Blade del PDF según el tipo de reporte (vibraciones, termografía, ...).
+     */
+    private static function pdfViewForReport(Report $report): string
+    {
+        $configuredView = $report->report_type
+            ? ReportType::where('code', $report->report_type)->value('pdf_view')
+            : null;
+
+        if (is_string($configuredView) && $configuredView !== '' && view()->exists($configuredView)) {
+            return $configuredView;
+        }
+
+        return 'reports.report-pdf';
     }
 
     /**
@@ -1270,6 +1216,69 @@ class ReportController extends Controller
         }
 
         return ['width' => $scaledWidth, 'height' => $scaledHeight];
+    }
+
+    /**
+     * Convierte una imagen del storage a data URI encuadrada en una caja fija
+     * (fondo blanco, centrada y escalada sin deformar). Se usa en los informes
+     * de termografía para que todas las fotos se vean del mismo tamaño.
+     */
+    private static function imageToBase64FittedForPdf(
+        string $path,
+        int $boxWidth = self::PDF_IMAGE_BOX_WIDTH,
+        int $boxHeight = self::PDF_IMAGE_BOX_HEIGHT
+    ): string {
+        $base64 = self::imageToBase64ForPdf($path);
+        if ($base64 === '' || !function_exists('imagecreatefromstring')) {
+            return $base64;
+        }
+
+        $binary = base64_decode(substr($base64, strpos($base64, ',') + 1), true);
+        if ($binary === false) {
+            return $base64;
+        }
+
+        $source = @imagecreatefromstring($binary);
+        if (!$source) {
+            return $base64;
+        }
+
+        $srcWidth = imagesx($source);
+        $srcHeight = imagesy($source);
+
+        if ($srcWidth < 1 || $srcHeight < 1) {
+            imagedestroy($source);
+            return $base64;
+        }
+
+        $canvas = imagecreatetruecolor($boxWidth, $boxHeight);
+        if (!$canvas) {
+            imagedestroy($source);
+            return $base64;
+        }
+
+        $white = imagecolorallocate($canvas, 255, 255, 255);
+        imagefilledrectangle($canvas, 0, 0, $boxWidth, $boxHeight, $white);
+
+        $scale = min($boxWidth / $srcWidth, $boxHeight / $srcHeight);
+        $targetWidth = max(1, (int) round($srcWidth * $scale));
+        $targetHeight = max(1, (int) round($srcHeight * $scale));
+        $offsetX = (int) round(($boxWidth - $targetWidth) / 2);
+        $offsetY = (int) round(($boxHeight - $targetHeight) / 2);
+
+        imagecopyresampled($canvas, $source, $offsetX, $offsetY, 0, 0, $targetWidth, $targetHeight, $srcWidth, $srcHeight);
+        imagedestroy($source);
+
+        ob_start();
+        imagejpeg($canvas, null, 88);
+        $fitted = ob_get_clean();
+        imagedestroy($canvas);
+
+        if (!is_string($fitted) || $fitted === '') {
+            return $base64;
+        }
+
+        return 'data:image/jpeg;base64,' . base64_encode($fitted);
     }
 
     /**
