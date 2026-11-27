@@ -16,6 +16,7 @@ use App\Models\ComponentTypeField;
 use App\Models\ComponentTypeValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -187,53 +188,7 @@ class EquipmentController extends Controller
                 $componentsInput = json_decode($componentsInput, true);
             }
             if (is_array($componentsInput)) {
-                foreach ($equipment->components as $oldComponent) {
-                    ComponentTypeValue::where('component_id', $oldComponent->id)->delete();
-                }
-                $equipment->components()->delete();
-                foreach ($componentsInput as $index => $item) {
-                    $typeId = isset($item['component_type_id']) ? (int) $item['component_type_id'] : 0;
-                    $brandId = isset($item['brand_id']) ? (int) $item['brand_id'] : 0;
-                    if ($typeId <= 0 || $brandId <= 0) {
-                        continue;
-                    }
-                    $displayOrder = isset($item['display_order']) ? (int) $item['display_order'] : $index;
-                    $component = $equipment->components()->create([
-                        'component_type_id' => $typeId,
-                        'brand_id' => $brandId,
-                        'display_order' => $displayOrder,
-                        'status' => 'active',
-                    ]);
-                    $fieldValues = $item['field_values'] ?? [];
-                    if (is_array($fieldValues)) {
-                        foreach ($fieldValues as $fieldId => $value) {
-                            $fieldId = (int) $fieldId;
-                            if ($fieldId <= 0 || $value === '' || $value === null) {
-                                continue;
-                            }
-                            $field = ComponentTypeField::find($fieldId);
-                            if (!$field) {
-                                continue;
-                            }
-                            $optionId = null;
-                            $storedValue = is_scalar($value) ? (string) $value : '';
-                            if ($field->hasOptions()) {
-                                $option = $field->options()->where('value', $storedValue)->first();
-                                if ($option) {
-                                    $optionId = $option->id;
-                                    $storedValue = $option->value;
-                                }
-                            }
-                            ComponentTypeValue::create([
-                                'component_id' => $component->id,
-                                'component_type_field_id' => $fieldId,
-                                'option_id' => $optionId,
-                                'value' => $storedValue,
-                                'raw_value' => is_scalar($value) ? (string) $value : '',
-                            ]);
-                        }
-                    }
-                }
+                DB::transaction(fn () => $this->syncComponents($equipment, $componentsInput));
             }
 
             return ApiResponse::success(
@@ -242,6 +197,113 @@ class EquipmentController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error('Error al actualizar el equipo', 500, ['detail' => [$e->getMessage()]]);
+        }
+    }
+
+    /**
+     * Sincroniza los componentes del equipo sin recrearlos.
+     *
+     * Los informes guardan imágenes, valores de medición, diagnóstico y
+     * recomendaciones por component_id. Borrar y volver a crear los
+     * componentes dejaba esos datos apuntando a registros eliminados: el
+     * informe quedaba sin fotos ni parámetros. Por eso se actualizan en sitio.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    private function syncComponents(Equipment $equipment, array $items): void
+    {
+        $existing = $equipment->components()->orderBy('id')->get();
+        $usedIds = [];
+        $position = 0;
+
+        foreach ($items as $index => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $typeId = isset($item['component_type_id']) ? (int) $item['component_type_id'] : 0;
+            $brandId = isset($item['brand_id']) ? (int) $item['brand_id'] : 0;
+            if ($typeId <= 0 || $brandId <= 0) {
+                continue;
+            }
+
+            $displayOrder = isset($item['display_order']) ? (int) $item['display_order'] : $index;
+
+            $component = null;
+            $itemId = isset($item['id']) ? (int) $item['id'] : 0;
+
+            if ($itemId > 0) {
+                $component = $existing->firstWhere('id', $itemId);
+            } else {
+                // Compatibilidad con formularios que aún no envían el id:
+                // se empareja por posición con los componentes existentes.
+                $component = $existing->values()->get($position);
+            }
+            $position++;
+
+            if ($component && isset($usedIds[$component->id])) {
+                $component = null;
+            }
+
+            if ($component) {
+                $usedIds[$component->id] = true;
+                $component->update([
+                    'component_type_id' => $typeId,
+                    'brand_id' => $brandId,
+                    'display_order' => $displayOrder,
+                    'status' => 'active',
+                ]);
+            } else {
+                $component = $equipment->components()->create([
+                    'component_type_id' => $typeId,
+                    'brand_id' => $brandId,
+                    'display_order' => $displayOrder,
+                    'status' => 'active',
+                ]);
+                $usedIds[$component->id] = true;
+            }
+
+            ComponentTypeValue::where('component_id', $component->id)->forceDelete();
+
+            $fieldValues = $item['field_values'] ?? [];
+            if (is_array($fieldValues)) {
+                foreach ($fieldValues as $fieldId => $value) {
+                    $fieldId = (int) $fieldId;
+                    if ($fieldId <= 0 || $value === '' || $value === null) {
+                        continue;
+                    }
+                    $field = ComponentTypeField::find($fieldId);
+                    if (!$field) {
+                        continue;
+                    }
+                    $optionId = null;
+                    $storedValue = is_scalar($value) ? (string) $value : '';
+                    if ($field->hasOptions()) {
+                        $option = $field->options()->where('value', $storedValue)->first();
+                        if ($option) {
+                            $optionId = $option->id;
+                            $storedValue = $option->value;
+                        }
+                    }
+                    ComponentTypeValue::create([
+                        'component_id' => $component->id,
+                        'component_type_field_id' => $fieldId,
+                        'option_id' => $optionId,
+                        'value' => $storedValue,
+                        'raw_value' => is_scalar($value) ? (string) $value : '',
+                    ]);
+                }
+            }
+        }
+
+        // Los componentes que ya no vienen en el formulario se dan de baja,
+        // conservando su historial en los informes.
+        foreach ($existing as $oldComponent) {
+            if (isset($usedIds[$oldComponent->id])) {
+                continue;
+            }
+            ComponentTypeValue::where('component_id', $oldComponent->id)->forceDelete();
+            $oldComponent->delete();
         }
     }
 
